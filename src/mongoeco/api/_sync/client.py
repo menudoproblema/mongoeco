@@ -481,6 +481,7 @@ class Database:
         return self._admin.list_collection_names(
             options.get("filter_spec", _FILTER_UNSET),
             session=options.get("session"),
+            comment=options.get("comment"),
         )
 
     def list_collections(
@@ -499,6 +500,7 @@ class Database:
         return self._admin.list_collections(
             options.get("filter_spec", _FILTER_UNSET),
             session=options.get("session"),
+            comment=options.get("comment"),
         )
 
     def create_collection(

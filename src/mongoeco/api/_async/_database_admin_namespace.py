@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from mongoeco.api.admin_parsing import (
     normalize_validate_command_options,
-    resolve_collection_reference,
+    normalize_validate_collection_name,
 )
 from mongoeco.core.aggregation import _bson_document_size
+from mongoeco.api.operations import compile_find_operation
+from mongoeco.api._async._collection_indexing import load_index_documents
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.engines._shared_ttl import coerce_ttl_datetime
-from mongoeco.errors import CollectionInvalid
+from mongoeco.core.server_errors import server_error
 from mongoeco.session import ClientSession  # noqa: TC001 - introspectable method annotations
 from mongoeco.types import (
     CollectionValidationSnapshot,
@@ -48,11 +50,20 @@ class DatabaseNamespaceAdminService:
                 return False
         return True
 
+    async def collection_documents(self, collection_name, *, session=None):
+        """Read administrative inputs before any public materialization or codec."""
+        collection = self._admin._database.get_collection(collection_name)
+        operation = compile_find_operation(
+            {}, dialect=self._admin._mongodb_dialect,
+        ).bind(collection._new_operation_context(session=session))
+        async with collection._engine_scan_with_operation(operation) as snapshot:
+            return [document async for document in snapshot]
+
     async def collection_stats(self, collection_name: str, *, scale: int = 1, session: ClientSession | None = None):
         self._admin._ensure_session_active(session)
         collection = self._admin._database.get_collection(collection_name)
-        documents = await collection.find({}, session=session).to_list()
-        indexes = await collection.list_indexes(session=session).to_list()
+        documents = await self.collection_documents(collection_name, session=session)
+        indexes = await load_index_documents(collection, session=session)
         data_size = sum(_bson_document_size(document) for document in documents)
         total_index_size = sum(_bson_document_size(document) for document in indexes)
         from mongoeco.types import CollectionStatsSnapshot
@@ -134,30 +145,31 @@ class DatabaseNamespaceAdminService:
         comment: object | None = None,
     ) -> CollectionValidationSnapshot:
         self._admin._ensure_session_active(session)
-        normalize_validate_command_options(
+        options = normalize_validate_command_options(
             scandata=scandata,
             full=full,
             background=background,
             comment=comment,
         )
-        collection_name = resolve_collection_reference(name_or_collection, "name_or_collection")
+        collection_name = normalize_validate_collection_name(name_or_collection)
         collection_names = await self._admin._engine.list_collections(self._admin._db_name, context=session)
         if collection_name not in collection_names:
-            raise CollectionInvalid(f"collection '{collection_name}' does not exist")
+            message = f"Namespace {self._admin._db_name}.{collection_name} not found"
+            raise server_error(message, code=26)
 
         collection = self._admin._database.get_collection(collection_name)
-        documents = await collection.find({}, session=session).to_list()
-        indexes = await collection.list_indexes(session=session).to_list()
+        documents = await self.collection_documents(collection_name, session=session)
+        indexes = await load_index_documents(collection, session=session)
         warnings: list[object] = []
-        if scandata:
+        if options.scandata:
             warnings.append(
                 "validate scandata is accepted for compatibility but does not change local validation behavior"
             )
-        if full:
+        if options.full:
             warnings.append(
                 "validate full is accepted for compatibility but does not change local validation behavior"
             )
-        if background is not None:
+        if options.background is not None:
             warnings.append(
                 "validate background is accepted for compatibility but validation runs synchronously in mongoeco"
             )

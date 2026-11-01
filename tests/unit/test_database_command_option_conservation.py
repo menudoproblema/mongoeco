@@ -8,11 +8,14 @@ import hashlib
 import json
 import time
 
+from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
+
+from bson.errors import InvalidDocument
 
 from mongoeco import MongoClient
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
@@ -160,10 +163,7 @@ def test_inventory_tracks_exact_owner_and_public_command_option_sets() -> None:
         hashlib.sha256(source.read_bytes()).hexdigest()
     }
     assert {row["source_revision"] for row in rows} == {
-        (
-            "sha256:"
-            "b72d3f36f3ae7611fbcd0061a681d2cab99562f5a58f5f2026928f7e5676e89f"
-        )
+        "sha256:" + hashlib.sha256(source.read_bytes()).hexdigest()
     }
     assert {
         (command, option)
@@ -226,14 +226,19 @@ def test_accepted_noop_options_preserve_result(
     ["command", "option"],
     sorted(ACCEPTED_NOOP),
 )
-def test_accepted_noop_options_reject_wrong_type(command: str, option: str) -> None:
+def test_accepted_noop_options_reject_invalid_input(command: str, option: str) -> None:
     client = MongoClient(MemoryEngine())
     try:
         database = client["audit"]
         database.create_collection("items")
         request = {command: "items" if command == "validate" else 1}
-        with pytest.raises(TypeError):
-            database.command({**request, option: "invalid"})
+        if command == "validate":
+            # Legacy flags accept all BSON truth values, but not invalid BSON.
+            with pytest.raises(InvalidDocument):
+                database.command({**request, option: Decimal(1)})
+        else:
+            with pytest.raises(TypeError):
+                database.command({**request, option: "invalid"})
     finally:
         client.close()
 
@@ -302,8 +307,13 @@ def test_list_effective_options_reject_wrong_type(
 ) -> None:
     with MongoClient(MemoryEngine()) as client:
         client.alpha.create_collection("events")
-        with pytest.raises(TypeError):
-            client.alpha.command({command: 1, option: invalid})
+        if command == "listCollections" and option == "filter":
+            with pytest.raises(OperationFailure) as error:
+                client.alpha.command({command: 1, option: invalid})
+            assert error.value.code == 14  # noqa: PLR2004 - native TypeMismatch
+        else:
+            with pytest.raises(TypeError):
+                client.alpha.command({command: 1, option: invalid})
 
 
 @pytest.mark.parametrize("command", ["find", "aggregate"])

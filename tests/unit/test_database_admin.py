@@ -15,7 +15,6 @@ from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.results import EngineUpdateResult, FindAndModifyOutcome
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import (
-    CollectionInvalid,
     InvalidOperation,
     OperationFailure,
     WriteError,
@@ -739,8 +738,10 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
             self.assertEqual(snapshot.namespace, "db.events")
             self.assertEqual(snapshot.record_count, 1)
 
-            with self.assertRaisesRegex(CollectionInvalid, "collection 'missing' does not exist"):
+            with self.assertRaises(OperationFailure) as missing:
                 await service._build_collection_validation_snapshot("missing")
+            self.assertEqual(missing.exception.code, 26)
+            self.assertEqual(missing.exception.details["codeName"], "NamespaceNotFound")
 
             with patch.object(service, "_compile_command_count_operation", return_value=("events", object())), patch.object(
                 service,

@@ -26,6 +26,10 @@ from tests.differential.semantic_binary_surface_cases import (
     SEED as BINARY_SURFACE_SEED,
     SEMANTIC_BINARY_SURFACE_CASES,
 )
+from tests.differential.semantic_bson_admin_read_cases import (
+    SEED as BSON_ADMIN_READ_SEED,
+    SEMANTIC_BSON_ADMIN_READ_CASES,
+)
 from tests.differential.semantic_bson_admission_cases import (
     SEED as BSON_ADMISSION_SEED,
     SEMANTIC_BSON_ADMISSION_CASES,
@@ -41,6 +45,10 @@ from tests.differential.semantic_bson_catalog_cases import (
 from tests.differential.semantic_bson_command_cases import (
     SEED as BSON_COMMAND_SEED,
     SEMANTIC_BSON_COMMAND_CASES,
+)
+from tests.differential.semantic_bson_command_flag_cases import (
+    SEED as BSON_COMMAND_FLAG_SEED,
+    SEMANTIC_BSON_COMMAND_FLAG_CASES,
 )
 from tests.differential.semantic_bson_consumer_cases import (
     SEED as BSON_CONSUMER_SEED,
@@ -554,6 +562,15 @@ SEMANTIC_CORPORA = {
         "semantic_decimal_cases",
         DECIMAL_EDGE_SEED,
         SEMANTIC_DECIMAL_EDGE_CASES,
+    ),
+    "bson_command_flags": SemanticCorpus(
+        "bson-command-flags", "semantic_bson_command_flag_cases",
+        BSON_COMMAND_FLAG_SEED,
+        SEMANTIC_BSON_COMMAND_FLAG_CASES,
+    ),
+    "bson_admin_read": SemanticCorpus(
+        "bson-admin-read", "semantic_bson_admin_read_cases", BSON_ADMIN_READ_SEED,
+        SEMANTIC_BSON_ADMIN_READ_CASES,
     ),
     "bson_index_admin": SemanticCorpus(
         "bson-index-admin", "semantic_bson_index_admin_cases", BSON_INDEX_ADMIN_SEED,

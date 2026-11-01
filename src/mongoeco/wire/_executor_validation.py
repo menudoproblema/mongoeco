@@ -261,12 +261,6 @@ def _validate_list_collections(_body: dict[str, Any], command_document: dict[str
     authorized = command_document.get("authorizedCollections")
     if authorized is not None and not isinstance(authorized, bool):
         raise OperationFailure("wire listCollections authorizedCollections must be a bool")
-    filter_spec = command_document.get("filter")
-    if filter_spec is not None and not isinstance(filter_spec, dict):
-        raise OperationFailure("wire listCollections filter must be a document")
-    comment = command_document.get("comment")
-    if comment is not None and not isinstance(comment, str):
-        raise OperationFailure("wire listCollections comment must be a string")
 
 
 def _validate_list_databases(_body: dict[str, Any], command_document: dict[str, Any]) -> None:
@@ -330,20 +324,6 @@ def _validate_distinct(_body: dict[str, Any], command_document: dict[str, Any]) 
     _require_non_empty_string("distinct", command_document.get("distinct"), "requires a non-empty collection name")
     _require_non_empty_string("distinct", command_document.get("key"), "requires a non-empty key string")
     _validate_wire_find_like_command("distinct", command_document, filter_field="query")
-
-
-def _validate_validate(_body: dict[str, Any], command_document: dict[str, Any]) -> None:
-    _require_non_empty_string("validate", command_document.get("validate"), "requires a non-empty collection name")
-    for field_name in ("scandata", "full"):
-        value = command_document.get(field_name)
-        if value is not None and not isinstance(value, bool):
-            raise OperationFailure(f"wire validate {field_name} must be a bool")
-    background = command_document.get("background")
-    if background is not None and not isinstance(background, bool):
-        raise OperationFailure("wire validate background must be a bool or null")
-    comment = command_document.get("comment")
-    if comment is not None and not isinstance(comment, str):
-        raise OperationFailure("wire validate comment must be a string")
 
 
 def _validate_find(_body: dict[str, Any], command_document: dict[str, Any]) -> None:
@@ -450,7 +430,6 @@ _WIRE_COMMAND_VALIDATORS: dict[str, _WireValidator] = {
     "aggregate": _validate_aggregate,
     "count": _validate_count,
     "distinct": _validate_distinct,
-    "validate": _validate_validate,
     "find": _validate_find,
     "listIndexes": _validate_list_indexes,
     "createIndexes": _validate_create_indexes,

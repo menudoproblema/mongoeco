@@ -1,9 +1,10 @@
 """Server BSON grammar shared by raw write command adapters."""
 
-from mongoeco.core.bson_scalars import is_bson_numeric, unwrap_bson_numeric
+from mongoeco.core.bson_scalars import wrap_bson_numeric
 from mongoeco.core.bson_values import matches_bson_type
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.server_errors import ErrorScope, server_error
+from mongoeco.types import UndefinedType
 
 
 _GENERIC_FIELDS = frozenset(
@@ -108,6 +109,19 @@ def validate_write_fields(spec, command, *, entry=False):
         raise server_error(message, code=40415, scope=ErrorScope.COMMAND)
 
 
+def legacy_command_truth_value(value):
+    """BSON trueValue for legacy flags; distinct from typed boolean fields."""
+    if value is None or isinstance(value, UndefinedType):
+        return False
+    if isinstance(value, bool):
+        return value
+    internal = DocumentCodec.to_internal(value)
+    numeric = wrap_bson_numeric(internal)
+    if numeric is not None:
+        return bool(numeric.value)
+    return True
+
+
 def command_boolean(value, field, *, numeric=False):
     if value is None:
         return False
@@ -115,8 +129,9 @@ def command_boolean(value, field, *, numeric=False):
         return value
     if numeric:
         internal = DocumentCodec.to_internal(value)
-        if is_bson_numeric(internal):
-            return bool(unwrap_bson_numeric(internal))
+        wrapped = wrap_bson_numeric(internal)
+        if wrapped is not None:
+            return bool(wrapped.value)
     message = f"{field} must be a boolean" + (" or number" if numeric else "")
     raise server_error(message, code=14, scope=ErrorScope.COMMAND)
 

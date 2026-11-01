@@ -45,6 +45,13 @@ class DatabaseAdminReadCommandService:
         session: ClientSession | None = None,
     ) -> dict[str, object]:
         options = normalize_list_collections_options(spec)
+        return await self.execute_list_collections(options, session=session)
+
+    async def execute_list_collections(self, options, *, session=None):
+        """Execute prepared listing options without another public BSON boundary."""
+        self._admin._database.get_collection("$cmd")._record_operation_metadata(
+            operation="list_collections", comment=options.comment, session=session,
+        )
         if options.name_only:
             collection_names = await self._admin._engine.list_collections(
                 self._admin._db_name,
@@ -234,8 +241,12 @@ class DatabaseAdminReadCommandService:
         collection_hashes: dict[str, str] = {}
         for collection_name in selected_collections:
             collection = self._admin._database.get_collection(collection_name)
-            documents = await collection.find({}, session=session).to_list()
-            indexes = await collection.list_indexes(session=session).to_list()
+            documents = await self._admin._namespace_admin.collection_documents(
+                collection_name, session=session,
+            )
+            indexes = await _collection_indexing.load_index_documents(
+                collection, session=session,
+            )
             options = await self._admin._engine.collection_options(
                 self._admin._db_name,
                 collection_name,

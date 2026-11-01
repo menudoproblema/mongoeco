@@ -26,6 +26,7 @@ from mongoeco.api.admin_parsing import (
     normalize_command_scale,
     normalize_find_and_modify_options,
     normalize_validate_command_options,
+    normalize_validate_collection_name,
     require_collection_name,
 )
 from mongoeco.api.bson_input import encode_bson_request
@@ -1261,10 +1262,7 @@ class AsyncDatabaseCommandService:
                 slow_ms=slow_ms,
             )
         if command_name == "validate":
-            collection_name = require_collection_name(
-                spec.get("validate"),
-                "validate",
-            )
+            collection_name = normalize_validate_collection_name(spec.get("validate"))
             options = normalize_validate_command_options(
                 scandata=spec.get("scandata"),
                 full=spec.get("full"),

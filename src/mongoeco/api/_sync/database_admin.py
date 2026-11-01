@@ -52,6 +52,7 @@ class DatabaseAdminService:
             "list_collection_names",
             options.get("filter_spec", _FILTER_UNSET),
             session=options.get("session"),
+            comment=options.get("comment"),
         )
 
     def list_collections(
@@ -73,6 +74,7 @@ class DatabaseAdminService:
             async_database.list_collections(
                 options.get("filter_spec", _FILTER_UNSET),
                 session=options.get("session"),
+                comment=options.get("comment"),
             ),
         )
 

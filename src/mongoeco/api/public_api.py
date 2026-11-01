@@ -361,13 +361,17 @@ COLLECTION_DISTINCT_SPEC = PublicOperationSpec(
 
 DATABASE_LIST_COLLECTION_NAMES_SPEC = PublicOperationSpec(
     name='list_collection_names',
-    allowed_options=_FILTER_ONLY_OPTIONS,
+    allowed_options=_options(
+        _FILTER_ONLY_OPTIONS, _catalog_options('list_collection_names')
+    ),
     aliases=_FILTER_ALIAS,
 )
 
 DATABASE_LIST_COLLECTIONS_SPEC = PublicOperationSpec(
     name='list_collections',
-    allowed_options=_FILTER_ONLY_OPTIONS,
+    allowed_options=_options(
+        _FILTER_ONLY_OPTIONS, _catalog_options('list_collections')
+    ),
     aliases=_FILTER_ALIAS,
 )
 
@@ -395,6 +399,8 @@ COLLECTION_CREATE_INDEXES_SPEC = PublicOperationSpec(
 
 
 for _operation, _spec in (
+    ('list_collection_names', DATABASE_LIST_COLLECTION_NAMES_SPEC),
+    ('list_collections', DATABASE_LIST_COLLECTIONS_SPEC),
     ('create_index', COLLECTION_CREATE_INDEX_SPEC),
     ('create_indexes', COLLECTION_CREATE_INDEXES_SPEC),
     ('find', COLLECTION_FIND_SPEC),

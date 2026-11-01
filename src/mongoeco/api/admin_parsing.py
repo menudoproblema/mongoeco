@@ -3,6 +3,7 @@ from types import MappingProxyType
 
 from mongoeco.api._command_bson import (
     command_boolean,
+    legacy_command_truth_value,
     validate_command_array_filters,
     validate_command_let,
     validate_write_fields,
@@ -15,6 +16,7 @@ from mongoeco.api.argument_validation import (
     validate_sort_spec as _validate_sort_spec,
 )
 from mongoeco.core.bson_raw import decode_bson_document
+from mongoeco.core.bson_values import matches_bson_type
 from mongoeco.core.server_errors import ErrorScope, server_error
 from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.errors import OperationFailure
@@ -67,7 +69,7 @@ class ListCollectionsCommandOptions:
     name_only: bool
     authorized_collections: bool
     filter_spec: Filter
-    comment: str | None = None
+    comment: object | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,7 +84,7 @@ class ValidationCommandOptions:
     scandata: bool
     full: bool
     background: bool | None
-    comment: str | None
+    comment: object | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -236,8 +238,10 @@ def normalize_list_collections_options(
     spec: dict[str, object],
 ) -> ListCollectionsCommandOptions:
     comment = spec.get("comment")
-    if comment is not None and not isinstance(comment, str):
-        raise TypeError("comment must be a string")
+    filter_spec = spec.get("filter")
+    if filter_spec is not None and not isinstance(filter_spec, dict):
+        message = "listCollections filter must be a document"
+        raise server_error(message, code=14, scope=ErrorScope.COMMAND)
     return ListCollectionsCommandOptions(
         name_only=normalize_command_bool(spec.get("nameOnly"), "nameOnly"),
         authorized_collections=normalize_command_bool(
@@ -269,16 +273,30 @@ def normalize_validate_command_options(
     background: object | None = None,
     comment: object | None = None,
 ) -> ValidationCommandOptions:
-    if background is not None and not isinstance(background, bool):
-        raise TypeError("background must be a bool or None")
-    if comment is not None and not isinstance(comment, str):
-        raise TypeError("comment must be a string")
+    normalized_full = legacy_command_truth_value(full)
+    normalized_background = (
+        None if background is None else legacy_command_truth_value(background)
+    )
+    if normalized_full and normalized_background:
+        message = "Cannot specify both full and background validation"
+        raise server_error(message, code=72, scope=ErrorScope.COMMAND)
     return ValidationCommandOptions(
-        scandata=normalize_command_bool(scandata, "scandata"),
-        full=normalize_command_bool(full, "full"),
-        background=background,
+        scandata=legacy_command_truth_value(scandata),
+        full=normalized_full,
+        background=normalized_background,
         comment=comment,
     )
+
+
+def normalize_validate_collection_name(value):
+    """Parse an already encoded validate namespace without client coercions."""
+    if not matches_bson_type(value, "string"):
+        message = "validate requires a BSON string collection name"
+        raise server_error(message, code=14, scope=ErrorScope.COMMAND)
+    if not value:
+        message = "Invalid namespace for validate"
+        raise server_error(message, code=73, scope=ErrorScope.COMMAND)
+    return value
 
 
 def normalize_find_and_modify_options(

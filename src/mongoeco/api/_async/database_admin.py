@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from mongoeco.api._async._database_admin_command_compiler import (
@@ -215,22 +216,37 @@ class AsyncDatabaseAdminService:
             explicit={"filter_spec": filter_spec, "session": session},
             extra_kwargs={"filter": filter, **kwargs},
         )
-        self._ensure_session_active(options.get("session"))
-        normalized_filter = (
-            None
-            if options.get("filter_spec") is None
-            else self._normalize_filter(options["filter_spec"])
+        command = self._prepare_list_collections(options, names_only=True)
+        result = await self._read_commands.execute_list_collections(
+            command, session=options.get("session"),
         )
-        if normalized_filter is None:
-            return await self._engine.list_collections(
-                self._db_name,
-                context=options.get("session"),
-            )
-        documents = await self.list_collections(
-            normalized_filter,
-            session=options.get("session"),
-        ).to_list()
-        return [str(document["name"]) for document in documents]
+        return [document["name"] for document in result.first_batch]
+
+    def _prepare_list_collections(self, options, *, names_only=False):
+        filter_spec = options.get("filter_spec")
+        if (
+            names_only and filter_spec is not None
+            and not isinstance(filter_spec, Mapping)
+        ):
+            message = "filter must be a mapping"
+            raise TypeError(message)
+        ensure_session_can_use_engine(self._engine, options.get("session"))
+        command = {"listCollections": 1, "cursor": {}}
+        if names_only and (
+            filter_spec is None or not filter_spec
+            or (len(filter_spec) == 1 and "name" in filter_spec)
+        ):
+            command["nameOnly"] = True
+        if filter_spec is not None:
+            command["filter"] = filter_spec
+        if options.get("comment") is not None:
+            command["comment"] = options["comment"]
+        admitted = encode_bson_request(
+            command, codec_options=CodecOptions(
+                uuid_representation=UuidRepresentation.UNSPECIFIED,
+            ),
+        )
+        return normalize_list_collections_options(admitted)
 
     async def _list_collection_snapshots(
         self,
@@ -266,29 +282,19 @@ class AsyncDatabaseAdminService:
             explicit={"filter_spec": filter_spec, "session": session},
             extra_kwargs={"filter": filter, **kwargs},
         )
-        self._ensure_session_active(options.get("session"))
-        normalized_filter = self._normalize_filter(options.get("filter_spec"))
+        command = self._prepare_list_collections(options)
 
         async def _load() -> list[CollectionListingDocument]:
-            documents = [
-                snapshot.to_document()
-                for snapshot in await self._list_collection_snapshots(
-                    session=options.get("session")
-                )
-            ]
+            result = await self._read_commands.execute_list_collections(
+                command, session=options.get("session"),
+            )
             return [
                 materialize_command_response(
-                    document,
-                    codec_options=CodecOptions(
-                        uuid_representation=UuidRepresentation.UNSPECIFIED
+                    document, codec_options=CodecOptions(
+                        uuid_representation=UuidRepresentation.UNSPECIFIED,
                     ),
                 )
-                for document in documents
-                if QueryEngine.match(
-                    document,
-                    normalized_filter,
-                    dialect=self._mongodb_dialect,
-                )
+                for document in result.first_batch
             ]
 
         return AsyncListingCursor(_load)
@@ -649,16 +655,20 @@ class AsyncDatabaseAdminService:
         session: ClientSession | None = None,
         comment: object | None = None,
     ) -> CollectionValidationDocument:
-        return (
-            await self._build_collection_validation_snapshot(
-                name_or_collection,
-                scandata=scandata,
-                full=full,
-                background=background,
-                session=session,
-                comment=comment,
-            )
-        ).to_document()
+        name = (
+            name_or_collection if isinstance(name_or_collection, str)
+            else resolve_collection_reference(name_or_collection, "name_or_collection")
+        )
+        command = {"validate": name, "scandata": scandata, "full": full}
+        if comment is not None:
+            command["comment"] = comment
+        if background is not None:
+            command["background"] = background
+        result = await self._commands.command(command, session=session)
+        if not result.get("valid", False):
+            message = f"{name} invalid: {result!r}"
+            raise CollectionInvalid(message)
+        return result
 
     async def command(
         self,

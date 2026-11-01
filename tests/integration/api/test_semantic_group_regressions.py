@@ -164,6 +164,12 @@ class _AsyncView:
     def list_indexes(self, *args, **kwargs):
         return _AsyncCursorView(self._call("list_indexes", *args, **kwargs), self.loop)
 
+    def list_collection_names(self, *args, **kwargs):
+        return self._call("list_collection_names", *args, **kwargs)
+
+    def validate_collection(self, *args, **kwargs):
+        return self._call("validate_collection", *args, **kwargs)
+
     def list_collections(self, *args, **kwargs):
         return _AsyncCursorView(
             self._call("list_collections", *args, **kwargs), self.loop

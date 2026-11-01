@@ -9,6 +9,16 @@ _ACCEPTED_NOOP = OptionSupportStatus.ACCEPTED_NOOP
 
 OPERATION_OPTION_SUPPORT_CATALOG = MappingProxyType(
     {
+        "list_collection_names": MappingProxyType(
+            {"comment": OperationOptionSupport(
+                _EFFECTIVE, "Admitted as BSON and retained in administrative session metadata.",
+            )}
+        ),
+        "list_collections": MappingProxyType(
+            {"comment": OperationOptionSupport(
+                _EFFECTIVE, "Admitted as BSON and retained in administrative session metadata.",
+            )}
+        ),
         "insert_one": MappingProxyType(
             {
                 "comment": OperationOptionSupport(_EFFECTIVE, "Preserved in insert profiling, active operations and session metadata."),
@@ -268,7 +278,11 @@ DATABASE_COMMAND_OPTION_SUPPORT_CATALOG = MappingProxyType(
                 "maxTimeMS": OperationOptionSupport(_EFFECTIVE, "Propagated through the underlying selection path and enforced there."),
                 "let": OperationOptionSupport(_EFFECTIVE, "Propagated into command-level $expr evaluation for the write filter."),
                 "comment": OperationOptionSupport(_EFFECTIVE, "Recorded in engine session metadata for the command execution."),
-                "bypassDocumentValidation": OperationOptionSupport(_EFFECTIVE, "Validated and propagated through replacement/update command routing."),
+                "bypassDocumentValidation": OperationOptionSupport(
+                    _EFFECTIVE,
+                    "Validated and propagated through replacement/update command "
+                    "routing.",
+                ),
                 "sort": OperationOptionSupport(_EFFECTIVE, "Applied through the underlying find-and-modify selection path."),
             }
         ),
@@ -315,26 +329,34 @@ DATABASE_COMMAND_OPTION_SUPPORT_CATALOG = MappingProxyType(
                 "ordered": OperationOptionSupport(_EFFECTIVE, "Controls short-circuiting when one update specification fails."),
                 "comment": OperationOptionSupport(_EFFECTIVE, "Recorded in engine session metadata for the write command."),
                 "let": OperationOptionSupport(_EFFECTIVE, "Command-level bindings are propagated into every update filter through $expr."),
-                "bypassDocumentValidation": OperationOptionSupport(_EFFECTIVE, "Validated and propagated through replacement/update command routing."),
-                "arrayFilters": OperationOptionSupport(_EFFECTIVE, "Applied through per-update write execution for supported filtered positional paths."),
+                "bypassDocumentValidation": OperationOptionSupport(
+                    _EFFECTIVE,
+                    "Validated and propagated through replacement/update command "
+                    "routing.",
+                ),
+                "arrayFilters": OperationOptionSupport(
+                    _EFFECTIVE,
+                    "Applied through per-update write execution for supported filtered "
+                    "positional paths.",
+                ),
             }
         ),
         "validate": MappingProxyType(
             {
                 "scandata": OperationOptionSupport(
                     _ACCEPTED_NOOP,
-                    "Accepted and type-checked; validation reports a warning "
+                    "Accepted with BSON truth conversion; validation reports a warning "
                     "and performs the same local scan.",
                 ),
                 "full": OperationOptionSupport(
                     _ACCEPTED_NOOP,
-                    "Accepted and type-checked; validation reports a warning "
+                    "Accepted with BSON truth conversion; validation reports a warning "
                     "and performs the same local pass.",
                 ),
                 "background": OperationOptionSupport(
                     _ACCEPTED_NOOP,
                     (
-                        "Accepted and type-checked; validation reports a warning "
+                        "Accepted with BSON truth conversion; validation reports a warning "
                         "and runs synchronously."
                     ),
                 ),

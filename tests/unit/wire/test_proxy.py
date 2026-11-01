@@ -85,10 +85,11 @@ class WireProxyUnitTests(unittest.TestCase):
             _validate("aggregate", {}, {"aggregate": "events", "pipeline": [], "cursor": []})
         with self.assertRaisesRegex(OperationFailure, "wire distinct requires a non-empty key string"):
             _validate("distinct", {}, {"distinct": "events", "key": ""})
-        with self.assertRaisesRegex(OperationFailure, "wire validate scandata must be a bool"):
-            _validate("validate", {}, {"validate": "events", "scandata": 1})
-        with self.assertRaisesRegex(OperationFailure, "wire validate background must be a bool or null"):
+        # Legacy validation flag grammar belongs to the shared command parser.
+        self.assertIsNone(_validate("validate", {}, {"validate": "events", "scandata": 1}))
+        self.assertIsNone(
             _validate("validate", {}, {"validate": "events", "background": "yes"})
+        )
         self.assertIsNone(
             _validate("listIndexes", {}, {"listIndexes": "events", "comment": 1})
         )
@@ -101,8 +102,9 @@ class WireProxyUnitTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(OperationFailure, "let must be a document"):
             _validate("findAndModify", {}, {"findAndModify": "events", "query": {}, "let": []})
-        with self.assertRaisesRegex(OperationFailure, "wire listCollections comment must be a string"):
+        self.assertIsNone(
             _validate("listCollections", {}, {"listCollections": 1, "comment": 1})
+        )
         with self.assertRaisesRegex(OperationFailure, "wire listDatabases filter must be a document"):
             _validate("listDatabases", {}, {"listDatabases": 1, "filter": []})
         with self.assertRaisesRegex(OperationFailure, "wire endSessions requires a list"):
@@ -140,8 +142,10 @@ class WireProxyUnitTests(unittest.TestCase):
             _validate("killOp", {}, {"killOp": 1, "op": ""})
         with self.assertRaisesRegex(OperationFailure, "wire dbStats scale must be a positive integer"):
             _validate("dbStats", {}, {"dbStats": 1, "scale": 0})
-        with self.assertRaisesRegex(OperationFailure, "wire listCollections filter must be a document"):
+        # The shared listCollections parser supplies the native code 14.
+        self.assertIsNone(
             _validate("listCollections", {}, {"listCollections": 1, "filter": []})
+        )
         with self.assertRaisesRegex(OperationFailure, "wire listDatabases nameOnly must be a bool"):
             _validate("listDatabases", {}, {"listDatabases": 1, "nameOnly": "yes"})
         with self.assertRaisesRegex(OperationFailure, "wire listIndexes requires a non-empty collection name"):
@@ -1494,11 +1498,12 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire validate comment must be a string"):
+        with self.assertRaises(OperationFailure) as missing:
             await proxy._executor.execute_command(
                 {"validate": "events", "comment": 1, "$db": "alpha"},
                 connection=connection,
             )
+        self.assertEqual(missing.exception.code, 26)
 
         with self.assertRaisesRegex(OperationFailure, "wire connectionStatus showPrivileges must be a bool"):
             await proxy._executor.execute_command(
@@ -1542,11 +1547,11 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire listCollections comment must be a string"):
-            await proxy._executor.execute_command(
-                {"listCollections": 1, "comment": 1, "$db": "alpha"},
-                connection=connection,
-            )
+        listed_collections = await proxy._executor.execute_command(
+            {"listCollections": 1, "comment": 1, "$db": "alpha"},
+            connection=connection,
+        )
+        self.assertEqual(listed_collections["ok"], 1.0)
 
         listed = await proxy._executor.execute_command(
             {"listIndexes": "events", "comment": 1, "$db": "alpha"},
@@ -2226,8 +2231,6 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
             ({"aggregate": "events", "pipeline": [], "allowDiskUse": "yes", "$db": "alpha"}, "wire aggregate allowDiskUse must be a bool"),
             ({"aggregate": "events", "pipeline": [], "let": [], "$db": "alpha"}, "wire aggregate let must be a document"),
             ({"aggregate": "events", "pipeline": [], "cursor": {"batchSize": -1}, "$db": "alpha"}, r"wire aggregate batch_size must be >= 0"),
-            ({"validate": "events", "scandata": "yes", "$db": "alpha"}, "wire validate scandata must be a bool"),
-            ({"validate": "events", "background": "yes", "$db": "alpha"}, "wire validate background must be a bool or null"),
             ({"createIndexes": "events", "indexes": [{"key": {"title": 1}, "name": "x"}], "maxTimeMS": -1, "$db": "alpha"}, r"wire createIndexes max_time_ms must be >= 0"),
             ({"findAndModify": "events", "query": {}, "let": [], "$db": "alpha"}, "let must be a document"),
         ]
