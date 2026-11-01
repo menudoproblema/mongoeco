@@ -2243,7 +2243,7 @@ no se cambiaron observadores ni referencias históricas para aceptar resultados.
 
 Esta es la única lista ejecutable de pendientes, fijada por el encargo de cierre.
 Los apartados anteriores conservan historia, no generan obligaciones adicionales.
-Estado inicial de esta lista: **1/8 cerradas**. No hay defectos reproducidos
+Estado vigente de esta lista: **3/8 cerradas**. No hay defectos reproducidos
 pendientes en el candidato al fijarla. Un gate rojo se registra en la obligación
 que incumple; no abre una auditoría general. Las hipótesis sin regresión ni
 incumplimiento obligatorio quedan como seguimiento, fuera del cierre.
@@ -2252,8 +2252,8 @@ incumplimiento obligatorio quedan como seguimiento, fuera del cierre.
 | --- | --- | --- | --- |
 | O1 / comprobación obligatoria | Fuente materializada conserva selección, representación y contexto D06. | Aceptación archivada del candidato y commits semánticos; 78 pruebas, nativos 7/8/9, SDK-free y ausencia de recursos acreditados arriba. | Cerrada |
 | O2 / comprobación obligatoria | D06a/b/c conserva gramática, BSON previo al decoder, contexto y equivalencia de claves por consumidor; B07 conserva efectos de fábricas también cuando transforman sin lanzar. | Componer mapa requisito→aceptaciones existentes y completar únicamente el diferencial de transformaciones de documento/metadata aún no acreditado. Cierra con resultados nativos coincidentes por superficie soportada y sin huecos normativos en ese mapa. | Abierta |
-| O3 / comprobación obligatoria | H53 dispone C03/B08 distinguiendo evaluación, permiso y warning, strict/moderate/off, error/warn/bypass y documento anterior/candidato. | Contrastar caracterización retenida y contrato público; documentar disposición explícita y límites. No exige crear un canal nuevo de logging. | Abierta |
-| O4 / decisión exigida | D07 requiere continuar/descartar el piloto opcional con criterio explícito. | Disposición documentada: descartar el piloto en esta entrega conforme al encargo de no hacer refactorizaciones opcionales; conservar implementación y garantías aceptadas. | Abierta |
+| O3 / comprobación obligatoria | H53 dispone C03/B08 distinguiendo evaluación, permiso y warning, strict/moderate/off, error/warn/bypass y documento anterior/candidato. | Contrastar caracterización retenida y contrato público; documentar disposición explícita y límites. No exige crear un canal nuevo de logging. | Cerrada; disposición debajo |
+| O4 / decisión exigida | D07 requiere continuar/descartar el piloto opcional con criterio explícito. | Disposición documentada: descartar el piloto en esta entrega conforme al encargo de no hacer refactorizaciones opcionales; conservar implementación y garantías aceptadas. | Cerrada; descarte documentado debajo |
 | O5 / comprobación obligatoria | D05 exige suite global, cobertura ≥99% y propiedades profundas sobre candidato instalado. | Resultado terminal de los gates; cualquier fallo obligatorio conserva bloqueo de cierre hasta su resolución y verificación causal. | En ejecución |
 | O6 / comprobación obligatoria | D05 exige Python 3.13/3.14/3.15, extremos SDK/pytest admitidos y perfil realmente sin SDK. | Matriz de CI y perfiles ejecutados, imports de artefacto comprobados; reutilizar evidencia idéntica admitida y distinguir omisiones de clases SDK. | Abierta |
 | O7 / comprobación obligatoria | D05 exige distribución reproducible, API/typing/SPI, compatibilidad persistida y presupuestos de coste. | Resultados de runners existentes y evidencia previa causalmente válida; todos los gates requeridos verdes, sin sustituir presupuesto por un benchmark diagnóstico. | Abierta |
@@ -2262,3 +2262,34 @@ incumplimiento obligatorio quedan como seguimiento, fuera del cierre.
 Hipótesis dispuestas: la reconstrucción de fuente desde pipeline completo queda
 sin defecto reproducido y protegida por O1. Otras sospechas que no incumplan las
 garantías de esta lista se registrarán como seguimiento, sin ampliar el alcance.
+
+
+### Disposición O3 — Validación y observabilidad H53
+
+Se conserva el contrato de aceptación de escrituras C03/B08. Strict/error rechaza
+un candidato inválido; moderate/error permite actualizar documentos antiguos ya
+inválidos; off y bypass omiten validación; warn permite escribir. Un resultado
+válido del validador tras omisión no acredita que el candidato satisfaga el schema.
+El motor local no publica el warning de servidor 20294. Este límite se documenta
+expresamente: no se promete el mismo logging de mongod ni se añade una superficie
+de avisos o datos de documentos por implicación. Bajo moderate/warn no se necesita
+forzar una evaluación adicional para producir un aviso que esta API no ofrece.
+
+Se reutilizan la caracterización física
+[native9-characterization.json](evidence/bson-consolidation-review/native9-characterization.json)
+(`native.moderate_warn_logs`, warning 20294 bad→bad) y las referencias nativas
+`semantic_schema` 7/8/9 de lifecycle para permisos, errores, estado y bypass.
+La matriz añadida observa 288 transiciones públicas: ambos motores, tres dialectos,
+tres niveles, dos acciones, antiguo/candidato válido o inválido y bypass activado
+o desactivado. Pasan 28 pruebas/302 subtests sobre la wheel instalada, incluyendo
+helpers y schema; [log](evidence/bson-consolidation-implementation/bson-grammar-context/materialized-validation-policy.txt.gz).
+El log de servidor retenido es caracterización 9.0, no una captura nueva 7/8/9 de
+logs; las garantías de permiso no se confunden con paridad de logging.
+
+### Disposición O4 — Piloto D07
+
+Se descarta el piloto opcional para esta entrega por el encargo explícito de
+cierre sin refactorizaciones opcionales. Se conservan CompiledJsonSchema y las
+primitivas compartidas ya aceptadas; no se crea un segundo intérprete ni una
+migración sin mejora medida. Esta decisión cierra D07, no elimina ninguno de los
+gates D05 ni modifica el subset o los diagnósticos de schema.
