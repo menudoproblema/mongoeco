@@ -29,6 +29,33 @@ from tests.differential.runner import available_case_names, build_suite, select_
 IMAGE = "mongo:7.0.43-jammy@sha256:" + "a" * 64
 
 
+def test_fixture_refuses_an_existing_receipt_before_docker_or_overwrite(tmp_path):
+    report = tmp_path / "fixture.json"
+    previous = b'{"owner":"previous","container_id":"retained-evidence"}\n'
+    report.write_bytes(previous)
+    with (
+        patch.object(replica_fixture, "_docker") as docker,
+        pytest.raises(FileExistsError, match="use a new artifacts directory"),
+    ):
+        MongoDBFixture(IMAGE, "7.0", tmp_path)
+    docker.assert_not_called()
+    assert report.read_bytes() == previous
+
+
+def test_fixture_claim_is_exclusive_before_the_first_report(tmp_path):
+    owner = MongoDBFixture(IMAGE, "7.0", tmp_path)
+    with (
+        patch.object(replica_fixture, "_docker") as docker,
+        pytest.raises(FileExistsError),
+    ):
+        MongoDBFixture(IMAGE, "7.0", tmp_path)
+    docker.assert_not_called()
+    owner.record()
+    owner.report["status"] = "succeeded"
+    owner.record()
+    assert json.loads((tmp_path / "fixture.json").read_text())["owner"] == owner.owner
+
+
 @pytest.mark.parametrize("topology", ["replica-set", "standalone"])
 def test_owned_fixture_passes_only_the_requested_topology_to_mongod(tmp_path, topology):
     fixture = MongoDBFixture(IMAGE, "7.0", tmp_path, topology=topology)

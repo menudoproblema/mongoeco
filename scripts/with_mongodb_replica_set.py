@@ -96,9 +96,23 @@ class MongoDBFixture:
             "status": "starting",
             "cleanup": {},
         }
+        self.artifacts.mkdir(parents=True, exist_ok=True)
+        report = self.artifacts / "fixture.json"
+        if report.exists():
+            message = (
+                f"fixture report already exists: {report}; "
+                "use a new artifacts directory"
+            )
+            raise FileExistsError(message)
+        self._artifact_owner = self.artifacts / ".fixture-owner"
+        with self._artifact_owner.open("x") as claim:
+            claim.write(self.owner)
 
     def record(self):
         self.artifacts.mkdir(parents=True, exist_ok=True)
+        if self._artifact_owner.read_text() != self.owner:
+            message = "fixture artifact directory ownership changed"
+            raise RuntimeError(message)
         (self.artifacts / "fixture.json").write_text(
             json.dumps(self.report, indent=2, default=str) + "\n"
         )
@@ -353,7 +367,15 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--image", required=True)
     parser.add_argument("--target", choices=("7.0", "8.0", "9.0"), required=True)
-    parser.add_argument("--artifacts", type=Path, required=True)
+    parser.add_argument(
+        "--artifacts",
+        type=Path,
+        required=True,
+        help=(
+            "fresh evidence directory; "
+            "an existing fixture receipt is never overwritten"
+        ),
+    )
     parser.add_argument("--startup-timeout", type=float, default=90)
     parser.add_argument(
         "--topology", choices=("replica-set", "standalone"), default="replica-set"
