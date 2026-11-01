@@ -7541,6 +7541,56 @@
         }
       }
     },
+    "semantic_followup_f08_bucket_rounding": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "min": {
+                "$numberInt": "0"
+              },
+              "max": {
+                "$numberInt": "3"
+              }
+            },
+            "count": {
+              "$numberInt": "3"
+            }
+          },
+          {
+            "_id": {
+              "min": {
+                "$numberInt": "3"
+              },
+              "max": {
+                "$numberInt": "6"
+              }
+            },
+            "count": {
+              "$numberInt": "3"
+            }
+          },
+          {
+            "_id": {
+              "min": {
+                "$numberInt": "6"
+              },
+              "max": {
+                "$numberInt": "9"
+              }
+            },
+            "count": {
+              "$numberInt": "4"
+            }
+          }
+        ]
+      }
+    },
     "semantic_followup_f08_buckets_equal": {
       "empty": {
         "ok": true,
@@ -7587,6 +7637,406 @@
             "count": {
               "$numberInt": "1"
             }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f08_group_initializers": {
+      "$topN/group": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "_id": {
+                "n": {
+                  "$numberInt": "2"
+                }
+              },
+              "v": [
+                {
+                  "$numberInt": "3"
+                },
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "$topN/scalar_missing": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787902"
+          },
+          "codeName": "Location5787902",
+          "phase": "open"
+        }
+      },
+      "$topN/constant": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "2"
+              },
+              "v": [
+                {
+                  "$numberInt": "3"
+                },
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "$topN/zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787908"
+          },
+          "codeName": "Location5787908",
+          "phase": "open"
+        }
+      },
+      "$topN/fraction": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787903"
+          },
+          "codeName": "Location5787903",
+          "phase": "open"
+        }
+      },
+      "$bottomN/group": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "_id": {
+                "n": {
+                  "$numberInt": "2"
+                }
+              },
+              "v": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "$bottomN/scalar_missing": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787902"
+          },
+          "codeName": "Location5787902",
+          "phase": "open"
+        }
+      },
+      "$bottomN/constant": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "2"
+              },
+              "v": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "$bottomN/zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787908"
+          },
+          "codeName": "Location5787908",
+          "phase": "open"
+        }
+      },
+      "$bottomN/fraction": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787903"
+          },
+          "codeName": "Location5787903",
+          "phase": "open"
+        }
+      }
+    },
+    "semantic_followup_f08_materialization": {
+      "direct": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "group": {
+                "$numberInt": "0"
+              },
+              "n": {
+                "$numberInt": "2"
+              }
+            },
+            "top": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "bottom": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "1"
+              }
+            ],
+            "s": {
+              "$numberDouble": "0.816496580927726"
+            },
+            "p": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "1"
+              }
+            ],
+            "first": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "group": {
+                "$numberInt": "1"
+              },
+              "n": {
+                "$numberInt": "2"
+              }
+            },
+            "top": [
+              {
+                "$numberInt": "12"
+              },
+              {
+                "$numberInt": "13"
+              }
+            ],
+            "bottom": [
+              {
+                "$numberInt": "13"
+              },
+              {
+                "$numberInt": "11"
+              }
+            ],
+            "s": {
+              "$numberDouble": "0.816496580927726"
+            },
+            "p": [
+              {
+                "$numberInt": "13"
+              },
+              {
+                "$numberInt": "12"
+              },
+              {
+                "$numberInt": "11"
+              }
+            ],
+            "first": [
+              {
+                "$numberInt": "13"
+              },
+              {
+                "$numberInt": "12"
+              }
+            ]
+          }
+        ]
+      },
+      "materialized": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              {
+                "_id": {
+                  "group": {
+                    "$numberInt": "0"
+                  },
+                  "n": {
+                    "$numberInt": "2"
+                  }
+                },
+                "top": [
+                  {
+                    "$numberInt": "2"
+                  },
+                  {
+                    "$numberInt": "3"
+                  }
+                ],
+                "bottom": [
+                  {
+                    "$numberInt": "3"
+                  },
+                  {
+                    "$numberInt": "1"
+                  }
+                ],
+                "s": {
+                  "$numberDouble": "0.816496580927726"
+                },
+                "p": [
+                  {
+                    "$numberInt": "3"
+                  },
+                  {
+                    "$numberInt": "2"
+                  },
+                  {
+                    "$numberInt": "1"
+                  }
+                ],
+                "first": [
+                  {
+                    "$numberInt": "3"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              },
+              {
+                "_id": {
+                  "group": {
+                    "$numberInt": "1"
+                  },
+                  "n": {
+                    "$numberInt": "2"
+                  }
+                },
+                "top": [
+                  {
+                    "$numberInt": "12"
+                  },
+                  {
+                    "$numberInt": "13"
+                  }
+                ],
+                "bottom": [
+                  {
+                    "$numberInt": "13"
+                  },
+                  {
+                    "$numberInt": "11"
+                  }
+                ],
+                "s": {
+                  "$numberDouble": "0.816496580927726"
+                },
+                "p": [
+                  {
+                    "$numberInt": "13"
+                  },
+                  {
+                    "$numberInt": "12"
+                  },
+                  {
+                    "$numberInt": "11"
+                  }
+                ],
+                "first": [
+                  {
+                    "$numberInt": "13"
+                  },
+                  {
+                    "$numberInt": "12"
+                  }
+                ]
+              }
+            ]
           }
         ]
       }
@@ -7647,11 +8097,522 @@
         }
       ]
     },
+    "semantic_followup_f08_natural_grammar": {
+      "forward": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "10"
+          }
+        ]
+      },
+      "forward/raw": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "10"
+          }
+        ]
+      },
+      "reverse": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "10"
+          }
+        ]
+      },
+      "reverse/raw": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "10"
+          }
+        ]
+      },
+      "same": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "10"
+          }
+        ]
+      },
+      "same/raw": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "10"
+          }
+        ]
+      },
+      "opposite": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "opposite/raw": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "index_conflict": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "index_conflict/raw": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "logical": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "20"
+          }
+        ]
+      },
+      "logical/raw": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "20"
+          }
+        ]
+      },
+      "mixed": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "mixed/raw": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "bad_direction": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "bad_direction/raw": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "bool/raw": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "string/raw": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "bad_hint": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "bad_hint/raw": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "mixed_hint": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "mixed_hint/raw": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "aggregation": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "16410"
+          },
+          "codeName": "Location16410",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "16410"
+          },
+          "codeName": "Location16410",
+          "phase": "open"
+        }
+      }
+    },
     "semantic_followup_f08_parallel": {
       "ok": false,
       "family": "OperationFailure",
       "code": {
         "$numberInt": "2"
+      }
+    },
+    "semantic_followup_f08_path_consumers": {
+      "a/1/find": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "3"
+          }
+        ]
+      },
+      "a/1/aggregate": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "4"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "6"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            }
+          }
+        ]
+      },
+      "a/-1/find": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "4"
+          }
+        ]
+      },
+      "a/-1/aggregate": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "6"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            }
+          }
+        ]
+      },
+      "a.0/1/find": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16746"
+        }
+      },
+      "a.0/1/aggregate": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16746"
+        },
+        "codeName": "Location16746",
+        "phase": "open"
+      },
+      "a.0/-1/find": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16746"
+        }
+      },
+      "a.0/-1/aggregate": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16746"
+        },
+        "codeName": "Location16746",
+        "phase": "open"
+      },
+      "a.0.0/1/find": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16746"
+        }
+      },
+      "a.0.0/1/aggregate": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16746"
+        },
+        "codeName": "Location16746",
+        "phase": "open"
+      },
+      "a.0.0/-1/find": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16746"
+        }
+      },
+      "a.0.0/-1/aggregate": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16746"
+        },
+        "codeName": "Location16746",
+        "phase": "open"
+      },
+      "parallel": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "2"
+          },
+          "codeName": "BadValue",
+          "phase": "open"
+        }
+      },
+      "parallel/window": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "2"
+          },
+          "codeName": "BadValue",
+          "phase": "open"
+        }
+      },
+      "nested_parallel": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "2"
+          },
+          "codeName": "BadValue",
+          "phase": "open"
+        }
+      },
+      "nested_parallel/window": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "2"
+          },
+          "codeName": "BadValue",
+          "phase": "open"
+        }
+      },
+      "correlated": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "a": [
+                {
+                  "b": {
+                    "$numberInt": "1"
+                  },
+                  "c": {
+                    "$numberInt": "2"
+                  }
+                },
+                {
+                  "b": {
+                    "$numberInt": "2"
+                  },
+                  "c": {
+                    "$numberInt": "1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "correlated/window": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "a": [
+                {
+                  "b": {
+                    "$numberInt": "1"
+                  },
+                  "c": {
+                    "$numberInt": "2"
+                  }
+                },
+                {
+                  "b": {
+                    "$numberInt": "2"
+                  },
+                  "c": {
+                    "$numberInt": "1"
+                  }
+                }
+              ],
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
       }
     },
     "semantic_followup_f08_push_order": {
@@ -7731,6 +8692,284 @@
         ]
       }
     },
+    "semantic_followup_f08_sortarray_contexts": {
+      "0/1": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "id": {
+                  "$numberInt": "0"
+                }
+              },
+              {
+                "id": {
+                  "$numberInt": "1"
+                },
+                "x": null
+              },
+              {
+                "id": {
+                  "$numberInt": "3"
+                },
+                "x": {
+                  "$numberInt": "1"
+                }
+              },
+              {
+                "id": {
+                  "$numberInt": "2"
+                },
+                "x": [
+                  {
+                    "$numberInt": "0"
+                  },
+                  {
+                    "$numberInt": "9"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "0/-1": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              {
+                "id": {
+                  "$numberInt": "2"
+                },
+                "x": [
+                  {
+                    "$numberInt": "0"
+                  },
+                  {
+                    "$numberInt": "9"
+                  }
+                ]
+              },
+              {
+                "id": {
+                  "$numberInt": "3"
+                },
+                "x": {
+                  "$numberInt": "1"
+                }
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "id": {
+                  "$numberInt": "0"
+                }
+              },
+              {
+                "id": {
+                  "$numberInt": "1"
+                },
+                "x": null
+              }
+            ]
+          }
+        ]
+      },
+      "1/1": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              null,
+              {
+                "id": {
+                  "$numberInt": "0"
+                }
+              },
+              {
+                "id": {
+                  "$numberInt": "1"
+                },
+                "x": null
+              },
+              {
+                "id": {
+                  "$numberInt": "3"
+                },
+                "x": {
+                  "$numberInt": "1"
+                }
+              },
+              {
+                "id": {
+                  "$numberInt": "2"
+                },
+                "x": [
+                  {
+                    "$numberInt": "0"
+                  },
+                  {
+                    "$numberInt": "9"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "1/-1": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              {
+                "id": {
+                  "$numberInt": "2"
+                },
+                "x": [
+                  {
+                    "$numberInt": "0"
+                  },
+                  {
+                    "$numberInt": "9"
+                  }
+                ]
+              },
+              {
+                "id": {
+                  "$numberInt": "3"
+                },
+                "x": {
+                  "$numberInt": "1"
+                }
+              },
+              null,
+              {
+                "id": {
+                  "$numberInt": "0"
+                }
+              },
+              {
+                "id": {
+                  "$numberInt": "1"
+                },
+                "x": null
+              }
+            ]
+          }
+        ]
+      },
+      "2/1": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              [
+                {
+                  "$numberInt": "1"
+                }
+              ],
+              {
+                "id": {
+                  "$numberInt": "0"
+                }
+              },
+              {
+                "id": {
+                  "$numberInt": "1"
+                },
+                "x": null
+              },
+              {
+                "id": {
+                  "$numberInt": "3"
+                },
+                "x": {
+                  "$numberInt": "1"
+                }
+              },
+              {
+                "id": {
+                  "$numberInt": "2"
+                },
+                "x": [
+                  {
+                    "$numberInt": "0"
+                  },
+                  {
+                    "$numberInt": "9"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "2/-1": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              {
+                "id": {
+                  "$numberInt": "2"
+                },
+                "x": [
+                  {
+                    "$numberInt": "0"
+                  },
+                  {
+                    "$numberInt": "9"
+                  }
+                ]
+              },
+              {
+                "id": {
+                  "$numberInt": "3"
+                },
+                "x": {
+                  "$numberInt": "1"
+                }
+              },
+              [
+                {
+                  "$numberInt": "1"
+                }
+              ],
+              {
+                "id": {
+                  "$numberInt": "0"
+                }
+              },
+              {
+                "id": {
+                  "$numberInt": "1"
+                },
+                "x": null
+              }
+            ]
+          }
+        ]
+      },
+      "collation": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              "v1",
+              "v2",
+              "V10"
+            ]
+          }
+        ]
+      }
+    },
     "semantic_followup_f08_sortarray_scalar": {
       "empty": {
         "ok": true,
@@ -7755,6 +8994,61 @@
                 }
               }
             ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f08_stddev_contexts": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": {
+              "$numberDecimal": "1"
+            },
+            "a": [
+              {
+                "$numberDecimal": "1"
+              },
+              {
+                "$numberDecimal": "3"
+              }
+            ],
+            "p": {
+              "$numberDouble": "1.0"
+            },
+            "s": {
+              "$numberDouble": "0.0"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberDecimal": "3"
+            },
+            "a": [
+              {
+                "$numberDecimal": "1"
+              },
+              {
+                "$numberDecimal": "3"
+              }
+            ],
+            "p": {
+              "$numberDouble": "1.0"
+            },
+            "s": {
+              "$numberDouble": "1.0"
+            }
           }
         ]
       }
@@ -9089,14 +10383,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793564587761"
+          "$numberLong": "1793565472051"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "3"
+        "$numberInt": "15"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -9112,7 +10406,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_followup_cases.py",
-    "sha256": "44e55a986026a94fcbd5a32ddff4101b278ba3eac0e7e44746276c4dda1700a2",
+    "sha256": "31de743bf9bb44a831b8142ae8ea799cb684d192675fa15144eb0037c694847b",
     "topology": "standalone"
   },
   "case_manifests": [
@@ -13504,6 +14798,139 @@
         }
       ],
       "selector": "semantic_followup_f07_timestamp_contextual"
+    },
+    {
+      "name": "semantic_followup_f08_natural_grammar",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_natural_grammar"
+    },
+    {
+      "name": "semantic_followup_f08_path_consumers",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_path_consumers"
+    },
+    {
+      "name": "semantic_followup_f08_group_initializers",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_group_initializers"
+    },
+    {
+      "name": "semantic_followup_f08_bucket_rounding",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_bucket_rounding"
+    },
+    {
+      "name": "semantic_followup_f08_stddev_contexts",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_stddev_contexts"
+    },
+    {
+      "name": "semantic_followup_f08_sortarray_contexts",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_sortarray_contexts"
+    },
+    {
+      "name": "semantic_followup_f08_materialization",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_materialization"
     }
   ]
 }

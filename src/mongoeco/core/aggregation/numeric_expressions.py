@@ -510,8 +510,9 @@ def _numeric_accumulator_expression_values(
 def _stddev_accumulator_operand(value: Any) -> float | None:
     if value is None or isinstance(value, UndefinedType) or isinstance(value, bool):
         return None
-    if is_bson_numeric(value):
-        return float(unwrap_bson_numeric(value))
+    numeric = wrap_bson_numeric(value)
+    if numeric is not None:
+        return float(numeric.value)
     return None
 
 

@@ -954,19 +954,27 @@ def _apply_bucket_auto(  # noqa: PLR0913
     compare_key = cmp_to_key(_compare_bucket_values)
     evaluated.sort(key=lambda item: compare_key(item[0]))
     bucket_count = min(buckets, len(evaluated))
-    base = len(evaluated) // bucket_count
-    remainder = len(evaluated) % bucket_count
-    sizes = [base + (1 if index < remainder else 0) for index in range(bucket_count)]
+    target_size = max(1, int(len(evaluated) / bucket_count + 0.5))
 
     result: list[Document] = []
     start = 0
-    for size_index, size in enumerate(iter_with_deadline(sizes, deadline)):
-        chunk = evaluated[start : start + size]
-        start += size
+    while start < len(evaluated) and len(result) < bucket_count:
+        end = (
+            len(evaluated)
+            if len(result) == bucket_count - 1
+            else min(start + target_size, len(evaluated))
+        )
+        while (
+            end < len(evaluated)
+            and _compare_bucket_values(evaluated[end - 1][0], evaluated[end][0]) == 0
+        ):
+            end += 1
+        chunk = evaluated[start:end]
+        start = end
         lower = _copy_if_mutable(chunk[0][0])
         upper = (
             _copy_if_mutable(evaluated[start][0])
-            if size_index + 1 < len(sizes) and start < len(evaluated)
+            if start < len(evaluated)
             else _copy_if_mutable(chunk[-1][0])
         )
         bucket = _AccumulatorBucket(

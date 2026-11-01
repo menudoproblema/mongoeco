@@ -292,7 +292,11 @@ def _validate_find(_body: dict[str, Any], command_document: dict[str, Any]) -> N
         raise server_error(message, code=14, scope=ErrorScope.COMMAND) from exc
     try:
         normalize_command_hint(command_document.get("hint"))
-    except (TypeError, OperationFailure) as exc:
+    except OperationFailure as exc:
+        if exc.code is not None:
+            raise
+        _raise_wire_shape_error("find", str(exc))
+    except TypeError as exc:
         _raise_wire_shape_error("find", str(exc))
     try:
         normalize_command_max_time_ms(command_document.get("maxTimeMS"))

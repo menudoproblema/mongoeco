@@ -16,7 +16,7 @@ from mongoeco.core.sorting import (
     sort_documents_window,
     sort_value,
 )
-from mongoeco.types import ObjectId
+from mongoeco.types import UNDEFINED, ObjectId
 
 
 class SortingHelpersTests(unittest.TestCase):
@@ -97,7 +97,7 @@ class SortingHelpersTests(unittest.TestCase):
 
     def test_sort_value_handles_missing_and_arrays(self):
         self.assertIsNone(sort_value({"name": "Ada"}, "rank", 1))
-        self.assertEqual(sort_value({"rank": []}, "rank", 1), [])
+        self.assertIs(sort_value({"rank": []}, "rank", 1), UNDEFINED)
         self.assertEqual(sort_value({"rank": [3, 1, 2]}, "rank", 1), 1)
         self.assertEqual(sort_value({"rank": [3, 1, 2]}, "rank", -1), 3)
 
@@ -351,7 +351,9 @@ class SortingHelpersTests(unittest.TestCase):
 
     def test_sort_value_handles_single_nested_candidate_and_empty_nested_list(self):
         self.assertEqual(sort_value({"scores": [{"value": 7}]}, "scores.value", 1), 7)
-        self.assertEqual(sort_value({"scores": [{"value": []}]}, "scores.value", 1), [])
+        self.assertIs(
+            sort_value({"scores": [{"value": []}]}, "scores.value", 1), UNDEFINED
+        )
 
     def test_sort_documents_window_handles_unsorted_documents_and_non_positive_windows(
         self,

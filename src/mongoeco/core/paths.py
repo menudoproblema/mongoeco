@@ -6,7 +6,7 @@ from mongoeco.core.runtime_metadata import (
 )
 from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
-from mongoeco.types import DBRef
+from mongoeco.types import DBRef, Document
 
 
 DEFAULT_MAX_ARRAY_INDEX = 10_000
@@ -202,3 +202,40 @@ def validate_projection_paths(paths: set[str]) -> None:
                     message,
                     code=31249,
                 )
+
+
+def array_paths_for_field(
+    document: Document,
+    field: str,
+) -> set[str]:
+    array_paths: set[str] = set()
+    parts = field.split(".")
+
+    def collect(value: Any, position: int, path: str) -> None:
+        if isinstance(value, DBRef):
+            value = value.as_document()
+        if isinstance(value, list):
+            if position == len(parts):
+                array_paths.add(path)
+                return
+            part = parts[position]
+            if part.isdigit():
+                item_index = int(part)
+                if item_index < len(value):
+                    next_path = f"{path}.{part}" if path else part
+                    collect(value[item_index], position + 1, next_path)
+                return
+            array_paths.add(path)
+            for item in value:
+                collect(item, position, path)
+            return
+        if position == len(parts) or not isinstance(value, dict):
+            return
+        part = parts[position]
+        if part not in value:
+            return
+        next_path = f"{path}.{part}" if path else part
+        collect(value[part], position + 1, next_path)
+
+    collect(document, 0, "")
+    return array_paths

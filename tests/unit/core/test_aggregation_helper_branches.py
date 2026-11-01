@@ -1039,41 +1039,26 @@ class AccumulatorHelperBranchTests(unittest.TestCase):
         }
         accumulators_module._apply_accumulators(
             std_bucket,
-            {'score': {'$stdDevPop': '$score'}},
-            {'score': float('inf')},
+            {"score": {"$stdDevPop": "$score"}},
+            {"score": float("inf")},
         )
-        self.assertTrue(std_bucket['score'].invalid)
+        self.assertTrue(std_bucket["score"].invalid)
+        ordered_bucket = {
+            "top": accumulators_module._OrderedAccumulator(n=2, sort_spec=[("rank", 1)])
+        }
+        accumulators_module._apply_accumulators(
+            ordered_bucket,
+            {"top": {"$topN": {"sortBy": {"rank": 1}, "output": "$rank", "n": 3}}},
+            {"rank": 1},
+        )
+        self.assertEqual(ordered_bucket["top"].n, 2)
         with self.assertRaisesRegex(
-            OperationFailure, 'consistent positive integer'
+            OperationFailure, "consistent positive integer within the group"
         ):
             accumulators_module._apply_accumulators(
-                {
-                    'top': accumulators_module._OrderedAccumulator(
-                        n=2, sort_spec=[('rank', 1)]
-                    )
-                },
-                {
-                    'top': {
-                        '$topN': {
-                            'sortBy': {'rank': 1},
-                            'output': '$rank',
-                            'n': 3,
-                        }
-                    }
-                },
-                {'rank': 1},
-            )
-        with self.assertRaisesRegex(
-            OperationFailure, 'consistent positive integer within the group'
-        ):
-            accumulators_module._apply_accumulators(
-                {
-                    'firstOne': accumulators_module._PickNAccumulator(
-                        items=[1], n=1
-                    )
-                },
-                {'firstOne': {'$firstN': {'input': '$value', 'n': 2}}},
-                {'value': 2},
+                {"firstOne": accumulators_module._PickNAccumulator(items=[1], n=1)},
+                {"firstOne": {"$firstN": {"input": "$value", "n": 2}}},
+                {"value": 2},
             )
         with self.assertRaisesRegex(
             OperationFailure, 'consistent array within the group'
@@ -1108,8 +1093,8 @@ class AccumulatorHelperBranchTests(unittest.TestCase):
                 ),
                 'std_invalid': accumulators_module._StdDevAccumulator(
                     population=True,
-                    total=0.0,
-                    sum_of_squares=0.0,
+                    mean=0.0,
+                    m2=0.0,
                     count=1,
                     invalid=True,
                 ),

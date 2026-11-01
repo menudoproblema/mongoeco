@@ -101,7 +101,7 @@ from mongoeco.core.search_models import (
     SearchExplainVerbosity,
 )
 from mongoeco.core.server_errors import server_error
-from mongoeco.core.sorting import sort_documents
+from mongoeco.core.sorting import natural_scan_direction, sort_documents
 from mongoeco.engines._active_operations import LocalActiveOperationRegistry
 from mongoeco.engines._change_dispatch import ConsumerDispatchCoordinator
 from mongoeco.engines._memory_collection import MemoryCollection, MemoryIndexMap
@@ -1843,6 +1843,8 @@ class MemoryEngine(AsyncStorageEngine):
         collation: CollationDocument | None = None,
     ) -> EngineIndexRecord | None:
         if hint is None:
+            return None
+        if natural_scan_direction(None, hint) is not None:
             return None
 
         if isinstance(hint, str):
@@ -3753,6 +3755,16 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> AsyncIterable[Document]:
+        natural_direction = natural_scan_direction(semantics.sort, semantics.hint)
+        if natural_direction is not None:
+            natural_sort = bool(semantics.sort and semantics.sort[0][0] == "$natural")
+            natural_hint = natural_scan_direction(None, semantics.hint) is not None
+            semantics = replace(
+                semantics,
+                sort=None if natural_sort else semantics.sort,
+                hint=None if natural_hint else semantics.hint,
+            )
+
         async def _scan():
             deadline = semantics.deadline
             self._record_operation_metadata(
@@ -3811,26 +3823,31 @@ class MemoryEngine(AsyncStorageEngine):
                         semantics.hint,
                     )
 
-                candidate_items = self._candidate_items_for_plan_locked(
-                    coll,
-                    semantics.query_plan,
-                    dialect=semantics.dialect,
-                    indexes=indexes,
-                    index_data=index_data,
-                    collation=semantics.collation,
-                    natural_order_limit=(
-                        semantics.skip + semantics.limit
-                        if (
-                            not semantics.sort
-                            and semantics.limit is not None
-                            and isinstance(
-                                semantics.query_plan,
-                                EqualsCondition,
+                if natural_direction is not None:
+                    candidate_items = list(coll.items())
+                    if natural_direction == -1:
+                        candidate_items.reverse()
+                else:
+                    candidate_items = self._candidate_items_for_plan_locked(
+                        coll,
+                        semantics.query_plan,
+                        dialect=semantics.dialect,
+                        indexes=indexes,
+                        index_data=index_data,
+                        collation=semantics.collation,
+                        natural_order_limit=(
+                            semantics.skip + semantics.limit
+                            if (
+                                not semantics.sort
+                                and semantics.limit is not None
+                                and isinstance(
+                                    semantics.query_plan,
+                                    EqualsCondition,
+                                )
                             )
-                        )
-                        else None
-                    ),
-                )
+                            else None
+                        ),
+                    )
                 # Writes replace _StoredDocument versions. Retaining candidates
                 # pins that view; custom decoder output is made owned when first
                 # cached, so decoding and projection can stay demand-driven.

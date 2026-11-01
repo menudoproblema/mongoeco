@@ -1792,3 +1792,278 @@ def write_finalization_events(collection):
 SEMANTIC_FOLLOWUP_WRITE_CASES += (
     ("semantic_followup_f07_finalization_events", write_finalization_events),
 )
+
+
+def natural_grammar(collection):
+    result = {}
+    collection.drop()
+    collection.insert_many([{"_id": n, "v": n} for n in [30, 10, 20]])
+    collection.create_index("v")
+    for label, sort, hint in [
+        ("forward", {"$natural": 1}, None),
+        ("reverse", {"$natural": -1}, None),
+        ("same", {"$natural": -1}, {"$natural": -1}),
+        ("opposite", {"$natural": -1}, {"$natural": 1}),
+        ("index_conflict", {"$natural": 1}, {"v": 1}),
+        ("logical", {"v": 1}, {"$natural": -1}),
+        ("mixed", {"$natural": 1, "v": 1}, None),
+        ("bad_direction", {"$natural": 2}, None),
+        ("bool", {"$natural": True}, None),
+        ("string", {"$natural": "bad"}, None),
+        ("bad_hint", None, {"$natural": 2}),
+        ("mixed_hint", None, {"$natural": 1, "v": 1}),
+    ]:
+
+        def invoke(sort=sort, hint=hint):
+            cursor = collection.find({"v": {"$gte": 10}}, sort=sort)
+            if hint is not None:
+                cursor = cursor.hint(hint)
+            return [row["_id"] for row in cursor.skip(1).limit(1)]
+
+        result[label] = outcome(invoke)
+        command = {
+            "find": collection.name,
+            "filter": {"v": {"$gte": 10}},
+            "skip": 1,
+            "limit": 1,
+        }
+        if sort is not None:
+            command["sort"] = sort
+        if hint is not None:
+            command["hint"] = hint
+        result[label + "/raw"] = outcome(
+            lambda command=command: [
+                row["_id"]
+                for row in collection.database.command(command)["cursor"]["firstBatch"]
+            ]
+        )
+    result["aggregation"] = pipeline(
+        collection, stages=[{"$sort": {"$natural": 1}}], rows=[{"_id": 1}]
+    )
+    return result
+
+
+def sort_path_consumers(collection):
+    rows = [
+        {"_id": 1, "a": [9, 1]},
+        {"_id": 2, "a": [1, 8]},
+        {"_id": 3, "a": {"0": 5}},
+        {"_id": 4, "a": []},
+        {"_id": 5},
+        {"_id": 6, "a": [{"0": 3}, {"0": 7}]},
+    ]
+    result = {}
+    for field in ["a", "a.0", "a.0.0"]:
+        for direction in [1, -1]:
+            reset(collection, rows)
+            result[f"{field}/{direction}/find"] = outcome(
+                lambda field=field, direction=direction: [
+                    row["_id"]
+                    for row in collection.find(
+                        {}, sort=[(field, direction), ("_id", 1)]
+                    )
+                ]
+            )
+            result[f"{field}/{direction}/aggregate"] = _aggregate(
+                collection,
+                [{"$sort": {field: direction, "_id": 1}}, {"$project": {"_id": 1}}],
+            )
+    for label, documents in [
+        ("parallel", [{"_id": 1, "a": [1], "b": [2]}]),
+        ("nested_parallel", [{"_id": 1, "a": [{"b": [1], "c": [2]}]}]),
+        ("correlated", [{"_id": 1, "a": [{"b": 1, "c": 2}, {"b": 2, "c": 1}]}]),
+    ]:
+        sort = {"a": 1, "b": 1} if label == "parallel" else {"a.b": 1, "a.c": 1}
+        result[label] = pipeline(collection, stages=[{"$sort": sort}], rows=documents)
+        result[label + "/window"] = pipeline(
+            collection,
+            stages=[
+                {
+                    "$setWindowFields": {
+                        "sortBy": sort,
+                        "output": {
+                            "v": {
+                                "$sum": 1,
+                                "window": {"documents": ["unbounded", "current"]},
+                            }
+                        },
+                    }
+                }
+            ],
+            rows=documents,
+        )
+    return result
+
+
+def ordered_group_initializers(collection):
+    rows = [
+        {"_id": 1, "k": {"n": 2}, "n": 1, "v": [1, 9]},
+        {"_id": 2, "k": {"n": 2}, "n": 3, "v": [3, 4]},
+        {"_id": 3, "k": {"n": 2}, "n": 2, "v": []},
+    ]
+    result = {}
+    for operator in ["$topN", "$bottomN"]:
+        for label, key, size in [
+            ("group", "$k", "$n"),
+            ("scalar_missing", 2, "$n"),
+            ("constant", 2, 2.0),
+            ("zero", "$k", 0),
+            ("fraction", "$k", 1.5),
+        ]:
+            result[f"{operator}/{label}"] = pipeline(
+                collection,
+                stages=[
+                    {
+                        "$group": {
+                            "_id": key,
+                            "v": {
+                                operator: {
+                                    "n": size,
+                                    "sortBy": {"v": 1, "_id": 1},
+                                    "output": "$_id",
+                                }
+                            },
+                        }
+                    }
+                ],
+                rows=rows,
+            )
+    return result
+
+
+SEMANTIC_FOLLOWUP_CASES += (
+    ("semantic_followup_f08_natural_grammar", natural_grammar),
+    ("semantic_followup_f08_path_consumers", sort_path_consumers),
+    ("semantic_followup_f08_group_initializers", ordered_group_initializers),
+    (
+        "semantic_followup_f08_bucket_rounding",
+        partial(
+            pipeline,
+            stages=[{"$bucketAuto": {"groupBy": "$v", "buckets": 3}}],
+            rows=[{"_id": n, "v": n} for n in range(10)],
+        ),
+    ),
+    (
+        "semantic_followup_f08_stddev_contexts",
+        partial(
+            pipeline,
+            stages=[
+                {"$set": {"p": {"$stdDevPop": "$a"}}},
+                {
+                    "$setWindowFields": {
+                        "sortBy": {"_id": 1},
+                        "output": {
+                            "s": {
+                                "$stdDevPop": "$v",
+                                "window": {"documents": ["unbounded", "current"]},
+                            }
+                        },
+                    }
+                },
+            ],
+            rows=[
+                {
+                    "_id": n,
+                    "v": Decimal128(str(n)),
+                    "a": [Decimal128("1"), Decimal128("3")],
+                }
+                for n in [1, 3]
+            ],
+        ),
+    ),
+)
+
+
+def array_sort_contexts(collection):
+    reset(collection, [{"_id": 1}])
+    result = {}
+    for position, scalar in enumerate([3, None, [1]]):
+        values = [
+            {"id": 2, "x": [0, 9]},
+            {"id": 1, "x": None},
+            {"id": 0},
+            scalar,
+            {"id": 3, "x": 1},
+        ]
+        for direction in [1, -1]:
+            result[f"{position}/{direction}"] = _aggregate(
+                collection,
+                [
+                    {
+                        "$project": {
+                            "_id": 0,
+                            "r": {
+                                "$sortArray": {
+                                    "input": {"$literal": values},
+                                    "sortBy": {"x": direction, "id": 1},
+                                }
+                            },
+                        }
+                    }
+                ],
+            )
+    result["collation"] = _aggregate(
+        collection,
+        [
+            {
+                "$project": {
+                    "_id": 0,
+                    "r": {"$sortArray": {"input": ["V10", "v2", "v1"], "sortBy": 1}},
+                }
+            }
+        ],
+        collation={"locale": "en", "strength": 1, "numericOrdering": True},
+    )
+    return result
+
+
+SEMANTIC_FOLLOWUP_CASES += (
+    ("semantic_followup_f08_sortarray_contexts", array_sort_contexts),
+)
+
+
+def ordered_materialization(collection):
+    rows = [
+        {
+            "_id": group * 10 + offset,
+            "k": {"group": group, "n": 2},
+            "a": array,
+            "v": Decimal128(str(offset)),
+        }
+        for group in [0, 1]
+        for offset, array in [(1, [1, 9]), (2, []), (3, [0, 8])]
+    ]
+    reset(collection, rows)
+    stages = [
+        {"$sort": {"_id": -1}},
+        {
+            "$group": {
+                "_id": "$k",
+                "top": {
+                    "$topN": {"n": "$n", "sortBy": {"a": 1, "_id": 1}, "output": "$_id"}
+                },
+                "bottom": {
+                    "$bottomN": {
+                        "n": "$n",
+                        "sortBy": {"a": 1, "_id": 1},
+                        "output": "$_id",
+                    }
+                },
+                "s": {"$stdDevPop": "$v"},
+                "p": {"$push": "$_id"},
+                "first": {"$firstN": {"input": "$_id", "n": 2}},
+            }
+        },
+        {"$sort": {"_id.group": 1}},
+    ]
+    return {
+        "direct": _aggregate(collection, stages, allowDiskUse=True, batchSize=1),
+        "materialized": _aggregate(
+            collection, [{"$facet": {"r": stages}}], allowDiskUse=True, batchSize=1
+        ),
+    }
+
+
+SEMANTIC_FOLLOWUP_CASES += (
+    ("semantic_followup_f08_materialization", ordered_materialization),
+)

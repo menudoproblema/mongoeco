@@ -367,8 +367,8 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
         self.assertEqual(
             bucketed_auto,
             [
-                {"_id": {"min": 1, "max": 2}, "firstTwo": [2, 9], "lastTwo": [9, 4]},
-                {"_id": {"min": 2, "max": 3}, "firstTwo": [None, 6], "lastTwo": [None, 6]},
+                {"_id": {"min": 1, "max": 3}, "firstTwo": [2, 9], "lastTwo": [4, None]},
+                {"_id": {"min": 3, "max": 3}, "firstTwo": [6], "lastTwo": [6]},
             ],
         )
 

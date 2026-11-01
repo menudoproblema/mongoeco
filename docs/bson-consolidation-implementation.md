@@ -2935,7 +2935,7 @@ Pruebas focales por bloque; suites globales reservadas a F11.
 | F05 | Cerrado | 492 diferenciales/contexto/metadatos, 54 spill y fronteras focales. |
 | F06 | Cerrado | Catálogo/unique/hashed, cuatro superficies, eventos RS 7/8/9, archivos previos e inventarios CXP. |
 | F07 | Implementado y comprobado focalmente | Escrituras/identidad/campos, 7/8/9, contadores/eventos y validadores; aceptación integrada en F11. |
-| F08 | Pendiente | Sort/natural y acumuladores del inventario. |
+| F08 | Implementado y comprobado focalmente | Claves contextuales/natural, inicializadores y acumulación, materialización/spill real; aceptación integrada en F11. |
 | F09 | Pendiente | Gramática/recursos, fechas y texto; tres subunidades. |
 | F10 | Pendiente | Fachadas, metadata y capacidades explícitas. |
 | F11 | Pendiente | Gates globales finales, coste, distribución y entrega. |
@@ -3134,3 +3134,38 @@ insert y validadores previos se reutilizan y repiten sólo por el cambio causal
 en identidad/finalización, sin ejecutar de nuevo sus corpus completos.
 Compatibilidad de archivos, matrices, suites globales, cobertura, packaging,
 coste y aceptación de toda la entrega quedan para F11. F08 es el siguiente gate.
+
+F08 implementado y comprobado focalmente. Sort documental conserva rutas MQL,
+rechaza ambigüedad numérica 16746 y arrays paralelos antes de seleccionar la
+ventana; sortArray sólo lee campos de documentos sin traversal de arrays.
+La clave de array vacío reutiliza Undefined como clave interna serializable,
+con orden contextual antes de null y después de MinKey. Top/bottom comparten
+claves documentales y collation. N se inicializa con la clave documental del
+grupo, sin reevaluarlo por fila; errores/fase y truncado se conservan según
+7/8/9, sin extender esa regla a otros operadores N.
+
+Natural sort/hint usa el escaneo físico en Memory y ORDER BY rowid explícito en
+SQLite, con filtro/skip/limit y sort lógico cuando corresponde. Una gramática
+común valida conflictos/direcciones; raw y método ya consumían el mismo
+validador de hint, por lo que se retira el control redundante añadido durante
+el trabajo. Wire conserva los códigos semánticos que ese validador emite.
+Natural en stage de agregación conserva el rechazo nativo 16410.
+
+BucketAuto redondea el tamaño objetivo y extiende los cortes para no partir
+valores iguales. StdDev admite Decimal128 en los contextos retenidos; el nuevo
+testigo reproduce además pérdida de precisión en la fórmula de cuadrados,
+corregida con estado Welford. El estado sólo pertenece a la ejecución/spill,
+sin migración de archivo. El extractor de ancestros array se mueve al owner de
+rutas sin cambiar su AST salvo nombre; F06 conserva exactamente ese cuerpo.
+
+Se añaden siete testigos (238 standalone/15 RS por dialecto); todas las 231/15
+observaciones anteriores permanecen idénticas. Pasan 468 controles focales,
+incluidas las cuatro superficies, materialización y seis verificaciones con
+apertura efectiva de archivos temporales. La primera prueba de spill no cruzaba
+el umbral de grupos y queda conservada como roja del test, no del producto.
+El testigo corregido también exige coincidencia numérica exacta con MongoDB.
+Pasan 49 controles locales/4 subtests y nueve del estado/9 subtests. Se concilian
+expectativas que partían ties o reevaluaban n, respaldadas por los nativos.
+La simplificación final del validador conserva 24 controles naturales verdes;
+diff revisado y ratchet focal verde. Compatibilidad/reapertura, coste y demás
+gates integrados quedan en F11. F09 es el siguiente bloque.

@@ -204,6 +204,9 @@ def _require_sort(spec: object) -> SortSpec:
     for field, direction in spec.items():
         if not isinstance(field, str):
             raise OperationFailure("$sort fields must be strings")
+        if field.startswith("$"):
+            message = "FieldPath field names may not start with '$'"
+            raise server_error(message, code=16410)
         if isinstance(direction, bool):
             raise OperationFailure("$sort directions must be 1 or -1")
         if direction not in (1, -1):

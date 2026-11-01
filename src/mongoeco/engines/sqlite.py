@@ -111,6 +111,7 @@ from mongoeco.core.search_models import (
     SearchExplainVerbosity,
 )
 from mongoeco.core.server_errors import server_error
+from mongoeco.core.sorting import natural_scan_direction
 from mongoeco.engines._active_operations import LocalActiveOperationRegistry
 from mongoeco.engines._change_dispatch import ConsumerDispatchCoordinator
 from mongoeco.engines._executor_admission import (
@@ -1436,6 +1437,8 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> EngineIndexRecord | None:
         if hint is None:
             return None
+        if natural_scan_direction(None, hint) is not None:
+            return None
 
         if isinstance(hint, str):
             if hint == "_id_":
@@ -1518,14 +1521,18 @@ class SQLiteEngine(AsyncStorageEngine):
             return decode(payload)
         return decode(payload, preserve_bson_wrappers=preserve_bson_wrappers)
 
-    def _load_documents(self, db_name: str, coll_name: str):
+    def _load_documents(self, db_name: str, coll_name: str, *, natural_direction=None):
         conn = self._require_connection()
         cursor = conn.execute(
-            """
-            SELECT storage_key, document
-            FROM documents
-            WHERE db_name = ? AND coll_name = ?
-            """,
+            "SELECT storage_key, document FROM documents "  # noqa: S608 - fixed internal ORDER BY fragments
+            "WHERE db_name = ? AND coll_name = ?"
+            + (
+                " ORDER BY rowid DESC"
+                if natural_direction == -1
+                else " ORDER BY rowid ASC"
+                if natural_direction == 1
+                else ""
+            ),
             (db_name, coll_name),
         )
         try:
@@ -6030,7 +6037,7 @@ class SQLiteEngine(AsyncStorageEngine):
 
         return _iter()
 
-    def _open_scan_documents_sync(
+    def _open_scan_documents_sync(  # noqa: PLR0911, PLR0912, PLR0915 - one reader owns profile, natural, planned and fallback sources
         self,
         reader: SQLiteScanReader,
     ):
@@ -6053,6 +6060,25 @@ class SQLiteEngine(AsyncStorageEngine):
             )
             reader.own(source)
             return self._finalize_scan_source(source, python_semantics)
+
+        natural_direction = natural_scan_direction(semantics.sort, semantics.hint)
+        if natural_direction is not None:
+            source_rows = self._load_documents(
+                db_name, coll_name, natural_direction=natural_direction
+            )
+            reader.own(source_rows)
+            if not reader.owns_connection and semantics.limit != 1:
+                source_rows = self._capture_shared_read_source(
+                    source_rows, reader, payloads=False
+                )
+            source = (document for _, document in source_rows)
+            natural_sort = bool(semantics.sort and semantics.sort[0][0] == "$natural")
+            effective = replace(
+                python_semantics,
+                sort=None if natural_sort else semantics.sort,
+                hint=None,
+            )
+            return self._finalize_scan_source(source, effective)
 
         # A Python fallback must still reject a missing index. Plan usability
         # and classic text index selection retain their specialized checks.

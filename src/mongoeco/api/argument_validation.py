@@ -5,6 +5,7 @@ from typing import Any
 
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.search import TEXT_SCORE_FIELD
+from mongoeco.core.sorting import natural_scan_direction
 from mongoeco.types import Projection, SortSpec
 
 
@@ -94,6 +95,8 @@ def validate_sort_spec(sort: object) -> None:
         field, direction = item
         if not isinstance(field, str):
             raise TypeError("sort fields must be strings")
+        if field == "$natural":
+            natural_scan_direction(sort)
         if direction not in (1, -1) or isinstance(direction, bool):
             raise ValueError("sort directions must be 1 or -1")
 

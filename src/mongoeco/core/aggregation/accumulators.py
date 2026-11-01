@@ -20,11 +20,13 @@ from mongoeco.core.aggregation.numeric_expressions import (
 from mongoeco.core.bson_ordering import Code
 from mongoeco.core.bson_scalars import (
     is_bson_numeric,
-    unwrap_bson_numeric,
+    truncate_bson_int64,
+    wrap_bson_numeric,
 )
 from mongoeco.core.collation import CollationSpec, compare_with_collation
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.server_errors import server_error
+from mongoeco.core.sorting import _document_sort_keys
 from mongoeco.error_catalog import EMPTY_GROUP_FIELD_ERROR
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, SortSpec, UndefinedType
@@ -71,8 +73,8 @@ class _AverageAccumulator:
 @dataclass(slots=True)
 class _StdDevAccumulator:
     population: bool
-    total: float = 0.0
-    sum_of_squares: float = 0.0
+    mean: float = 0.0
+    m2: float = 0.0
     count: int = 0
     invalid: bool = False
 
@@ -129,8 +131,26 @@ def _validate_unary_accumulator_operand(operator, expression, allow_array_operan
         raise server_error(message, code=40237)
 
 
+def _validate_ordered_accumulator_size(operator, n, *, dialect):
+    if dialect.key == "7.0":
+        return
+    if isinstance(n, dict) and set(n) in ({"$literal"}, {"$const"}):
+        n = next(iter(n.values()))
+    if not isinstance(n, (dict, list)) and not (
+        isinstance(n, str) and n.startswith("$")
+    ):
+        try:
+            _ordered_accumulator_size(operator, n, dialect=dialect)
+        except OperationFailure as error:
+            raise server_error(str(error), code=7548606) from error
+
+
 def _validate_accumulator_expression(
-    operator: str, expression: object, *, allow_array_operand: bool = False
+    operator: str,
+    expression: object,
+    *,
+    allow_array_operand: bool = False,
+    dialect=MONGODB_DIALECT_70,
 ) -> None:
     _validate_unary_accumulator_operand(operator, expression, allow_array_operand)
     if operator == "$count":
@@ -140,29 +160,41 @@ def _validate_accumulator_expression(
         if not isinstance(expression, dict) or not {"input", "n"} <= set(expression):
             raise OperationFailure(f"{operator} requires input and n")
     if operator in {"$top", "$bottom"}:
-        if not isinstance(expression, dict) or not {"sortBy", "output"} <= set(expression):
+        if not isinstance(expression, dict) or not {"sortBy", "output"} <= set(
+            expression
+        ):
             raise OperationFailure(f"{operator} requires sortBy and output")
     if operator in {"$topN", "$bottomN"}:
-        if not isinstance(expression, dict) or not {"sortBy", "output", "n"} <= set(expression):
+        if not isinstance(expression, dict) or not {"sortBy", "output", "n"} <= set(
+            expression
+        ):
             raise OperationFailure(f"{operator} requires sortBy, output and n")
+        _validate_ordered_accumulator_size(operator, expression["n"], dialect=dialect)
     if operator == "$median":
-        if not isinstance(expression, dict) or not {"input", "method"} <= set(expression):
+        if not isinstance(expression, dict) or not {"input", "method"} <= set(
+            expression
+        ):
             raise OperationFailure("$median requires input and method")
     if operator == "$percentile":
-        if not isinstance(expression, dict) or not {"input", "p", "method"} <= set(expression):
+        if not isinstance(expression, dict) or not {"input", "p", "method"} <= set(
+            expression
+        ):
             raise OperationFailure("$percentile requires input, p and method")
 
 
 def _is_numeric(value: object) -> bool:
-    return is_bson_numeric(value) or (isinstance(value, (int, float, decimal.Decimal)) and not isinstance(value, bool))
+    return is_bson_numeric(value) or (
+        isinstance(value, (int, float, decimal.Decimal)) and not isinstance(value, bool)
+    )
 
 
 def _stddev_accumulator_operand(value: Any) -> float | None:
     if isinstance(value, bool) or value is None or isinstance(value, list):
         return None
-    if not _is_numeric(value):
+    numeric = wrap_bson_numeric(value)
+    if numeric is None:
         return None
-    numeric_value = float(unwrap_bson_numeric(value))
+    numeric_value = float(numeric.value)
     if not math.isfinite(numeric_value):
         return math.nan
     return numeric_value
@@ -215,6 +247,32 @@ def _evaluate_pick_n_size(
     )
 
 
+def _ordered_accumulator_size(operator, value, *, dialect):
+    if dialect.key == "9.0":
+        size = truncate_bson_int64(value)
+        if size is not None and size > 0:
+            return size
+        message = f"{operator} n must be a positive numeric value"
+        raise server_error(message, code=7548607)
+    try:
+        return _normalize_pick_n_size(operator, value)
+    except OperationFailure as error:
+        if dialect.key != "7.0":
+            raise server_error(str(error), code=7548607) from error
+        numeric = wrap_bson_numeric(value)
+        code = (
+            5787902
+            if numeric is None
+            else (
+                5787908
+                if truncate_bson_int64(value) is not None
+                and truncate_bson_int64(value) <= 0
+                else 5787903
+            )
+        )
+        raise server_error(str(error), code=code) from error
+
+
 def _evaluate_ordered_accumulator_input(
     operator: str,
     document: Document,
@@ -226,14 +284,20 @@ def _evaluate_ordered_accumulator_input(
     require_sort: Callable[[object], SortSpec],
     resolve_aggregation_field_path: Callable[[Any, str], Any],
     missing_sentinel: object,
+    initialization_document=None,
+    initialized_size=None,
+    collation=None,
 ) -> tuple[SortSpec, list[Any], Any, int | None]:
-    if not isinstance(expression, dict) or "sortBy" not in expression or "output" not in expression:
+    if (
+        not isinstance(expression, dict)
+        or "sortBy" not in expression
+        or "output" not in expression
+    ):
         raise OperationFailure(f"{operator} requires sortBy and output")
     sort_spec = require_sort(expression["sortBy"])
-    sort_values: list[Any] = []
-    for field, _direction in sort_spec:
-        resolved = resolve_aggregation_field_path(document, field)
-        sort_values.append(None if resolved is missing_sentinel else resolved)
+    sort_values = _document_sort_keys(
+        document, sort_spec, dialect=dialect, collation=collation
+    )
     output = _normalize_remove_value(
         evaluate_expression(document, expression["output"], variables)
     )
@@ -241,10 +305,15 @@ def _evaluate_ordered_accumulator_input(
     if operator in {"$topN", "$bottomN"}:
         if "n" not in expression:
             raise OperationFailure(f"{operator} requires n")
-        size = _normalize_pick_n_size(
-            operator,
-            evaluate_expression(document, expression["n"], variables),
-        )
+        if initialized_size is not None:
+            size = initialized_size
+        else:
+            initializer = (
+                document if initialization_document is None else initialization_document
+            )
+            size = _ordered_accumulator_size(
+                operator, evaluate_expression(initializer, expression["n"], variables), dialect=dialect
+            )
     return sort_spec, sort_values, output, size
 
 
@@ -356,7 +425,10 @@ def _prepare_accumulator_specs(  # noqa: PLR0913 - group/window grammar and runt
         if not support_checker(operator):
             raise OperationFailure(f"{unsupported_message}: {operator}")
         _validate_accumulator_expression(
-            operator, expression, allow_array_operand=allow_array_operand
+            operator,
+            expression,
+            allow_array_operand=allow_array_operand,
+            dialect=dialect,
         )
         prepared.append((field, operator, expression))
     return tuple(prepared)
@@ -540,9 +612,11 @@ def _apply_accumulators(
             if not math.isfinite(operand):
                 values[field].invalid = True
                 continue
-            values[field].total += operand
-            values[field].sum_of_squares += operand * operand
-            values[field].count += 1
+            state = values[field]
+            state.count += 1
+            delta = operand - state.mean
+            state.mean += delta / state.count
+            state.m2 += delta * (operand - state.mean)
         elif operator == "$push":
             values[field].append(deepcopy(value))
         elif operator == "$addToSet":
@@ -586,14 +660,16 @@ def _apply_accumulators(
             if state.n is None:
                 state.n = size
             elif state.n != size:
-                raise OperationFailure(f"{operator} n must evaluate to a consistent positive integer within the group")
+                raise OperationFailure(
+                    f"{operator} n must evaluate to a consistent positive integer within the group"
+                )
             if operator == "$firstN":
                 if len(state.items) < state.n:
                     state.items.append(deepcopy(value))
             elif operator == "$lastN":
                 state.items.append(deepcopy(value))
                 if len(state.items) > state.n:
-                    del state.items[:-state.n]
+                    del state.items[: -state.n]
             else:
                 if value is None or isinstance(value, UndefinedType):
                     continue
@@ -602,8 +678,14 @@ def _apply_accumulators(
                     key=cmp_to_key(compare),
                     reverse=operator == "$maxN",
                 )
-                del state.items[state.n:]
+                del state.items[state.n :]
         elif operator in {"$top", "$bottom", "$topN", "$bottomN"}:
+            state = values[field]
+            initializer = (
+                (bucket.bucket_id if isinstance(bucket.bucket_id, dict) else {})
+                if isinstance(bucket, _AccumulatorBucket) and bucket.include_bucket_id
+                else document
+            )
             sort_spec, sort_values, output, size = _evaluate_ordered_accumulator_input(
                 operator,
                 document,
@@ -614,16 +696,17 @@ def _apply_accumulators(
                 require_sort=require_sort,
                 resolve_aggregation_field_path=resolve_aggregation_field_path,
                 missing_sentinel=missing_sentinel,
+                initialization_document=initializer,
+                initialized_size=state.n,
+                collation=collation,
             )
             state = values[field]
             if state.sort_spec is None:
                 state.sort_spec = sort_spec
             keep = size if operator in {"$topN", "$bottomN"} else 1
-            if operator in {"$topN", "$bottomN"}:
-                if state.n is None:
-                    state.n = size
-                elif state.n != size:
-                    raise OperationFailure(f"{operator} n must evaluate to a consistent positive integer within the group")
+            if operator in {"$topN", "$bottomN"} and state.n is None:
+                state.n = size
+
             state.items.append((sort_values, deepcopy(output), state.sequence))
             state.sequence += 1
             _trim_ordered_accumulator(
@@ -691,29 +774,22 @@ def _finalize_accumulators(
             document[field] = value.sum()
         elif isinstance(value, _AverageAccumulator):
             document[field] = value.total.average(
-                value.count, finalize_sum=(
+                value.count,
+                finalize_sum=(
                     isinstance(bucket, _AccumulatorBucket)
                     and bucket.group_uses_slot_semantics
                 ),
             )
         elif isinstance(value, _StdDevAccumulator):
-            if value.invalid or value.count == 0:
-                document[field] = None
-            elif value.population:
-                mean = value.total / value.count
-                variance = max(
-                    (value.sum_of_squares / value.count) - (mean * mean), 0.0
-                )
-                document[field] = math.sqrt(variance)
-            elif value.count < 2:
+            if (
+                value.invalid
+                or value.count == 0
+                or (not value.population and value.count < 2)
+            ):
                 document[field] = None
             else:
-                variance = max(
-                    (value.sum_of_squares - ((value.total * value.total) / value.count))
-                    / (value.count - 1),
-                    0.0,
-                )
-                document[field] = math.sqrt(variance)
+                divisor = value.count if value.population else value.count - 1
+                document[field] = math.sqrt(max(value.m2 / divisor, 0.0))
         elif isinstance(value, _PickNAccumulator):
             document[field] = list(value.items)
         elif isinstance(value, _OrderedAccumulator):

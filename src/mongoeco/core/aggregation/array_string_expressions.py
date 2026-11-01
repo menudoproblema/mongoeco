@@ -28,7 +28,7 @@ from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import compare_with_collation
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.server_errors import server_error
-from mongoeco.core.sorting import sort_documents
+from mongoeco.core.sorting import sort_array_items
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Decimal128, Document, Regex, SortSpec, UndefinedType
 
@@ -855,7 +855,7 @@ def evaluate_array_string_expression(
                 ),
                 reverse=sort_by == -1,
             )
-        return sort_documents(values, sort_by, dialect=dialect, collation=collation)
+        return sort_array_items(values, sort_by, dialect=dialect, collation=collation)
 
     raise OperationFailure(f"Unsupported array/string expression operator: {operator}")
 

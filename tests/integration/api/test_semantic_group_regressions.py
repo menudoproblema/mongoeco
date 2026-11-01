@@ -105,6 +105,10 @@ class _AsyncCursorView:
         self._invoke("skip", *args, **kwargs)
         return self
 
+    def hint(self, *args, **kwargs):
+        self._invoke("hint", *args, **kwargs)
+        return self
+
     def clone(self):
         return _AsyncCursorView(self._invoke("clone"), self.loop)
 
@@ -945,6 +949,30 @@ def test_followup_collation_groups_survive_spill(
     ) as client:
         actual = action(client.followup.rows)
     assert opened
+    assert _normalize(actual) == _normalize(
+        _capture(dialect, "followup")["cases"][name]
+    )
+
+
+@pytest.mark.parametrize("dialect", DIALECTS)
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+def test_followup_f08_groups_survive_actual_spill(engine_factory, dialect):
+    name = "semantic_followup_f08_materialization"
+    action = dict(SEMANTIC_CORPORA["followup"].cases)[name]
+    original = AggregationGroupSpool._open_temporary_partition
+    with (
+        patch.object(
+            AggregationGroupSpool,
+            "_open_temporary_partition",
+            autospec=True,
+            side_effect=original,
+        ) as opened,
+        MongoClient(
+            engine_factory(aggregation_spill_threshold=1), mongodb_dialect=dialect
+        ) as client,
+    ):
+        actual = action(client.followup.rows)
+    assert opened.call_count > 0
     assert _normalize(actual) == _normalize(
         _capture(dialect, "followup")["cases"][name]
     )

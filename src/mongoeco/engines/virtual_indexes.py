@@ -17,6 +17,7 @@ from mongoeco.core.collation import (
     values_equal_with_collation,
 )
 from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.paths import array_paths_for_field
 from mongoeco.core.query_operators import DBREF_FIELDS
 from mongoeco.core.query_plan import (
     AndCondition,
@@ -203,41 +204,7 @@ def index_field_values(document, field):
     return values or [None]
 
 
-def array_paths_for_index_field(
-    document: Document,
-    field: str,
-) -> set[str]:
-    array_paths: set[str] = set()
-    parts = field.split(".")
-
-    def collect(value: Any, position: int, path: str) -> None:
-        if isinstance(value, DBRef):
-            value = value.as_document()
-        if isinstance(value, list):
-            if position == len(parts):
-                array_paths.add(path)
-                return
-            part = parts[position]
-            if part.isdigit():
-                item_index = int(part)
-                if item_index < len(value):
-                    next_path = f"{path}.{part}" if path else part
-                    collect(value[item_index], position + 1, next_path)
-                return
-            array_paths.add(path)
-            for item in value:
-                collect(item, position, path)
-            return
-        if position == len(parts) or not isinstance(value, dict):
-            return
-        part = parts[position]
-        if part not in value:
-            return
-        next_path = f"{path}.{part}" if path else part
-        collect(value[part], position + 1, next_path)
-
-    collect(document, 0, "")
-    return array_paths
+array_paths_for_index_field = array_paths_for_field
 
 
 def compound_multikey_array_paths(

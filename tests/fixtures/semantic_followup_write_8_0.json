@@ -675,7 +675,7 @@
       "$clusterTime": {
         "clusterTime": {
           "$timestamp": {
-            "t": 1793564599,
+            "t": 1793565479,
             "i": 1
           }
         },
@@ -693,7 +693,7 @@
       },
       "operationTime": {
         "$timestamp": {
-          "t": 1793564599,
+          "t": 1793565479,
           "i": 1
         }
       }
@@ -730,7 +730,7 @@
         "opTime": {
           "ts": {
             "$timestamp": {
-              "t": 1793564599,
+              "t": 1793565479,
               "i": 1
             }
           },
@@ -740,13 +740,13 @@
         },
         "lastWriteDate": {
           "$date": {
-            "$numberLong": "1793564599000"
+            "$numberLong": "1793565479000"
           }
         },
         "majorityOpTime": {
           "ts": {
             "$timestamp": {
-              "t": 1793564599,
+              "t": 1793565479,
               "i": 1
             }
           },
@@ -756,7 +756,7 @@
         },
         "majorityWriteDate": {
           "$date": {
-            "$numberLong": "1793564599000"
+            "$numberLong": "1793565479000"
           }
         }
       },
@@ -771,14 +771,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793564599449"
+          "$numberLong": "1793565480242"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "5"
+        "$numberInt": "18"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -793,7 +793,7 @@
       "$clusterTime": {
         "clusterTime": {
           "$timestamp": {
-            "t": 1793564599,
+            "t": 1793565479,
             "i": 1
           }
         },
@@ -811,7 +811,7 @@
       },
       "operationTime": {
         "$timestamp": {
-          "t": 1793564599,
+          "t": 1793565479,
           "i": 1
         }
       }
@@ -819,7 +819,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_followup_cases.py",
-    "sha256": "44e55a986026a94fcbd5a32ddff4101b278ba3eac0e7e44746276c4dda1700a2"
+    "sha256": "31de743bf9bb44a831b8142ae8ea799cb684d192675fa15144eb0037c694847b"
   },
   "case_manifests": [
     {
