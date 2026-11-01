@@ -4,10 +4,11 @@ import mongoeco.api._async._collection_bulk as collection_bulk_module
 import mongoeco.api.operations as operations_module
 
 from mongoeco.api._async.collection import AsyncCollection
+from mongoeco.api.public_api import ARG_UNSET
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
-from mongoeco.types import ReplaceOne, UpdateOne
+from mongoeco.types import DeleteMany, DeleteOne, ReplaceOne, UpdateMany, UpdateOne
 
 from tests.unit.api._collection_test_support import *  # noqa: F403
 from tests.unit.api._collection_test_support import (
@@ -882,52 +883,54 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
             pass
 
         async def _exercise():
-            collection = AsyncCollection(EngineStub(), 'db', 'coll')
+            collection = AsyncCollection(EngineStub(), "db", "coll")
             recorded: list[tuple[str, dict[str, object | None]]] = []
 
             async def _update_one(*args, **kwargs):
-                recorded.append(('update_one', kwargs))
+                recorded.append(("update_one", kwargs))
                 return UpdateResult(matched_count=1, modified_count=1)
 
             async def _update_many(*args, **kwargs):
-                recorded.append(('update_many', kwargs))
+                recorded.append(("update_many", kwargs))
                 return UpdateResult(matched_count=2, modified_count=2)
 
             async def _replace_one(*args, **kwargs):
-                recorded.append(('replace_one', kwargs))
+                recorded.append(("replace_one", kwargs))
                 return UpdateResult(matched_count=1, modified_count=1)
 
             async def _delete_one(*args, **kwargs):
-                recorded.append(('delete_one', kwargs))
+                recorded.append(("delete_one", kwargs))
                 return DeleteResult(deleted_count=1)
 
             async def _delete_many(*args, **kwargs):
-                recorded.append(('delete_many', kwargs))
+                recorded.append(("delete_many", kwargs))
                 return DeleteResult(deleted_count=2)
 
-            collection.update_one = _update_one  # type: ignore[method-assign]
-            collection.update_many = _update_many  # type: ignore[method-assign]
-            collection.replace_one = _replace_one  # type: ignore[method-assign]
-            collection.delete_one = _delete_one  # type: ignore[method-assign]
-            collection.delete_many = _delete_many  # type: ignore[method-assign]
-
-            result = await collection.bulk_write(
-                [
-                    UpdateOne(
-                        {'kind': 'one'},
-                        {'$set': {'done': True}},
-                        hint='req_hint',
-                        comment='req_comment',
-                        let={'scope': 'request'},
-                    ),
-                    UpdateMany({'kind': 'many'}, {'$set': {'done': True}}),
-                    ReplaceOne({'kind': 'replace'}, {'done': True}),
-                    DeleteOne({'kind': 'delete-one'}),
-                    DeleteMany({'kind': 'delete-many'}),
-                ],
-                comment='bulk_comment',
-                let={'scope': 'bulk'},
-            )
+            with patch.multiple(
+                collection_bulk_module._collection_modify,
+                update_one=_update_one,
+                update_many=_update_many,
+                replace_one=_replace_one,
+                delete_one=_delete_one,
+                delete_many=_delete_many,
+            ):
+                result = await collection.bulk_write(
+                    [
+                        UpdateOne(
+                            {"kind": "one"},
+                            {"$set": {"done": True}},
+                            hint="req_hint",
+                            comment="req_comment",
+                            let={"scope": "request"},
+                        ),
+                        UpdateMany({"kind": "many"}, {"$set": {"done": True}}),
+                        ReplaceOne({"kind": "replace"}, {"done": True}),
+                        DeleteOne({"kind": "delete-one"}),
+                        DeleteMany({"kind": "delete-many"}),
+                    ],
+                    comment="bulk_comment",
+                    let={"scope": "bulk"},
+                )
             return result, recorded
 
         result, recorded = asyncio.run(_exercise())
@@ -935,12 +938,20 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         self.assertEqual(result.matched_count, 4)
         self.assertEqual(result.modified_count, 4)
         self.assertEqual(result.deleted_count, 3)
+        for operation, kwargs in recorded:
+            self.assertTrue(kwargs.pop("server_command"))
+            self.assertIs(kwargs.pop("filter"), ARG_UNSET)
+            self.assertEqual(kwargs.pop("extra_kwargs"), {})
+            if operation in {"update_one", "update_many", "replace_one"}:
+                self.assertFalse(kwargs.pop("bypass_document_validation"))
+            if operation in {"update_one", "update_many"}:
+                self.assertIs(kwargs.pop("update"), ARG_UNSET)
         recorded = [
             (
                 operation,
                 {
                     **kwargs,
-                    'let': dict(kwargs['let'].bindings),
+                    "let": dict(kwargs["let"].bindings),
                 },
             )
             for operation, kwargs in recorded
@@ -949,57 +960,57 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
             recorded,
             [
                 (
-                    'update_one',
+                    "update_one",
                     {
-                        'collation': None,
-                        'sort': None,
-                        'array_filters': None,
-                        'hint': 'req_hint',
-                        'comment': 'req_comment',
-                        'let': {'scope': 'request'},
-                        'session': None,
+                        "collation": None,
+                        "sort": None,
+                        "array_filters": None,
+                        "hint": "req_hint",
+                        "comment": "req_comment",
+                        "let": {"scope": "request"},
+                        "session": None,
                     },
                 ),
                 (
-                    'update_many',
+                    "update_many",
                     {
-                        'collation': None,
-                        'array_filters': None,
-                        'hint': None,
-                        'comment': 'bulk_comment',
-                        'let': {'scope': 'bulk'},
-                        'session': None,
+                        "collation": None,
+                        "array_filters": None,
+                        "hint": None,
+                        "comment": "bulk_comment",
+                        "let": {"scope": "bulk"},
+                        "session": None,
                     },
                 ),
                 (
-                    'replace_one',
+                    "replace_one",
                     {
-                        'collation': None,
-                        'sort': None,
-                        'hint': None,
-                        'comment': 'bulk_comment',
-                        'let': {'scope': 'bulk'},
-                        'session': None,
+                        "collation": None,
+                        "sort": None,
+                        "hint": None,
+                        "comment": "bulk_comment",
+                        "let": {"scope": "bulk"},
+                        "session": None,
                     },
                 ),
                 (
-                    'delete_one',
+                    "delete_one",
                     {
-                        'collation': None,
-                        'hint': None,
-                        'comment': 'bulk_comment',
-                        'let': {'scope': 'bulk'},
-                        'session': None,
+                        "collation": None,
+                        "hint": None,
+                        "comment": "bulk_comment",
+                        "let": {"scope": "bulk"},
+                        "session": None,
                     },
                 ),
                 (
-                    'delete_many',
+                    "delete_many",
                     {
-                        'collation': None,
-                        'hint': None,
-                        'comment': 'bulk_comment',
-                        'let': {'scope': 'bulk'},
-                        'session': None,
+                        "collation": None,
+                        "hint": None,
+                        "comment": "bulk_comment",
+                        "let": {"scope": "bulk"},
+                        "session": None,
                     },
                 ),
             ],
@@ -1041,40 +1052,42 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
             pass
 
         async def _exercise():
-            collection = AsyncCollection(EngineStub(), 'db', 'coll')
+            collection = AsyncCollection(EngineStub(), "db", "coll")
             recorded = {}
 
             async def _update_one(*args, **kwargs):
-                recorded['update_one'] = kwargs
+                recorded["update_one"] = kwargs
                 return UpdateResult(matched_count=1, modified_count=1)
 
             async def _update_many(*args, **kwargs):
-                recorded['update_many'] = kwargs
+                recorded["update_many"] = kwargs
                 return UpdateResult(matched_count=1, modified_count=1)
 
             async def _replace_one(*args, **kwargs):
-                recorded['replace_one'] = kwargs
+                recorded["replace_one"] = kwargs
                 return UpdateResult(matched_count=1, modified_count=1)
 
-            collection.update_one = _update_one  # type: ignore[method-assign]
-            collection.update_many = _update_many  # type: ignore[method-assign]
-            collection.replace_one = _replace_one  # type: ignore[method-assign]
-
-            await collection.bulk_write(
-                [
-                    UpdateOne({'_id': '1'}, {'$set': {'done': True}}),
-                    UpdateMany({'done': False}, {'$set': {'done': True}}),
-                    ReplaceOne({'_id': '1'}, {'done': True}),
-                ],
-                bypass_document_validation=True,
-            )
+            with patch.multiple(
+                collection_bulk_module._collection_modify,
+                update_one=_update_one,
+                update_many=_update_many,
+                replace_one=_replace_one,
+            ):
+                await collection.bulk_write(
+                    [
+                        UpdateOne({"_id": "1"}, {"$set": {"done": True}}),
+                        UpdateMany({"done": False}, {"$set": {"done": True}}),
+                        ReplaceOne({"_id": "1"}, {"done": True}),
+                    ],
+                    bypass_document_validation=True,
+                )
             return recorded
 
         recorded = asyncio.run(_exercise())
 
-        self.assertTrue(recorded['update_one']['bypass_document_validation'])
-        self.assertTrue(recorded['update_many']['bypass_document_validation'])
-        self.assertTrue(recorded['replace_one']['bypass_document_validation'])
+        self.assertTrue(recorded["update_one"]["bypass_document_validation"])
+        self.assertTrue(recorded["update_many"]["bypass_document_validation"])
+        self.assertTrue(recorded["replace_one"]["bypass_document_validation"])
 
     def test_update_methods_reject_invalid_array_filters_shapes(self):
         with self.assertRaises(TypeError):

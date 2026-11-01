@@ -5,6 +5,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from mongoeco.api._async import _collection_modify
 from mongoeco.api._async._write_command_validation import validate_update_entry_shape
 from mongoeco.api._async._write_errors import validate_classic_update_sort
 from mongoeco.api._async._write_failures import record_write_failure
@@ -469,10 +470,9 @@ async def execute_bulk_write(
                     }
                     if bypass_document_validation:
                         update_one_kwargs["bypass_document_validation"] = True
-                    result = await collection.update_one(
-                        request.filter,
-                        request.update,
-                        request.upsert,
+                    result = await _collection_modify.execute_server_update(
+                        collection, request.filter, request.update,
+                        upsert=request.upsert,
                         **update_one_kwargs,
                     )
                     matched_count += 0 if result.did_upsert else result.matched_count
@@ -492,10 +492,9 @@ async def execute_bulk_write(
                     }
                     if bypass_document_validation:
                         update_many_kwargs["bypass_document_validation"] = True
-                    result = await collection.update_many(
-                        request.filter,
-                        request.update,
-                        request.upsert,
+                    result = await _collection_modify.execute_server_update(
+                        collection, request.filter, request.update,
+                        multi=True, upsert=request.upsert,
                         **update_many_kwargs,
                     )
                     matched_count += 0 if result.did_upsert else result.matched_count
@@ -515,10 +514,10 @@ async def execute_bulk_write(
                     }
                     if bypass_document_validation:
                         replace_one_kwargs["bypass_document_validation"] = True
-                    result = await collection.replace_one(
-                        request.filter,
+                    result = await _collection_modify.execute_server_update(
+                        collection, request.filter,
                         prepared.replacement_document or request.replacement,
-                        request.upsert,
+                        replacement=True, upsert=request.upsert,
                         **replace_one_kwargs,
                     )
                     matched_count += 0 if result.did_upsert else result.matched_count
@@ -526,8 +525,8 @@ async def execute_bulk_write(
                     if result.did_upsert:
                         upserted_ids[index] = result.upserted_id
                 elif isinstance(request, DeleteOne):
-                    result = await collection.delete_one(
-                        request.filter,
+                    result = await _collection_modify.execute_server_delete(
+                        collection, request.filter,
                         collation=request.collation,
                         hint=request.hint,
                         comment=request.comment
@@ -538,8 +537,8 @@ async def execute_bulk_write(
                     )
                     deleted_count += result.deleted_count
                 elif isinstance(request, DeleteMany):
-                    result = await collection.delete_many(
-                        request.filter,
+                    result = await _collection_modify.execute_server_delete(
+                        collection, request.filter, multi=True,
                         collation=request.collation,
                         hint=request.hint,
                         comment=request.comment

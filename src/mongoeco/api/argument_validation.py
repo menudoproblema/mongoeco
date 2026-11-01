@@ -100,3 +100,36 @@ def validate_max_time_ms(max_time_ms: int) -> None:
         raise TypeError("max_time_ms must be an integer")
     if max_time_ms < 0:
         raise ValueError("max_time_ms must be >= 0")
+
+
+def update_document(update):
+    """Validate client update shape without normalizing its BSON values."""
+    if not isinstance(update, Mapping | list):
+        message = "update_spec must be a dict or list"
+        raise TypeError(message)
+    if not update:
+        message = "update_spec must not be empty"
+        raise ValueError(message)
+    if not isinstance(update, list) and not next(iter(update)).startswith("$"):
+        message = "update_spec must begin with an update operator"
+        raise ValueError(message)
+    return update
+
+
+def replacement_document(replacement):
+    """Only the first key decides the driver's replacement/operator grammar."""
+    if not isinstance(replacement, Mapping):
+        message = "replacement must be a dict"
+        raise TypeError(message)
+    if replacement and next(iter(replacement)).startswith("$"):
+        message = "replacement must not begin with an update operator"
+        raise ValueError(message)
+    return replacement
+
+
+def filter_document(filter_spec):
+    """Require the client write filter, where None is not an empty query."""
+    if not isinstance(filter_spec, Mapping):
+        message = "filter_spec must be a document"
+        raise TypeError(message)
+    return filter_spec

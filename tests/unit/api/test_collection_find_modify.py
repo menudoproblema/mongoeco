@@ -1296,7 +1296,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
         self.assertEqual(ctx.exception.code, 66)
 
     def test_find_one_and_update_requires_return_document_enum(self):
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError):
             asyncio.run(
                 self.collection.find_one_and_update(
                     {"name": "Ada"},

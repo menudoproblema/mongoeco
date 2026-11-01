@@ -214,3 +214,49 @@ def encode_operation_bson(options, *, codec_options):
         if isinstance(encoded.get(field), dict):
             encoded[field] = list(encoded[field].items())
     return {**options, **encoded}
+
+
+def encode_write_operation_bson(options, *, codec_options, find_modify=False):
+    """Admit one write frame; command headers precede batched q/u entries."""
+    order = (
+        (
+            "filter_spec",
+            "return_document",
+            "let",
+            "max_time_ms",
+            "update_spec",
+            "replacement",
+            "comment",
+            "projection",
+            "sort",
+            "upsert",
+            "array_filters",
+            "hint",
+            "bypass_document_validation",
+            "collation",
+        )
+        if find_modify
+        else (
+            "let",
+            "comment",
+            "bypass_document_validation",
+            "filter_spec",
+            "update_spec",
+            "replacement",
+            "upsert",
+            "collation",
+            "array_filters",
+            "hint",
+            "sort",
+        )
+    )
+    document = {
+        name: options[name]
+        for name in order
+        if name in options and options[name] is not None
+    }
+    encoded = encode_bson_request(document, codec_options=codec_options)
+    for field in ("sort", "hint"):
+        if isinstance(encoded.get(field), dict):
+            encoded[field] = list(encoded[field].items())
+    return {**options, **encoded}

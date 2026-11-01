@@ -46,6 +46,10 @@ from tests.differential.semantic_bson_insert_cases import (
     SEED as BSON_INSERT_SEED,
     SEMANTIC_BSON_INSERT_CASES,
 )
+from tests.differential.semantic_bson_mutation_cases import (
+    SEED as BSON_MUTATION_SEED,
+    SEMANTIC_BSON_MUTATION_CASES,
+)
 from tests.differential.semantic_bson_request_cases import (
     SEED as BSON_REQUEST_SEED,
     SEMANTIC_BSON_REQUEST_CASES,
@@ -534,6 +538,11 @@ SEMANTIC_CORPORA = {
         "semantic_decimal_cases",
         DECIMAL_EDGE_SEED,
         SEMANTIC_DECIMAL_EDGE_CASES,
+    ),
+    "bson_mutation": SemanticCorpus(
+        "bson-mutation", "semantic_bson_mutation_cases",
+        BSON_MUTATION_SEED, SEMANTIC_BSON_MUTATION_CASES,
+        observation_encoding="canonical-json",
     ),
     "bson_insert": SemanticCorpus(
         "bson-insert", "semantic_bson_insert_cases",

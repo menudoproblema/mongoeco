@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from mongoeco.api._async._write_errors import (
@@ -7,6 +8,15 @@ from mongoeco.api._async._write_errors import (
     validate_classic_update_sort,
     write_command_errors,
 )
+from mongoeco.api._command_bson import command_boolean
+from mongoeco.api.argument_validation import (
+    filter_document,
+    normalize_sort_spec,
+    projection_document,
+    replacement_document,
+    update_document,
+)
+from mongoeco.api.bson_input import encode_write_operation_bson
 from mongoeco.api.operations import (
     UpdateOperation,
     compile_find_selection_from_update_operation,
@@ -61,8 +71,98 @@ if TYPE_CHECKING:
     from mongoeco.session import ClientSession
 
 
+def _index_document(value, *, hint=False):
+    if value is None or (hint and isinstance(value, str)):
+        return value
+    if isinstance(value, Mapping):
+        return dict(value)
+    return dict(normalize_sort_spec(value))
+
+
+def _admit_write_options(  # noqa: PLR0912 - native validation/session phases
+    collection,
+    options,
+    *,
+    change=None,
+    find_modify=False,
+):
+    def validate_change():
+        if change in {"update", "update_many"}:
+            update_document(options["update_spec"])
+            if options.get("array_filters") is not None and not isinstance(
+                options["array_filters"], list
+            ):
+                message = "array_filters must be a list"
+                raise TypeError(message)
+        elif change == "replacement":
+            replacement_document(options["replacement"])
+            if (
+                not find_modify
+                and options.get("let") is not None
+                and not isinstance(options["let"], Mapping)
+            ):
+                message = "let must be a document"
+                raise TypeError(message)
+
+    if change == "delete_one":
+        collection._ensure_session_active(options.get("session"))
+    if find_modify:
+        validate_change()
+    filter_document(options["filter_spec"])
+    if not find_modify and change != "delete_one":
+        validate_change()
+        if change != "update_many" and change is not None:
+            collection._ensure_session_active(options.get("session"))
+    if find_modify and "return_document" in options:
+        returned = collection._normalize_return_document(options["return_document"])
+        options["return_document"] = returned is ReturnDocument.AFTER
+    if (
+        not find_modify
+        and "upsert" in options
+        and not isinstance(options["upsert"], bool)
+    ):
+        message = "upsert must be a bool"
+        raise TypeError(message)
+    collation = options.get("collation")
+    if collation is not None and not isinstance(collation, Mapping):
+        # Retain the already supported local CollationSpec convenience.
+        collation = collection._normalize_collation(collation)
+        options["collation"] = collation
+    options["hint"] = _index_document(options.get("hint"), hint=True)
+    if not find_modify:
+        options["sort"] = _index_document(options.get("sort"))
+    else:
+        collection._ensure_session_active(options.get("session"))
+    if options.get("let") is not None and not isinstance(options["let"], Mapping):
+        message = "let must be a document"
+        raise TypeError(message)
+    if find_modify:
+        options["projection"] = projection_document(options.get("projection"))
+        options["sort"] = _index_document(options.get("sort"))
+        if options.get("upsert") is not None and not isinstance(
+            options["upsert"], bool
+        ):
+            message = "upsert must be a bool"
+            raise TypeError(message)
+    if not find_modify and change in {"update_many", None}:
+        collection._ensure_session_active(options.get("session"))
+    encoded = encode_write_operation_bson(
+        options,
+        codec_options=collection._codec_options,
+        find_modify=find_modify,
+    )
+    if "bypass_document_validation" in encoded:
+        value = encoded["bypass_document_validation"]
+        encoded["bypass_document_validation"] = command_boolean(
+            value, "bypassDocumentValidation", numeric=True
+        )
+    return encoded
+
+
 def _document_selection(
-    document_id: DocumentId, *, dialect: MongoDialect,
+    document_id: DocumentId,
+    *,
+    dialect: MongoDialect,
 ) -> tuple[Filter, QueryNode]:
     """Build the identity filter and its plan together, without recompiling updates."""
     identity_filter = {"_id": document_id}
@@ -118,7 +218,8 @@ async def _delete_selected_document(
 ) -> bool:
     document_id = _selected_document_id(document)
     identity_filter, identity_plan = _document_selection(
-        document_id, dialect=collection._mongodb_dialect,
+        document_id,
+        dialect=collection._mongodb_dialect,
     )
     operation_context = selector_operation.context
     if operation_context is None:
@@ -184,6 +285,13 @@ async def update_one(
         extra_kwargs={"filter": filter, "update": update, **extra_kwargs},
         profile=None if server_command else collection._pymongo_profile,
     )
+    if not server_command:
+        options = _admit_write_options(
+            collection,
+            options,
+            change="update",
+            find_modify=False,
+        )
     filter_spec = collection._normalize_filter(options["filter_spec"])
     update_spec = (
         DocumentCodec.to_internal(options["update_spec"])
@@ -196,7 +304,8 @@ async def update_one(
         collection._mongodb_dialect.key, has_sort=options.get("sort") is not None
     )
     session = options.get("session")
-    collection._ensure_session_active(session)
+    if server_command:
+        collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
         collation=options.get("collation"),
@@ -273,6 +382,13 @@ async def update_many(
         extra_kwargs={"filter": filter, "update": update, **extra_kwargs},
         profile=None if server_command else collection._pymongo_profile,
     )
+    if not server_command:
+        options = _admit_write_options(
+            collection,
+            options,
+            change="update_many",
+            find_modify=False,
+        )
     filter_spec = collection._normalize_filter(options["filter_spec"])
     update_spec = (
         DocumentCodec.to_internal(options["update_spec"])
@@ -282,7 +398,8 @@ async def update_many(
     upsert = bool(options.get("upsert", False))
     bypass_document_validation = bool(options.get("bypass_document_validation", False))
     session = options.get("session")
-    collection._ensure_session_active(session)
+    if server_command:
+        collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
         collation=options.get("collation"),
@@ -332,7 +449,8 @@ async def update_many(
     for event_index, matched in enumerate(matched_documents):
         matched_id = _selected_document_id(matched)
         identity_filter, identity_plan = _document_selection(
-            matched_id, dialect=collection._mongodb_dialect,
+            matched_id,
+            dialect=collection._mongodb_dialect,
         )
         operation_context = operation.context
         if operation_context is None:
@@ -408,6 +526,13 @@ async def replace_one(
         extra_kwargs={"filter": filter, **extra_kwargs},
         profile=None if server_command else collection._pymongo_profile,
     )
+    if not server_command:
+        options = _admit_write_options(
+            collection,
+            options,
+            change="replacement",
+            find_modify=False,
+        )
     filter_spec = collection._normalize_filter(options["filter_spec"])
     replacement = collection._require_replacement(options["replacement"])
     upsert = bool(options.get("upsert", False))
@@ -416,7 +541,8 @@ async def replace_one(
         collection._mongodb_dialect.key, has_sort=options.get("sort") is not None
     )
     session = options.get("session")
-    collection._ensure_session_active(session)
+    if server_command:
+        collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
         collation=options.get("collation"),
@@ -503,6 +629,13 @@ async def find_one_and_update_outcome(
         extra_kwargs={"filter": filter, "update": update, **extra_kwargs},
         profile=None if server_command else collection._pymongo_profile,
     )
+    if not server_command:
+        options = _admit_write_options(
+            collection,
+            options,
+            change="update",
+            find_modify=True,
+        )
     filter_spec = collection._normalize_filter(options["filter_spec"])
     update_spec = (
         DocumentCodec.to_internal(options["update_spec"])
@@ -522,7 +655,8 @@ async def find_one_and_update_outcome(
     upsert = bool(options.get("upsert", False))
     bypass_document_validation = bool(options.get("bypass_document_validation", False))
     session = options.get("session")
-    collection._ensure_session_active(session)
+    if server_command:
+        collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
         collation=options.get("collation"),
@@ -604,6 +738,13 @@ async def find_one_and_replace_outcome(
         extra_kwargs={"filter": filter, **extra_kwargs},
         profile=None if server_command else collection._pymongo_profile,
     )
+    if not server_command:
+        options = _admit_write_options(
+            collection,
+            options,
+            change="replacement",
+            find_modify=True,
+        )
     filter_spec = collection._normalize_filter(options["filter_spec"])
     replacement = collection._require_replacement(options["replacement"])
     projection = collection._normalize_projection(options.get("projection"))
@@ -616,7 +757,8 @@ async def find_one_and_replace_outcome(
     upsert = bool(options.get("upsert", False))
     bypass_document_validation = bool(options.get("bypass_document_validation", False))
     session = options.get("session")
-    collection._ensure_session_active(session)
+    if server_command:
+        collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
         collation=options.get("collation"),
@@ -694,13 +836,21 @@ async def find_one_and_delete(
         extra_kwargs={"filter": filter, **extra_kwargs},
         profile=None if server_command else collection._pymongo_profile,
     )
+    if not server_command:
+        options = _admit_write_options(
+            collection,
+            options,
+            change=None,
+            find_modify=True,
+        )
     filter_spec = collection._normalize_filter(options["filter_spec"])
     projection = collection._normalize_projection(options.get("projection"))
     project = _ProjectionExecutor(
         projection, selector_filter=filter_spec, dialect=collection._mongodb_dialect
     )
     session = options.get("session")
-    collection._ensure_session_active(session)
+    if server_command:
+        collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
         collation=options.get("collation"),
@@ -756,9 +906,17 @@ async def delete_one(
         extra_kwargs={"filter": filter, **extra_kwargs},
         profile=None if server_command else collection._pymongo_profile,
     )
+    if not server_command:
+        options = _admit_write_options(
+            collection,
+            options,
+            change="delete_one",
+            find_modify=False,
+        )
     filter_spec = collection._normalize_filter(options["filter_spec"])
     session = options.get("session")
-    collection._ensure_session_active(session)
+    if server_command:
+        collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
         collation=options.get("collation"),
@@ -815,9 +973,17 @@ async def delete_many(
         extra_kwargs={"filter": filter, **extra_kwargs},
         profile=None if server_command else collection._pymongo_profile,
     )
+    if not server_command:
+        options = _admit_write_options(
+            collection,
+            options,
+            change=None,
+            find_modify=False,
+        )
     filter_spec = collection._normalize_filter(options["filter_spec"])
     session = options.get("session")
-    collection._ensure_session_active(session)
+    if server_command:
+        collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
         collation=options.get("collation"),

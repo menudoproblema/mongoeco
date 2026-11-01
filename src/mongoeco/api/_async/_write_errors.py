@@ -34,6 +34,16 @@ from mongoeco.errors import (
 from mongoeco.types import CodecOptions
 
 
+def materialize_write_response(document, *, codec_options):
+    """Write replies retain builtin UUID/date options, without user decoders."""
+    options = CodecOptions(
+        tz_aware=codec_options.tz_aware,
+        tzinfo=codec_options.tzinfo,
+        uuid_representation=codec_options.uuid_representation,
+    )
+    return materialize_public_document(document, codec_options=options)
+
+
 def materialize_write_error(error, *, codec_options):
     """Decode the write reply with builtin options, preserving client bulk ops."""
     source = error.details or {}
@@ -52,12 +62,7 @@ def materialize_write_error(error, *, codec_options):
                 for entry in source.get("writeErrors", ())
             ],
         }
-    options = CodecOptions(
-        tz_aware=codec_options.tz_aware,
-        tzinfo=codec_options.tzinfo,
-        uuid_representation=codec_options.uuid_representation,
-    )
-    details = materialize_public_document(source, codec_options=options)
+    details = materialize_write_response(source, codec_options=codec_options)
     if isinstance(error, BulkWriteError):
         # PyMongo adds the original client operation after decoding the reply.
         for public, original in zip(
@@ -106,7 +111,7 @@ def write_command_errors[**P, T](
                 message = write_error_message(
                     error, update_dialect=args[0]._mongodb_dialect.key
                 )
-                raise DuplicateKeyError._from_server_document(
+                converted = DuplicateKeyError._from_server_document(
                     message,
                     code=error.code,
                     details={
@@ -115,7 +120,13 @@ def write_command_errors[**P, T](
                         "errmsg": message,
                         **write_error_details(error),
                     },
-                ) from error
+                )
+                if not kwargs.get("server_command"):
+                    converted = materialize_write_error(
+                        converted,
+                        codec_options=args[0]._codec_options,
+                    )
+                raise retain_diagnostic(error, converted) from error
             if error_scope(error) is ErrorScope.COMMAND or isinstance(
                 error, ExecutionTimeout
             ):
@@ -131,6 +142,11 @@ def write_command_errors[**P, T](
                     **write_error_details(error),
                 },
             )
+            if not kwargs.get("server_command"):
+                converted = materialize_write_error(
+                    converted,
+                    codec_options=args[0]._codec_options,
+                )
             raise retain_diagnostic(error, converted) from error
 
     return invoke
@@ -174,6 +190,11 @@ def find_modify_errors[**P, T](
             details.update(ok=0.0, code=error.code, errmsg=message)
             if name is not None:
                 details["codeName"] = name
+            if not kwargs.get("server_command"):
+                details = materialize_write_response(
+                    details,
+                    codec_options=args[0]._codec_options,
+                )
             raise retain_diagnostic(
                 error, error_type(message, code=error.code, details=details)
             ) from error

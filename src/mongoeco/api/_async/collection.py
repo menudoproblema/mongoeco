@@ -24,7 +24,9 @@ from mongoeco.api._async._collection_bulk import (
     normalize_bulk_write_request,
 )
 from mongoeco.api._async._collection_insert import execute_insert_many
-from mongoeco.api._async._write_errors import materialize_write_error
+from mongoeco.api._async._write_errors import (
+    materialize_write_error, materialize_write_response,
+)
 from mongoeco.api._async._collection_runtime import (
     CollectionRuntimeCoordinator,
 )
@@ -44,6 +46,8 @@ from mongoeco.api.argument_validation import (
     ProjectionInput,
     normalize_projection_spec,
     projection_document,
+    update_document,
+    replacement_document,
     normalize_sort_spec as _normalize_sort_spec,
     validate_batch_size as _validate_batch_size,
     validate_hint_spec as _validate_hint_spec,
@@ -113,7 +117,6 @@ from mongoeco.core.query_plan import QueryNode  # noqa: TC001
 from mongoeco.core.validation import (
     is_document,
     is_filter,
-    is_update,
 )
 from mongoeco.engines.base import (
     AsyncStorageEngine,  # noqa: TC001 - runtime public annotations
@@ -416,25 +419,11 @@ class AsyncCollection:
 
     @staticmethod
     def _require_update(update_spec: object) -> Update:
-        if isinstance(update_spec, list):
-            if not update_spec:
-                raise ValueError("update_spec must not be empty")
-            return DocumentCodec.to_internal(update_spec)
-        if not is_update(update_spec):
-            raise TypeError("update_spec must be a dict or list")
-        if not update_spec:
-            raise ValueError("update_spec must not be empty")
-        if not all(isinstance(key, str) and key.startswith("$") for key in update_spec):
-            raise ValueError("update_spec must contain only update operators")
-        return DocumentCodec.to_internal(update_spec)
+        return DocumentCodec.to_internal(update_document(update_spec))
 
     @staticmethod
     def _require_replacement(replacement: object) -> Document:
-        if not is_document(replacement):
-            raise TypeError("replacement must be a dict")
-        if any(isinstance(key, str) and key.startswith("$") for key in replacement):
-            raise ValueError("replacement must not contain update operators")
-        return DocumentCodec.to_internal(replacement)
+        return DocumentCodec.to_internal(replacement_document(replacement))
 
     @staticmethod
     def _normalize_hint(hint: object | None) -> HintSpec | None:
@@ -517,8 +506,8 @@ class AsyncCollection:
             return None
         return self._apply_codec_options_to_document(document)
 
-    @staticmethod
     def _to_public_update_result(
+        self,
         result: UpdateResult[DocumentId],
     ) -> UpdateResult[DocumentId]:
         return UpdateResult(
@@ -530,7 +519,11 @@ class AsyncCollection:
                 else result.matched_count
             ),
             modified_count=result.modified_count,
-            upserted_id=materialize_public_value(result.upserted_id),
+            upserted_id=(
+                None if result.upserted_id is None else materialize_write_response(
+                    {"_id": result.upserted_id}, codec_options=self._codec_options,
+                )["_id"]
+            ),
             acknowledged=result.acknowledged,
             did_upsert=result.did_upsert,
         )
@@ -650,7 +643,8 @@ class AsyncCollection:
                 return ReturnDocument.BEFORE
             if normalized_name == "AFTER":
                 return ReturnDocument.AFTER
-        raise TypeError("return_document must be a ReturnDocument value")
+        message = "return_document must be a ReturnDocument value"
+        raise ValueError(message)
 
     def _record_operation_metadata(
         self,
