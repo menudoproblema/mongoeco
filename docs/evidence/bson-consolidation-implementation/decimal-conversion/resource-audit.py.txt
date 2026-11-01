@@ -1,0 +1,13 @@
+import json,subprocess
+from pathlib import Path
+subprocess.run(['docker','info','--format','{{.ServerVersion}}'],check=True,capture_output=True,text=True)
+rows=[]
+for round_id in range(1,8):
+ for version in ('7.0','8.0','9.0'):
+  path=Path(f'/tmp/mongoeco-decimal-conversion-native-v{round_id}/{version}/fixture.json');d=json.loads(path.read_text());assert d['status']=='succeeded' and d['cleanup']['removed'] and d['cleanup']['volumes_removed'],d
+  for kind,identifier in [('container',d['container_id']),*[('volume',x) for x in d['anonymous_volumes']]]:
+   r=subprocess.run(['docker',kind,'inspect',identifier],capture_output=True,text=True)
+   assert r.returncode!=0 and 'no such' in (r.stderr+r.stdout).lower(),(kind,identifier,r.returncode,r.stderr)
+   rows.append({'round':round_id,'target':version,'kind':kind,'id':identifier,'absent':True})
+Path('/tmp/mongoeco-decimal-resources.json').write_text(json.dumps(rows,indent=2)+'\n')
+print('verified absent',len(rows),'owned resources')

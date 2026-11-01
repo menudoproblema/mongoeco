@@ -17,6 +17,7 @@ from mongoeco.compat._catalog_operators import SCALAR_EXPRESSION_ARGUMENTS
 from mongoeco.core.aggregation.date_expressions import _to_utc_naive
 from mongoeco.core.aggregation.expression_values import compare_expression_values
 from mongoeco.core.bson_scalars import (
+    DECIMAL128_CONTEXT,
     INT32_MAX,
     INT32_MIN,
     INT64_MAX,
@@ -25,6 +26,7 @@ from mongoeco.core.bson_scalars import (
     BsonDouble,
     BsonInt32,
     BsonInt64,
+    _numeric_to_decimal,
     bson_datetime_from_milliseconds,
     bson_datetime_milliseconds,
     bson_numeric_alias,
@@ -33,7 +35,7 @@ from mongoeco.core.bson_scalars import (
     validate_bson_value,
     wrap_bson_numeric,
 )
-from mongoeco.core.bson_values import code_parts, document_mapping
+from mongoeco.core.bson_values import code_parts, document_mapping, is_bson_string
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import compare_with_collation
 from mongoeco.core.server_errors import server_error
@@ -123,12 +125,11 @@ def evaluate_scalar_expression(
             "int": "int",
             "long": "long",
             "double": "double",
+            "decimal": "decimal",
             "date": "date",
             "objectId": "objectId",
             "string": "string",
         }
-        if extended:
-            aliases["decimal"] = "decimal"
         base = None
         if extended and "base" in spec:
             base = _conversion_base(
@@ -699,42 +700,55 @@ def _convert_aggregation_scalar(
         raise OperationFailure(f"{operator} cannot convert the value")
 
     if target == "decimal":
-        if isinstance(value, bool):
-            result = decimal.Decimal(int(value))
-            validate_bson_value(result)
-            return BsonDecimal128(result) if preserve_numeric_wrappers else result
-        if isinstance(value, int):
-            result = decimal.Decimal(value)
-            validate_bson_value(result)
-            return BsonDecimal128(result) if preserve_numeric_wrappers else result
-        if isinstance(value, float):
-            if not math.isfinite(value):
-                raise OperationFailure(f"{operator} cannot convert the value")
-            result = decimal.Decimal(str(value))
-            validate_bson_value(result)
-            return BsonDecimal128(result) if preserve_numeric_wrappers else result
-        if isinstance(value, Decimal128):
-            result = value.to_decimal()
-            validate_bson_value(result)
-            return BsonDecimal128(result) if preserve_numeric_wrappers else result
-        if isinstance(value, decimal.Decimal):
-            validate_bson_value(value)
-            return BsonDecimal128(value) if preserve_numeric_wrappers else value
-        if isinstance(value, str):
-            text = value.strip()
-            if not text:
-                raise OperationFailure(f"{operator} cannot convert the string value")
-            try:
-                result = decimal.Decimal(text)
-                validate_bson_value(result)
-                return BsonDecimal128(result) if preserve_numeric_wrappers else result
-            except Exception as exc:
-                raise OperationFailure(
-                    f"{operator} cannot convert the string value"
-                ) from exc
-        raise OperationFailure(f"{operator} cannot convert the value")
+        result = _decimal_conversion_value(operator, value)
+        return BsonDecimal128(result) if preserve_numeric_wrappers else result
 
     if target == "string":
         return stringify_value(value)
 
     raise OperationFailure(f"Unsupported conversion target for {operator}")  # noqa: EM102 - unchanged legacy emitter
+
+
+def _parse_decimal128_string(operator: str, text: str) -> decimal.Decimal:
+    # Python Decimal accepts signaling NaN, payloads, separators and whitespace.
+    # BSON numeric storage accepts some of these; MongoDB's String parser does not.
+    grammar = (
+        r"[+-]?(?:(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)"
+        r"(?:[eE][+-]?[0-9]+)?|inf(?:inity)?|nan)"
+    )
+    message = f"{operator} cannot convert the string value"
+    if re.fullmatch(grammar, text, flags=re.IGNORECASE | re.ASCII) is None:
+        raise server_error(message, code=241)
+    try:
+        with decimal.localcontext(DECIMAL128_CONTEXT) as context:
+            context.clear_flags()
+            context.clamp = 1
+            context.traps[decimal.Underflow] = True
+            return context.create_decimal(text)
+    except decimal.DecimalException as error:
+        raise server_error(message, code=241) from error
+
+
+def _decimal_conversion_value(operator: str, value: Any) -> decimal.Decimal:
+    if isinstance(value, bool):
+        result = decimal.Decimal(int(value))
+    elif isinstance(value, int):
+        result = decimal.Decimal(value)
+    elif isinstance(value, float):
+        # Share the established 15-digit conversion, not exact comparison keys.
+        result = _numeric_to_decimal(value)
+        if math.isnan(value) and math.copysign(1.0, value) < 0:
+            result = result.copy_negate()
+    elif isinstance(value, Decimal128):
+        result = value.to_decimal()
+    elif isinstance(value, decimal.Decimal):
+        result = value
+    elif isinstance(value, datetime.datetime):
+        result = decimal.Decimal(bson_datetime_milliseconds(value))
+    elif is_bson_string(value):
+        return _parse_decimal128_string(operator, value)
+    else:
+        message = f"{operator} cannot convert the value"
+        raise server_error(message, code=241)
+    validate_bson_value(result)
+    return result

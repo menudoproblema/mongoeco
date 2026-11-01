@@ -755,6 +755,7 @@ _EXPRESSION_ARITIES = {
             "$floor",
             "$ceil",
             "$toInt",
+            "$toDecimal",
         ),
         (1, 1),
     ),

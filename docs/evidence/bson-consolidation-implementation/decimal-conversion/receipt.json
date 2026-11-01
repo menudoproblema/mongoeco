@@ -1,0 +1,193 @@
+{
+  "scope": "Scalar decimal conversion; plan remains in progress",
+  "base": "a2c3cbb",
+  "runtime_sources": "runtime-sources.json",
+  "changed_sources": "changed-sources.json",
+  "wheel": {
+    "wheel": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-u9qyaer6/source/dist/mongoeco-4.11.0-py3-none-any.whl",
+    "sha256": "3b09032d777176b8bcda9983ebf1956098ddccab7e38fb75bf3ba9727fb2568c",
+    "site_packages": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-u9qyaer6/site-packages",
+    "modules": 284
+  },
+  "native": {
+    "references": "native-checks.json",
+    "actions": 6,
+    "records_per_version": 548,
+    "topology": "standalone",
+    "final_capture_round": 7,
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "cleanup_resources_absent": 63
+  },
+  "baseline": {
+    "failed": 144,
+    "passed": 3,
+    "log": "baseline-final.txt.gz"
+  },
+  "gates": {
+    "installed_replay": {
+      "passed": 8601,
+      "log": "wheel-all-final.txt.gz",
+      "seconds": 211.96
+    },
+    "installed_unit_spi_properties": {
+      "passed": 1144,
+      "subtests": 181,
+      "log": "wheel-unit-final.txt.gz",
+      "seconds": 75.58
+    },
+    "sdk_free": {
+      "python": "3.13.15 (main, Aug  5 2026, 12:25:43) [Clang 17.0.0 (clang-1700.6.4.2)]",
+      "sdk_available": false,
+      "checks": 228,
+      "site": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-u9qyaer6/site-packages"
+    },
+    "typing": "typing-final.txt.gz",
+    "lint": "lint.txt.gz",
+    "public_api_unchanged": true,
+    "import_proofs": [
+      "wheel-imports-decimal-replay-final-master.json",
+      "wheel-imports-decimal-replay-final-gw0.json",
+      "wheel-imports-decimal-replay-final-gw1.json",
+      "wheel-imports-decimal-unit-final-master.json",
+      "wheel-imports-decimal-replay-final-gw2.json",
+      "wheel-imports-decimal-replay-final-gw3.json"
+    ]
+  },
+  "performance": {
+    "scope": "diagnostic scalar String->Decimal only, not D05 performance acceptance",
+    "iterations_per_sample": 10000,
+    "order": "ABBA x2",
+    "cpu_ratio": 1.0637448190881595,
+    "samples": [
+      {
+        "cpu": 0.09267399999999998,
+        "result": "1.250",
+        "label": "base"
+      },
+      {
+        "cpu": 0.09899699999999997,
+        "result": "1.250",
+        "label": "candidate"
+      },
+      {
+        "cpu": 0.09354600000000002,
+        "result": "1.250",
+        "label": "candidate"
+      },
+      {
+        "cpu": 0.08541699999999999,
+        "result": "1.250",
+        "label": "base"
+      },
+      {
+        "cpu": 0.09017,
+        "result": "1.250",
+        "label": "base"
+      },
+      {
+        "cpu": 0.09439900000000001,
+        "result": "1.250",
+        "label": "candidate"
+      },
+      {
+        "cpu": 0.09290000000000001,
+        "result": "1.250",
+        "label": "candidate"
+      },
+      {
+        "cpu": 0.08881900000000004,
+        "result": "1.250",
+        "label": "base"
+      }
+    ]
+  },
+  "limits": [
+    "D06 remaining representations/contexts and consumers are not complete.",
+    "H53 C03/B08, D07 decision, D05 matrix/coverage/performance and B07 admission remain.",
+    "SDK-free covers the documented subset, not the full distribution matrix.",
+    "Standalone conversion controls do not exercise native concurrent writes/transactions.",
+    "No arbitrary Decimal128 BID payload preservation claim or reconstruction of historically lost data."
+  ],
+  "artifact_sha256": {
+    "7.0/capture-check.txt.gz": "6b197b53a2b2a9309ce47a45ed94231d28a2d6b941a6cbfcf87f8ad6316fde55",
+    "7.0/fixture.json": "8a629520254d43dc366e7ca2f06a5ad972b9e002f4356392c5f1da70be0efa75",
+    "8.0/capture-check.txt.gz": "0fe7562302f0e63cb780cd96d6f554c610f5b1502a08cc125f1824edead625bd",
+    "8.0/fixture.json": "9babee13c6ff94a37dd0124f35695d32e741e413960956d40b304984b69bf346",
+    "9.0/capture-check.txt.gz": "750449b14ed44b5fcead0d6d03d07a9414de805fdc2b0b9ad12d1101eab35643",
+    "9.0/fixture.json": "0ca20232dabab05b56845e563547f7366640e72e09ddeb0da93e3a8e91435c21",
+    "README.md": "99cab322277e316737852c5514ba712149a382cbec4b89d8f88a3df03df89d10",
+    "artifact-guard.py.txt": "d3f1ddd3376418a72b6ec4aea27b7df0f1be19b17a7114f4339eaf0efae9307f",
+    "baseline-final.txt.gz": "3ddb4d2696dbc399ee234a2243e3630008be273f14001ed81086363c37bc3711",
+    "baseline.py.txt": "ce215212fcb2b1846f72db192b5a9f4a54b1a776c679d275ce726afaea4c0000",
+    "build-final.txt.gz": "6e0094cdc325a7f35c31c82e780ce7c7f107f518953d46993fb9d0768803ce13",
+    "changed-sources.json": "89d4c3d91158590e12b2289bb182433127bb156419bc1a4d3bcc3c84250e9622",
+    "cost.json": "474a99e3b1cc9bbdc9b0b8a383735dbd81afbc3366cda8fa23cc5690d4301a3f",
+    "cost.py.txt": "497eaf101f8e022fa0a60ad95158b2cd2e9b7029a2b7b5470880d0b2077e2589",
+    "development-round-1/7.0/capture-check.txt.gz": "c091bcbf717396e9abbcae0da99aea877c9a250d24094c5a5d8494eaa6025d7a",
+    "development-round-1/7.0/fixture.json": "5f61fd80b358f2ec7a6b1f96315ec5b4b956ac0cc6c4c70ab7611c5b8440ca96",
+    "development-round-1/8.0/capture-check.txt.gz": "d8068d8090cfab3e7361a4e1363671d984ff460cde424a4c83134dac7c634956",
+    "development-round-1/8.0/fixture.json": "76d2cf8cd3943f7fce3eccfcd94c0889f83ca6baf255f3d339a1f6b3b90b7cf4",
+    "development-round-1/9.0/capture-check.txt.gz": "b2e8250b9eb299c5244e5e8d66b8152a58ee29ea10a3bd887f40ff9b3103c596",
+    "development-round-1/9.0/fixture.json": "ed991e7367a161c0a24fe2b05b94caa676db6e6ed6f6a7270550f8a33fe5eb88",
+    "development-round-2/7.0/capture-check.txt.gz": "177d8d82ababed948bbe6548240f3c5757627bd847f04edfe15fc7c6197954d1",
+    "development-round-2/7.0/fixture.json": "33dfdb0a22f0bdd8a775081dc17b6eef95a6fb86d9de5347a0fd3b87ba7f17a8",
+    "development-round-2/8.0/capture-check.txt.gz": "d4f58ef8a9b1f6c42a032c7b778f9b2f4814b62c2d9f3457994db85082d4a4e7",
+    "development-round-2/8.0/fixture.json": "ec55351a4e9856a7f2aa0601b3c067e7e59b5aa959a3dc060db6835dee7a3755",
+    "development-round-2/9.0/capture-check.txt.gz": "947da270d11643c30318978b88145e929fbe96f1b06f0370d5cd730e2610722b",
+    "development-round-2/9.0/fixture.json": "90e7865cc15edc6845d01fd5fdafe45fe4d6b8a2d74020586067dee156ff1706",
+    "development-round-3/7.0/capture-check.txt.gz": "e1f3b96b51803cfd2e8956a064bd24e5f9952392c9af2a2e9c86238e4a55d11b",
+    "development-round-3/7.0/fixture.json": "5c6dd5aa1659120f92d3c19a89ed73c799a7928673f6c923093ce6359e8bc75b",
+    "development-round-3/8.0/capture-check.txt.gz": "5c0aeae2f2565648b291df33577ce367e68e65f7d623693cd1fddee3c5cbfaa0",
+    "development-round-3/8.0/fixture.json": "a01eb68e5b901f8c55a55fb855d572406d7620cb42525cf75528bc8ba25cd948",
+    "development-round-3/9.0/capture-check.txt.gz": "c83443389d2de1bcf35c9b6993ece18d52363b2412110a3ea8bc64dc1749aec0",
+    "development-round-3/9.0/fixture.json": "978268397b040121798eaa23213da62173c7711ab35c275fe4bb2928fa3a8329",
+    "development-round-4/7.0/capture-check.txt.gz": "c776872ed52807d721ce40dc64f9b33522a0bb20c0a9745bdeaf800b1129607d",
+    "development-round-4/7.0/fixture.json": "238806e87bb56bab6efed14d01ffe571484d256c0a6a74c1733e00ddd77b65fe",
+    "development-round-4/8.0/capture-check.txt.gz": "7eb33959bb1694790779ec650c88ed34046d0d57ed065700639f63075a9ab797",
+    "development-round-4/8.0/fixture.json": "306353c02c9015b59844e161bbfb18f2a6eafd78dc5d24e1467c30cee040a6b4",
+    "development-round-4/9.0/capture-check.txt.gz": "b708d92c41aa06db16d354bdd17d87c2f09ef6849651c075b48c4d78c2b4c0cb",
+    "development-round-4/9.0/fixture.json": "2d16e6b348313f5ece776f5bbe8a7dd4f05be98e203a0209fcc7d3c236585659",
+    "development-round-5/7.0/capture-check.txt.gz": "5c1ab1b03aec47254743e28546b1b98a1490c8389762a79cc45c402060c6eb0c",
+    "development-round-5/7.0/fixture.json": "fe071208ad425271cc0c0d218d50d46f0d648e0d42e49fa5ea54fbcc6c28e9bc",
+    "development-round-5/8.0/capture-check.txt.gz": "a29dffe4ad4433450c5285ec8aea1ecad3668fa745bbf1fe28bc67dfd3bb1635",
+    "development-round-5/8.0/fixture.json": "c888d49835e942438553ff3d7daed5fc2e3638c6201e2e6297aaea8d117bc98f",
+    "development-round-5/9.0/capture-check.txt.gz": "d624618e75d391536e59fc0b2f86b634ef834c76aa155eebdcd91133e659c4a3",
+    "development-round-5/9.0/fixture.json": "d611c27e5e783a11bc9565ca61ac80d628598b069cb510f5d6d0cc044b128a69",
+    "development-round-6/7.0/capture-check.txt.gz": "b72f0a1bcfd20ec5431faf55c904665ef8aca78d2f968f091dceaee0812480ce",
+    "development-round-6/7.0/fixture.json": "0a4c1183193a62f6d17e2e95ef04b90af066d6901a565e9b2bee346a8641df98",
+    "development-round-6/8.0/capture-check.txt.gz": "1786319f936f87885e6353efeb159bdd496e10bb12f5c08523049f8997398e1d",
+    "development-round-6/8.0/fixture.json": "abc90709f1c391468e4249d5f3c4ec86e55a6b307bf4a2711cf6ad41d1f68183",
+    "development-round-6/9.0/capture-check.txt.gz": "6316af25ed08b09e27fb692864cc7ac1f53226de6a729acb23358268913adae7",
+    "development-round-6/9.0/fixture.json": "6838b3f1d52e7a5d851717f3e10d35165243357dbbe7d8bc081b7a0eeffc1aab",
+    "development-wide-feedback.txt.gz": "c01aea3318104df4743d1535055cc8f0870a3d441982aa3acda719a9a18ab8ef",
+    "environment.json": "901ce4fed9f801a01a4b2580c2a96da657fa0559a9e03105c469d83ae713617c",
+    "lint.txt.gz": "9c8c12c404e18a19a7556df6e9cc5ae376ee8c1b45df1030aad68ac96e114d7f",
+    "native-checks.json": "f183e66e42ff1412d41f410018818a10fc1da631ae64993bc05a1c29ed84534c",
+    "native-controller.py.txt": "1e2fb323d79a3ca209b53df76f2fd8db60b29d728be5986739e4da6aea62b0f8",
+    "protected-sources.json": "cf8f5710f95cdec671bb92d661007cfd5d7795089f0c984c22f1ad3e620fb105",
+    "public-api-manifest.json": "18f336380aa25bc6fecff86f5e353671059f3576b3913964f20dabfeae19ad7a",
+    "resource-audit.py.txt": "3b2aa51038afd8ce3fbf3032058dc6e5aa5f0aa67ceea69e0d331004ea6848ff",
+    "resources.json": "311a6a65708df94dffe6f784d24755c8fa7d632b229c438dbd5edf2407373404",
+    "runtime-sources.json": "6924b59598f166c0bde3f683fecb929b9fade69c8fcc3d506627eefabb4819ca",
+    "sdk-free-expected.json": "aeaf72190c6fdf3dc47c232f8eab851449152a13bb6e9ce785124c602ef21cd3",
+    "sdk-free-final.txt.gz": "f6c37cbdfc0b8db0f417d3aa65b243eb50189c8b0fe64101a57253bffe5107b1",
+    "sdk-free-prepare.py.txt": "15bd17aeed16f2c7242ad7f8169b8124795b1b248a9511dcc80ff11ccf81c40d",
+    "sdk-free.py.txt": "5450c071523f6b15abd09c001cc3c0772fcf32a2dce1c02341afcb11c29a356e",
+    "typing-final.txt.gz": "d0661e65e80b8c953491cbdc135114e90fda79d9e5b880c67ebef48c19947acd",
+    "wheel-all-final.txt.gz": "0c240de63d14829f4a2c02d8d97c57257c570c1d48a1d4e3dabfb0e3eccacd81",
+    "wheel-all.py.txt": "4cb9c5871cc34b8238e39c93c0475ca7bca27dd9feac3a9654709eeb09e64e09",
+    "wheel-imports-decimal-replay-final-gw0.json": "27a9bcde4d12b1c03358bf1ba35dba3b12cc34d6402ef0661ff1a53beb28316a",
+    "wheel-imports-decimal-replay-final-gw1.json": "27a9bcde4d12b1c03358bf1ba35dba3b12cc34d6402ef0661ff1a53beb28316a",
+    "wheel-imports-decimal-replay-final-gw2.json": "27a9bcde4d12b1c03358bf1ba35dba3b12cc34d6402ef0661ff1a53beb28316a",
+    "wheel-imports-decimal-replay-final-gw3.json": "27a9bcde4d12b1c03358bf1ba35dba3b12cc34d6402ef0661ff1a53beb28316a",
+    "wheel-imports-decimal-replay-final-master.json": "b494073552882b584b4511e990e4e3eac164230e24d943faa148dbc198c1da9e",
+    "wheel-imports-decimal-unit-final-master.json": "593f002162e00188a545e46b3863027bfe124cb27e985dcc873a70b572222969",
+    "wheel-unit-final.txt.gz": "8fdf3b9ed990d3f67b9b0ded887ca9f2c52111e1ec75c1a49a05d66a6ba13d6a",
+    "wheel-unit.py.txt": "e9205c1a8ef0dc29862a4c6945c3681d054ac3f2be211ae0f4e347b6f05850b0",
+    "wheel.json": "e8cc81058ab9e4d9e44d26279da2c74d348a155600a7e37c48bd7678c15712e8"
+  }
+}

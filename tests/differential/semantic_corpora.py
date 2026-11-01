@@ -74,6 +74,10 @@ from tests.differential.semantic_decimal_cases import (
     SEMANTIC_DECIMAL_CASES,
     SEMANTIC_DECIMAL_EDGE_CASES,
 )
+from tests.differential.semantic_decimal_conversion_cases import (
+    SEED as DECIMAL_CONVERSION_SEED,
+    SEMANTIC_DECIMAL_CONVERSION_CASES,
+)
 from tests.differential.semantic_document_factory_cases import (
     SEED as DOCUMENT_FACTORY_SEED,
     SEMANTIC_DOCUMENT_FACTORY_CASES,
@@ -518,6 +522,10 @@ SEMANTIC_CORPORA = {
         "semantic_decimal_cases",
         DECIMAL_EDGE_SEED,
         SEMANTIC_DECIMAL_EDGE_CASES,
+    ),
+    "decimal_conversion": SemanticCorpus(
+        "decimal-conversion", "semantic_decimal_conversion_cases",
+        DECIMAL_CONVERSION_SEED, SEMANTIC_DECIMAL_CONVERSION_CASES,
     ),
     "decimal": SemanticCorpus(
         "decimal-values",

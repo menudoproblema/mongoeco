@@ -1,0 +1,4305 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_decimal_branch_controls": {
+      "False/dead-cond": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "False/live-cond": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "False/field-cond": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "False/masked": {
+        "ok": true,
+        "rows": []
+      },
+      "False/null": {
+        "ok": true,
+        "rows": []
+      },
+      "False/missing": {
+        "ok": true,
+        "rows": []
+      },
+      "True/dead-cond": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "True/live-cond": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "True/field-cond": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "True/masked": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "OK"
+          }
+        ]
+      },
+      "True/null": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "NULL"
+          }
+        ]
+      },
+      "True/missing": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "NULL"
+          }
+        ]
+      }
+    },
+    "semantic_decimal_code_controls": {
+      "Code('1.25', None)/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "Code('1.25', None)/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "Code('1.25', None)/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "Code('sNaN', None)/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "Code('sNaN', None)/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "Code('sNaN', None)/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "Code('1.25', {})/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "Code('1.25', {})/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "Code('1.25', {})/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      }
+    },
+    "semantic_decimal_context_controls": {
+      "let": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00407a10f35a00000000000000002230"
+          }
+        ]
+      },
+      "facet": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00407a10f35a00000000000000002230"
+          }
+        ]
+      },
+      "lookup": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00407a10f35a00000000000000002230"
+          }
+        ]
+      }
+    },
+    "semantic_decimal_pipeline_updates": {
+      "valid-string/shortcut/0": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "7d000000000000000000000000003c30"
+        }
+      },
+      "valid-string/shortcut/1": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "7d000000000000000000000000003c30"
+        }
+      },
+      "valid-string/convert/0": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "7d000000000000000000000000003c30"
+        }
+      },
+      "valid-string/convert/1": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "7d000000000000000000000000003c30"
+        }
+      },
+      "valid-string/onError/0": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "7d000000000000000000000000003c30"
+        }
+      },
+      "valid-string/onError/1": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "7d000000000000000000000000003c30"
+        }
+      },
+      "bad-string/shortcut/0": {
+        "ok": false,
+        "exception": "WriteError",
+        "code": {
+          "$numberInt": "241"
+        },
+        "stored": {
+          "type": "str",
+          "value": "sNaN"
+        }
+      },
+      "bad-string/shortcut/1": {
+        "ok": false,
+        "exception": "WriteError",
+        "code": {
+          "$numberInt": "241"
+        },
+        "stored": {
+          "type": "str",
+          "value": "sNaN"
+        }
+      },
+      "bad-string/convert/0": {
+        "ok": false,
+        "exception": "WriteError",
+        "code": {
+          "$numberInt": "241"
+        },
+        "stored": {
+          "type": "str",
+          "value": "sNaN"
+        }
+      },
+      "bad-string/convert/1": {
+        "ok": false,
+        "exception": "WriteError",
+        "code": {
+          "$numberInt": "241"
+        },
+        "stored": {
+          "type": "str",
+          "value": "sNaN"
+        }
+      },
+      "bad-string/onError/0": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "stored": {
+          "type": "str",
+          "value": "ERROR"
+        }
+      },
+      "bad-string/onError/1": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "str",
+          "value": "ERROR"
+        }
+      },
+      "finite-double/shortcut/0": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "00407a10f35a00000000000000002230"
+        }
+      },
+      "finite-double/shortcut/1": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "00407a10f35a00000000000000002230"
+        }
+      },
+      "finite-double/convert/0": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "00407a10f35a00000000000000002230"
+        }
+      },
+      "finite-double/convert/1": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "00407a10f35a00000000000000002230"
+        }
+      },
+      "finite-double/onError/0": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "00407a10f35a00000000000000002230"
+        }
+      },
+      "finite-double/onError/1": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "00407a10f35a00000000000000002230"
+        }
+      },
+      "negative-nan/shortcut/0": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "000000000000000000000000000000fc"
+        }
+      },
+      "negative-nan/shortcut/1": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "000000000000000000000000000000fc"
+        }
+      },
+      "negative-nan/convert/0": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "000000000000000000000000000000fc"
+        }
+      },
+      "negative-nan/convert/1": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "000000000000000000000000000000fc"
+        }
+      },
+      "negative-nan/onError/0": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "000000000000000000000000000000fc"
+        }
+      },
+      "negative-nan/onError/1": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "000000000000000000000000000000fc"
+        }
+      },
+      "stored-snan/shortcut/0": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "0000000000000000000000000000007e"
+        }
+      },
+      "stored-snan/shortcut/1": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "0000000000000000000000000000007e"
+        }
+      },
+      "stored-snan/convert/0": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "0000000000000000000000000000007e"
+        }
+      },
+      "stored-snan/convert/1": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "0000000000000000000000000000007e"
+        }
+      },
+      "stored-snan/onError/0": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "0000000000000000000000000000007e"
+        }
+      },
+      "stored-snan/onError/1": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "decimal",
+          "bid": "0000000000000000000000000000007e"
+        }
+      },
+      "code/shortcut/0": {
+        "ok": false,
+        "exception": "WriteError",
+        "code": {
+          "$numberInt": "241"
+        },
+        "stored": {
+          "type": "Code",
+          "value": {
+            "$code": "1.25"
+          }
+        }
+      },
+      "code/shortcut/1": {
+        "ok": false,
+        "exception": "WriteError",
+        "code": {
+          "$numberInt": "241"
+        },
+        "stored": {
+          "type": "Code",
+          "value": {
+            "$code": "1.25"
+          }
+        }
+      },
+      "code/convert/0": {
+        "ok": false,
+        "exception": "WriteError",
+        "code": {
+          "$numberInt": "241"
+        },
+        "stored": {
+          "type": "Code",
+          "value": {
+            "$code": "1.25"
+          }
+        }
+      },
+      "code/convert/1": {
+        "ok": false,
+        "exception": "WriteError",
+        "code": {
+          "$numberInt": "241"
+        },
+        "stored": {
+          "type": "Code",
+          "value": {
+            "$code": "1.25"
+          }
+        }
+      },
+      "code/onError/0": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "stored": {
+          "type": "str",
+          "value": "ERROR"
+        }
+      },
+      "code/onError/1": {
+        "ok": true,
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "stored": {
+          "type": "str",
+          "value": "ERROR"
+        }
+      }
+    },
+    "semantic_decimal_stored_controls": {
+      "nan-double/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "nan-double/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "nan-double/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "negative-nan-double/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000fc"
+          }
+        ]
+      },
+      "negative-nan-double/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000fc"
+          }
+        ]
+      },
+      "negative-nan-double/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000fc"
+          }
+        ]
+      },
+      "negative-zero-double/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000040b0"
+          }
+        ]
+      },
+      "negative-zero-double/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000040b0"
+          }
+        ]
+      },
+      "negative-zero-double/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000040b0"
+          }
+        ]
+      },
+      "subnormal-double/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "5b30350d7c8d0300000000000000a22d"
+          }
+        ]
+      },
+      "subnormal-double/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "5b30350d7c8d0300000000000000a22d"
+          }
+        ]
+      },
+      "subnormal-double/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "5b30350d7c8d0300000000000000a22d"
+          }
+        ]
+      },
+      "inf-double/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "inf-double/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "inf-double/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "negative-inf-double/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000f8"
+          }
+        ]
+      },
+      "negative-inf-double/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000f8"
+          }
+        ]
+      },
+      "negative-inf-double/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000f8"
+          }
+        ]
+      },
+      "finite-double/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "7adf0d86487000000000000000002430"
+          }
+        ]
+      },
+      "finite-double/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "7adf0d86487000000000000000002430"
+          }
+        ]
+      },
+      "finite-double/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "7adf0d86487000000000000000002430"
+          }
+        ]
+      },
+      "tenth-double/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00407a10f35a00000000000000002230"
+          }
+        ]
+      },
+      "tenth-double/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00407a10f35a00000000000000002230"
+          }
+        ]
+      },
+      "tenth-double/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00407a10f35a00000000000000002230"
+          }
+        ]
+      },
+      "quiet-decimal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "quiet-decimal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "quiet-decimal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "quiet-decimal/stored": {
+        "type": "decimal",
+        "bid": "0000000000000000000000000000007c"
+      },
+      "signaling-decimal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007e"
+          }
+        ]
+      },
+      "signaling-decimal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007e"
+          }
+        ]
+      },
+      "signaling-decimal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007e"
+          }
+        ]
+      },
+      "signaling-decimal/stored": {
+        "type": "decimal",
+        "bid": "0000000000000000000000000000007e"
+      },
+      "negative-signaling/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000fe"
+          }
+        ]
+      },
+      "negative-signaling/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000fe"
+          }
+        ]
+      },
+      "negative-signaling/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000fe"
+          }
+        ]
+      },
+      "negative-signaling/stored": {
+        "type": "decimal",
+        "bid": "000000000000000000000000000000fe"
+      },
+      "inf-decimal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "inf-decimal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "inf-decimal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "inf-decimal/stored": {
+        "type": "decimal",
+        "bid": "00000000000000000000000000000078"
+      },
+      "finite-decimal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "fa000000000000000000000000003c30"
+          }
+        ]
+      },
+      "finite-decimal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "fa000000000000000000000000003c30"
+          }
+        ]
+      },
+      "finite-decimal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "fa000000000000000000000000003c30"
+          }
+        ]
+      },
+      "finite-decimal/stored": {
+        "type": "decimal",
+        "bid": "fa000000000000000000000000003c30"
+      },
+      "integer/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000020000000000000004030"
+          }
+        ]
+      },
+      "integer/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000020000000000000004030"
+          }
+        ]
+      },
+      "integer/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000020000000000000004030"
+          }
+        ]
+      },
+      "boolean/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004030"
+          }
+        ]
+      },
+      "boolean/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004030"
+          }
+        ]
+      },
+      "boolean/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004030"
+          }
+        ]
+      },
+      "positive-date/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "e9030000000000000000000000004030"
+          }
+        ]
+      },
+      "positive-date/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "e9030000000000000000000000004030"
+          }
+        ]
+      },
+      "positive-date/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "e9030000000000000000000000004030"
+          }
+        ]
+      },
+      "negative-date/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "e90300000000000000000000000040b0"
+          }
+        ]
+      },
+      "negative-date/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "e90300000000000000000000000040b0"
+          }
+        ]
+      },
+      "negative-date/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "e90300000000000000000000000040b0"
+          }
+        ]
+      }
+    },
+    "semantic_decimal_string_parsing": {
+      "'sNaN'/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'sNaN'/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'sNaN'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'sNaN'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'sNaN'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'sNaN'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'sNaN'/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'sNaN'/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'sNaN'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'sNaN'/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'sNaN'/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'sNaN'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'+sNaN'/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'+sNaN'/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'+sNaN'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'+sNaN'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'+sNaN'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'+sNaN'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'+sNaN'/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'+sNaN'/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'+sNaN'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'+sNaN'/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'+sNaN'/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'+sNaN'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'-sNaN'/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'-sNaN'/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'-sNaN'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'-sNaN'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'-sNaN'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'-sNaN'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'-sNaN'/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'-sNaN'/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'-sNaN'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'-sNaN'/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'-sNaN'/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'-sNaN'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'SNAN'/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'SNAN'/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'SNAN'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'SNAN'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'SNAN'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'SNAN'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'SNAN'/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'SNAN'/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'SNAN'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'SNAN'/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'SNAN'/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'SNAN'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'snan'/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'snan'/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'snan'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'snan'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'snan'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'snan'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'snan'/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'snan'/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'snan'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'snan'/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'snan'/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'snan'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'sNaN42'/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'sNaN42'/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'sNaN42'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'sNaN42'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'sNaN42'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'sNaN42'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'sNaN42'/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'sNaN42'/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'sNaN42'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'sNaN42'/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'sNaN42'/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'sNaN42'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'NaN42'/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'NaN42'/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'NaN42'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'NaN42'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'NaN42'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'NaN42'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'NaN42'/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'NaN42'/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'NaN42'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'NaN42'/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'NaN42'/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'NaN42'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'NaN'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'NaN'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'NaN'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'NaN'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'NaN'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'NaN'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'NaN'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'NaN'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'NaN'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'NaN'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'NaN'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'NaN'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'nan'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'nan'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'nan'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'nan'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'nan'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'nan'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'nan'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'nan'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'nan'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'nan'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'nan'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'nan'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'NAN'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'NAN'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'NAN'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'NAN'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'NAN'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'NAN'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'NAN'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'NAN'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'NAN'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'NAN'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'NAN'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'NAN'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'+NaN'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'+NaN'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'+NaN'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'+NaN'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'+NaN'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'+NaN'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'+NaN'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'+NaN'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'+NaN'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'+NaN'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'+NaN'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'+NaN'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "0000000000000000000000000000007c"
+          }
+        ]
+      },
+      "'-NaN'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'-NaN'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'-NaN'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'-NaN'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'-NaN'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'-NaN'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'-NaN'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000fc"
+          }
+        ]
+      },
+      "'-NaN'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000fc"
+          }
+        ]
+      },
+      "'-NaN'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000fc"
+          }
+        ]
+      },
+      "'-NaN'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000fc"
+          }
+        ]
+      },
+      "'-NaN'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000fc"
+          }
+        ]
+      },
+      "'-NaN'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000fc"
+          }
+        ]
+      },
+      "'Infinity'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'Infinity'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'Infinity'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'Infinity'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'Infinity'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'Infinity'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'Infinity'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "'Infinity'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "'Infinity'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "'Infinity'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "'Infinity'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "'Infinity'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "'+Inf'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'+Inf'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'+Inf'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'+Inf'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'+Inf'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'+Inf'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'+Inf'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "'+Inf'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "'+Inf'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "'+Inf'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "'+Inf'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "'+Inf'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000000078"
+          }
+        ]
+      },
+      "'-Infinity'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'-Infinity'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'-Infinity'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'-Infinity'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'-Infinity'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'-Infinity'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'-Infinity'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000f8"
+          }
+        ]
+      },
+      "'-Infinity'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000f8"
+          }
+        ]
+      },
+      "'-Infinity'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000f8"
+          }
+        ]
+      },
+      "'-Infinity'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000f8"
+          }
+        ]
+      },
+      "'-Infinity'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000f8"
+          }
+        ]
+      },
+      "'-Infinity'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000000f8"
+          }
+        ]
+      },
+      "'0'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'0'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'0'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'0'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'0'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'0'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'0'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000004030"
+          }
+        ]
+      },
+      "'0'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000004030"
+          }
+        ]
+      },
+      "'0'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000004030"
+          }
+        ]
+      },
+      "'0'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000004030"
+          }
+        ]
+      },
+      "'0'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000004030"
+          }
+        ]
+      },
+      "'0'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "00000000000000000000000000004030"
+          }
+        ]
+      },
+      "'-0'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'-0'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'-0'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'-0'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'-0'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'-0'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'-0'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000040b0"
+          }
+        ]
+      },
+      "'-0'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000040b0"
+          }
+        ]
+      },
+      "'-0'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000040b0"
+          }
+        ]
+      },
+      "'-0'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000040b0"
+          }
+        ]
+      },
+      "'-0'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000040b0"
+          }
+        ]
+      },
+      "'-0'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000000000000000000000040b0"
+          }
+        ]
+      },
+      "'1.250'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.250'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.250'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.250'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.250'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.250'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.250'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "e2040000000000000000000000003a30"
+          }
+        ]
+      },
+      "'1.250'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "e2040000000000000000000000003a30"
+          }
+        ]
+      },
+      "'1.250'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "e2040000000000000000000000003a30"
+          }
+        ]
+      },
+      "'1.250'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "e2040000000000000000000000003a30"
+          }
+        ]
+      },
+      "'1.250'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "e2040000000000000000000000003a30"
+          }
+        ]
+      },
+      "'1.250'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "e2040000000000000000000000003a30"
+          }
+        ]
+      },
+      "'1e2'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e2'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e2'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e2'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e2'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e2'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e2'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004430"
+          }
+        ]
+      },
+      "'1e2'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004430"
+          }
+        ]
+      },
+      "'1e2'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004430"
+          }
+        ]
+      },
+      "'1e2'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004430"
+          }
+        ]
+      },
+      "'1e2'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004430"
+          }
+        ]
+      },
+      "'1e2'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004430"
+          }
+        ]
+      },
+      "'1.234567890123456789012345678901234'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.234567890123456789012345678901234'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.234567890123456789012345678901234'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.234567890123456789012345678901234'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.234567890123456789012345678901234'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.234567890123456789012345678901234'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.234567890123456789012345678901234'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "f2af967ed05c82de3297ff6fde3cfe2f"
+          }
+        ]
+      },
+      "'1.234567890123456789012345678901234'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "f2af967ed05c82de3297ff6fde3cfe2f"
+          }
+        ]
+      },
+      "'1.234567890123456789012345678901234'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "f2af967ed05c82de3297ff6fde3cfe2f"
+          }
+        ]
+      },
+      "'1.234567890123456789012345678901234'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "f2af967ed05c82de3297ff6fde3cfe2f"
+          }
+        ]
+      },
+      "'1.234567890123456789012345678901234'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "f2af967ed05c82de3297ff6fde3cfe2f"
+          }
+        ]
+      },
+      "'1.234567890123456789012345678901234'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "f2af967ed05c82de3297ff6fde3cfe2f"
+          }
+        ]
+      },
+      "' NaN'/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "' NaN'/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "' NaN'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "' NaN'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "' NaN'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "' NaN'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "' NaN'/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "' NaN'/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "' NaN'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "' NaN'/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "' NaN'/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "' NaN'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'1.0 '/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1.0 '/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1.0 '/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.0 '/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.0 '/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.0 '/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.0 '/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1.0 '/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1.0 '/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'1.0 '/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1.0 '/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1.0 '/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'1_0'/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1_0'/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1_0'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1_0'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1_0'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1_0'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1_0'/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1_0'/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1_0'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'1_0'/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1_0'/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1_0'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "''/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "''/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "''/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "''/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "''/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "''/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "''/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "''/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "''/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "''/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "''/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "''/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'1e6145'/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1e6145'/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1e6145'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e6145'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e6145'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e6145'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e6145'/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1e6145'/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1e6145'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'1e6145'/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1e6145'/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1e6145'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'1e-6177'/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1e-6177'/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1e-6177'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e-6177'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e-6177'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e-6177'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e-6177'/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1e-6177'/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1e-6177'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'1e-6177'/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1e-6177'/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'1e-6177'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'1e-6176'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e-6176'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e-6176'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e-6176'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e-6176'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e-6176'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e-6176'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000000000"
+          }
+        ]
+      },
+      "'1e-6176'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000000000"
+          }
+        ]
+      },
+      "'1e-6176'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000000000"
+          }
+        ]
+      },
+      "'1e-6176'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000000000"
+          }
+        ]
+      },
+      "'1e-6176'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000000000"
+          }
+        ]
+      },
+      "'1e-6176'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000000000"
+          }
+        ]
+      },
+      "'1e6144'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e6144'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e6144'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e6144'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e6144'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e6144'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1e6144'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000a5bc138938d44c64d31fe5f"
+          }
+        ]
+      },
+      "'1e6144'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000a5bc138938d44c64d31fe5f"
+          }
+        ]
+      },
+      "'1e6144'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000a5bc138938d44c64d31fe5f"
+          }
+        ]
+      },
+      "'1e6144'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000a5bc138938d44c64d31fe5f"
+          }
+        ]
+      },
+      "'1e6144'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000a5bc138938d44c64d31fe5f"
+          }
+        ]
+      },
+      "'1e6144'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000a5bc138938d44c64d31fe5f"
+          }
+        ]
+      },
+      "'.5'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'.5'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'.5'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'.5'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'.5'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'.5'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'.5'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "05000000000000000000000000003e30"
+          }
+        ]
+      },
+      "'.5'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "05000000000000000000000000003e30"
+          }
+        ]
+      },
+      "'.5'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "05000000000000000000000000003e30"
+          }
+        ]
+      },
+      "'.5'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "05000000000000000000000000003e30"
+          }
+        ]
+      },
+      "'.5'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "05000000000000000000000000003e30"
+          }
+        ]
+      },
+      "'.5'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "05000000000000000000000000003e30"
+          }
+        ]
+      },
+      "'1.'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004030"
+          }
+        ]
+      },
+      "'1.'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004030"
+          }
+        ]
+      },
+      "'1.'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004030"
+          }
+        ]
+      },
+      "'1.'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004030"
+          }
+        ]
+      },
+      "'1.'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004030"
+          }
+        ]
+      },
+      "'1.'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004030"
+          }
+        ]
+      },
+      "'01'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'01'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'01'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'01'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'01'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'01'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'01'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004030"
+          }
+        ]
+      },
+      "'01'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004030"
+          }
+        ]
+      },
+      "'01'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004030"
+          }
+        ]
+      },
+      "'01'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004030"
+          }
+        ]
+      },
+      "'01'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004030"
+          }
+        ]
+      },
+      "'01'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "01000000000000000000000000004030"
+          }
+        ]
+      },
+      "'\u0661\u0662'/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0661\u0662'/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0661\u0662'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'\u0661\u0662'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'\u0661\u0662'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'\u0661\u0662'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'\u0661\u0662'/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0661\u0662'/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0661\u0662'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'\u0661\u0662'/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0661\u0662'/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0661\u0662'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'\u0130nf'/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0130nf'/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0130nf'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'\u0130nf'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'\u0130nf'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'\u0130nf'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'\u0130nf'/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0130nf'/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0130nf'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'\u0130nf'/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0130nf'/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0130nf'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'\u0131nfinity'/False/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0131nfinity'/False/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0131nfinity'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'\u0131nfinity'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'\u0131nfinity'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'\u0131nfinity'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'\u0131nfinity'/True/literal/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0131nfinity'/True/literal/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0131nfinity'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'\u0131nfinity'/True/field/shortcut": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0131nfinity'/True/field/convert": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "codeName": "ConversionFailure"
+      },
+      "'\u0131nfinity'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "str",
+            "value": "ERROR"
+          }
+        ]
+      },
+      "'1.2345678901234567890123456789012345'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.2345678901234567890123456789012345'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.2345678901234567890123456789012345'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.2345678901234567890123456789012345'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.2345678901234567890123456789012345'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.2345678901234567890123456789012345'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.2345678901234567890123456789012345'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "f2af967ed05c82de3297ff6fde3cfe2f"
+          }
+        ]
+      },
+      "'1.2345678901234567890123456789012345'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "f2af967ed05c82de3297ff6fde3cfe2f"
+          }
+        ]
+      },
+      "'1.2345678901234567890123456789012345'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "f2af967ed05c82de3297ff6fde3cfe2f"
+          }
+        ]
+      },
+      "'1.2345678901234567890123456789012345'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "f2af967ed05c82de3297ff6fde3cfe2f"
+          }
+        ]
+      },
+      "'1.2345678901234567890123456789012345'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "f2af967ed05c82de3297ff6fde3cfe2f"
+          }
+        ]
+      },
+      "'1.2345678901234567890123456789012345'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "f2af967ed05c82de3297ff6fde3cfe2f"
+          }
+        ]
+      },
+      "'1.0000000000000000000000000000000000'/False/literal/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.0000000000000000000000000000000000'/False/literal/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.0000000000000000000000000000000000'/False/literal/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.0000000000000000000000000000000000'/False/field/shortcut": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.0000000000000000000000000000000000'/False/field/convert": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.0000000000000000000000000000000000'/False/field/onError": {
+        "ok": true,
+        "rows": []
+      },
+      "'1.0000000000000000000000000000000000'/True/literal/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000a5bc138938d44c64d31fe2f"
+          }
+        ]
+      },
+      "'1.0000000000000000000000000000000000'/True/literal/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000a5bc138938d44c64d31fe2f"
+          }
+        ]
+      },
+      "'1.0000000000000000000000000000000000'/True/literal/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000a5bc138938d44c64d31fe2f"
+          }
+        ]
+      },
+      "'1.0000000000000000000000000000000000'/True/field/shortcut": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000a5bc138938d44c64d31fe2f"
+          }
+        ]
+      },
+      "'1.0000000000000000000000000000000000'/True/field/convert": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000a5bc138938d44c64d31fe2f"
+          }
+        ]
+      },
+      "'1.0000000000000000000000000000000000'/True/field/onError": {
+        "ok": true,
+        "rows": [
+          {
+            "type": "decimal",
+            "bid": "000000000a5bc138938d44c64d31fe2f"
+          }
+        ]
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_decimal_conversion_cases.py",
+    "sha256": "da6727620d746ae2f3c82cab9c3a6884a8f1735919996f05aef48ed3aac86625"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_decimal_string_parsing",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_string_parsing"
+    },
+    {
+      "name": "semantic_decimal_stored_controls",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_stored_controls"
+    },
+    {
+      "name": "semantic_decimal_code_controls",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_code_controls"
+    },
+    {
+      "name": "semantic_decimal_branch_controls",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_branch_controls"
+    },
+    {
+      "name": "semantic_decimal_pipeline_updates",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_pipeline_updates"
+    },
+    {
+      "name": "semantic_decimal_context_controls",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_context_controls"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+import importlib.util,json,sys,tempfile,math
+from datetime import datetime,timedelta,timezone
+from pathlib import Path
+root=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip());info=json.loads((root/'wheel.json').read_text());site=Path(info['site_packages'])
+sys.path[:0]=[str(site),'/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-raw-wheel-vu7alvd0/sdk-free-deps']
+assert importlib.util.find_spec('bson') is None
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.types import Decimal128
+samples=json.loads(Path('/tmp/mongoeco-decimal-sdk-free-expected.json').read_text());checks=0
+for dialect,rows in samples.items():
+ for factory in (MemoryEngine,SQLiteEngine):
+  with MongoClient(factory(),mongodb_dialect=dialect) as client:
+   c=client.test.c
+   for token,expected in rows:
+    c.delete_many({});c.insert_one({'v':token})
+    try:
+     got=list(c.aggregate([{'$project':{'_id':0,'v':{'$toDecimal':'$v'}}}]))[0]['v']
+    except Exception as error:
+     assert expected['ok'] is False and getattr(error,'code',None)==241,(token,error)
+    else:
+     assert expected['ok'] and type(got) is Decimal128,(token,got)
+     tup=got.to_decimal().as_tuple();assert [tup.sign,list(tup.digits),tup.exponent]==expected['tuple'],(token,got,expected)
+    checks+=1
+# Reopen real persisted data, including signaling/sign and cohort.
+with tempfile.TemporaryDirectory() as tmp:
+ path=str(Path(tmp)/'decimal.sqlite')
+ for dialect in ('7.0','8.0','9.0'):
+  with MongoClient(SQLiteEngine(path),mongodb_dialect=dialect) as client:
+   client.test.c.delete_many({});client.test.c.insert_many([{'_id':i,'v':Decimal128(v)} for i,v in enumerate(('sNaN','-sNaN','-NaN','2.50'))])
+  with MongoClient(SQLiteEngine(path),mongodb_dialect=dialect) as client:
+   for row,token in zip(client.test.c.find().sort('_id'),('sNaN','-sNaN','-NaN','2.50'),strict=True):
+    assert row['v'].to_decimal().as_tuple()==Decimal128(token).to_decimal().as_tuple();checks+=1
+print(json.dumps({'python':sys.version,'sdk_available':False,'checks':checks,'site':str(site)}))

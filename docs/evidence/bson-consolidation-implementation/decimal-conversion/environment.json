@@ -1,0 +1,10 @@
+{
+  "python": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 17.0.0 (clang-1700.6.4.2)]",
+  "platform": "macOS-15.6-arm64-arm-64bit-Mach-O",
+  "packages": {
+    "pytest": "9.1.1",
+    "pymongo": "4.19.0",
+    "numpy": "2.5.1",
+    "usearch": "2.25.3"
+  }
+}

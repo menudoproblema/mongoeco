@@ -1,0 +1,20 @@
+[
+  {
+    "target": "7.0",
+    "reference": "tests/fixtures/semantic_decimal_conversion_7_0.json",
+    "sha256": "44dbd2a57bef5becf969385a213fbd95bec0b10eee32fe6084f5f3e20cf1feb2",
+    "final_check_matches": true
+  },
+  {
+    "target": "8.0",
+    "reference": "tests/fixtures/semantic_decimal_conversion_8_0.json",
+    "sha256": "b6e5809e92a514053ad33d9902990e628456b434b2dc26647d120e0d89e0539f",
+    "final_check_matches": true
+  },
+  {
+    "target": "9.0",
+    "reference": "tests/fixtures/semantic_decimal_conversion_9_0.json",
+    "sha256": "47aa8e6d6e8088a2b5877cad620a48342cf5ad29dead3e7d358a854be61da2c6",
+    "final_check_matches": true
+  }
+]

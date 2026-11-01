@@ -1,0 +1,18 @@
+import json,subprocess,sys
+from pathlib import Path
+baseline=Path(Path('/tmp/mongoeco-decimal-baseline-location.txt').read_text().strip());candidate=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())
+program='''import sys,time,json
+sys.path.insert(0,sys.argv[1])
+from mongoeco.core.aggregation.runtime import evaluate_expression
+expression={"$toDecimal":"1.250"}
+for _ in range(200): evaluate_expression({},expression)
+t=time.process_time()
+for _ in range(10000): value=evaluate_expression({},expression)
+print(json.dumps({"cpu":time.process_time()-t,"result":str(value)}))
+'''
+rows=[]
+for label in ('base','candidate','candidate','base')*2:
+ root=baseline if label=='base' else candidate;site=json.loads((root/'wheel.json').read_text())['site_packages']
+ r=subprocess.run([sys.executable,'-I','-c',program,site],check=True,capture_output=True,text=True);row=json.loads(r.stdout);assert row['result']=='1.250';row['label']=label;rows.append(row)
+base=sum(x['cpu'] for x in rows if x['label']=='base');new=sum(x['cpu'] for x in rows if x['label']=='candidate');out={'scope':'diagnostic scalar String->Decimal only, not D05 performance acceptance','iterations_per_sample':10000,'order':'ABBA x2','cpu_ratio':new/base,'samples':rows}
+Path('/tmp/mongoeco-decimal-cost.json').write_text(json.dumps(out,indent=2)+'\n');print('diagnostic CPU ratio',new/base)

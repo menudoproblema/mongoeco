@@ -1,0 +1,48 @@
+{
+  "scope": "diagnostic scalar String->Decimal only, not D05 performance acceptance",
+  "iterations_per_sample": 10000,
+  "order": "ABBA x2",
+  "cpu_ratio": 1.0637448190881595,
+  "samples": [
+    {
+      "cpu": 0.09267399999999998,
+      "result": "1.250",
+      "label": "base"
+    },
+    {
+      "cpu": 0.09899699999999997,
+      "result": "1.250",
+      "label": "candidate"
+    },
+    {
+      "cpu": 0.09354600000000002,
+      "result": "1.250",
+      "label": "candidate"
+    },
+    {
+      "cpu": 0.08541699999999999,
+      "result": "1.250",
+      "label": "base"
+    },
+    {
+      "cpu": 0.09017,
+      "result": "1.250",
+      "label": "base"
+    },
+    {
+      "cpu": 0.09439900000000001,
+      "result": "1.250",
+      "label": "candidate"
+    },
+    {
+      "cpu": 0.09290000000000001,
+      "result": "1.250",
+      "label": "candidate"
+    },
+    {
+      "cpu": 0.08881900000000004,
+      "result": "1.250",
+      "label": "base"
+    }
+  ]
+}

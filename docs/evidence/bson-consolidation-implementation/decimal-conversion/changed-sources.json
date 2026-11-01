@@ -1,0 +1,9 @@
+{
+  "src/mongoeco/core/aggregation/evaluation_environment.py": "ae71ad9f17ab55b4c2756e3e455f6c51aa5442e272f264e252a3d0cc7843a0ce",
+  "src/mongoeco/core/aggregation/preparation.py": "6cd73c00b85c4071d49d198b6f96a23fd671fd3f3bc089f49f77b9e426161fa8",
+  "src/mongoeco/core/aggregation/scalar_expressions.py": "b1058cd8cb64bf4a007613a54b6482dfbcb0182a95e879fb009e338a7bf98bf7",
+  "src/mongoeco/core/codec.py": "00c20e4239348c43a5d72a8c5981ec0f76898b52359709ebae27e70a8643acc3",
+  "tests/differential/semantic_corpora.py": "f8a0286c3aa5a158ec110845dcc5a77dc43dc9ab8d115e3f25d7b65879ea6acb",
+  "tests/differential/semantic_decimal_conversion_cases.py": "da6727620d746ae2f3c82cab9c3a6884a8f1735919996f05aef48ed3aac86625",
+  "tests/unit/core/test_aggregation_expression_advanced.py": "aaa7691ec03926f797f7ba37a45199b0ed472509e801da3fc91f5236d8ef78ff"
+}

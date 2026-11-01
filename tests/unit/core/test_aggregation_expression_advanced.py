@@ -1420,8 +1420,10 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
             _convert_aggregation_scalar("$convert", 1, "objectId", stringify_value=str)
         with self.assertRaises(OperationFailure):
             _convert_aggregation_scalar("$convert", 1, "uuid", stringify_value=str)
-        with self.assertRaises(OperationFailure):
-            _convert_aggregation_scalar("$convert", float("inf"), "decimal", stringify_value=str)
+        self.assertEqual(
+            _convert_aggregation_scalar("$convert", float("inf"), "decimal", stringify_value=str),
+            decimal.Decimal("Infinity"),
+        )
         with self.assertRaises(OperationFailure):
             _convert_aggregation_scalar("$convert", [], "decimal", stringify_value=str)
         with self.assertRaises(OperationFailure):

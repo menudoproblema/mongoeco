@@ -103,6 +103,10 @@ def aggregation_environment(variables, collation=None) -> EvaluationEnvironment:
         if not isinstance(variables, EvaluationEnvironment)
         else variables.with_lexicals()
     )
+    # Pipeline results cross BSON boundaries, including direct API responses.
+    # Keep conversion types here; standalone expression helpers retain their
+    # Python scalar convenience without relying on wire encoding to repair it.
+    environment.preserve_numeric_conversion_types = True
     if collation is not None:
         environment.collation = collation
     return environment

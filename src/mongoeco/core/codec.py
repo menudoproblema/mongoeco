@@ -326,7 +326,7 @@ class DocumentCodec:
         ):
             return DocumentCodec._tagged_value(
                 "decimal128_public",
-                str(data),
+                str(data.to_decimal()),
             )
 
         if BsonInt64Public is not None and isinstance(data, BsonInt64Public):

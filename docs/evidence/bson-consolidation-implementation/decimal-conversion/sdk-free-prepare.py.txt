@@ -1,0 +1,15 @@
+import json
+from pathlib import Path
+from bson import Decimal128
+from tests.differential.semantic_decimal_conversion_cases import STRINGS
+from tests.differential._real_parity_base import _decode_capture
+result={}
+for version in ('7.0','8.0','9.0'):
+ d=_decode_capture(Path(f'tests/fixtures/semantic_decimal_conversion_{version.replace(".","_")}.json').read_text())['cases']['semantic_decimal_string_parsing'];rows=[]
+ for token in STRINGS:
+  observed=d[f'{token!r}/True/field/shortcut'];row={'ok':observed['ok']}
+  if row['ok']:
+   t=Decimal128.from_bid(bytes.fromhex(observed['rows'][0]['bid'])).to_decimal().as_tuple();row['tuple']=[t.sign,list(t.digits),t.exponent]
+  rows.append([token,row])
+ result[version]=rows
+Path('/tmp/mongoeco-decimal-sdk-free-expected.json').write_text(json.dumps(result))

@@ -1,0 +1,14 @@
+from pathlib import Path
+import hashlib,json,sys,os
+root=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())
+info=json.loads((root/'wheel.json').read_text());site=Path(info['site_packages']).resolve()
+for p,digest in json.loads((root/'runtime.json').read_text()).items():assert hashlib.sha256((site/Path(p).relative_to('src')).read_bytes()).hexdigest()==digest,p
+sys.path[:0]=[str(site),'/tmp']
+os.environ['MONGOECO_TEST_INSTALLED_ARTIFACT']='1'
+os.environ['MONGOECO_ARTIFACT_PROOF_LABEL']='decimal-unit-final'
+os.environ['MONGOECO_DISPATCH_ARTIFACT_ROOT']=str(root)
+os.environ['PYTHONPATH']=os.pathsep.join([str(site),'/tmp',str(Path.cwd())])
+import mongoeco,pytest
+assert Path(mongoeco.__file__).resolve().is_relative_to(site),mongoeco.__file__
+print('verified installed wheel',info,flush=True)
+raise SystemExit(pytest.main(['-q','-W','error::RuntimeWarning','-W','error::pytest.PytestUnraisableExceptionWarning','-W','error::pytest.PytestUnhandledThreadExceptionWarning','-o','pythonpath=','-p','mongoeco_dispatch_artifact_guard','tests/unit/core/test_codec.py','tests/unit/core/test_public_materialization.py','tests/unit/api/test_cursors.py','tests/unit/api/test_sync_client.py','tests/unit/api/test_aggregation_cursor.py','tests/unit/api/test_response_boundaries.py','tests/contracts/engines/test_spi_v2_only.py','tests/unit/core/test_engine_spi_v2.py','tests/unit/core/test_engine_boundary.py','tests/unit/core/test_aggregation_core.py','tests/unit/core/test_aggregation_runtime.py','tests/unit/core/test_aggregation_helper_branches.py','tests/unit/core/test_aggregation_expression_advanced.py','tests/unit/core/test_aggregation_expression_basics.py','tests/unit/core/test_aggregation_pipeline_advanced.py','tests/unit/core/test_lookup_physical_plan.py','tests/property/test_aggregation_bson_consumer_keys.py','tests/property/test_bson_document_keys.py','tests/property/test_bson_binary_coherence.py','tests/property/test_search_bson_candidate_conservation.py','tests/property/test_search_candidate_conservation.py','tests/unit/core/test_sqlite_search_runtime_helpers.py','tests/unit/core/test_sqlite_vector_backend_helpers.py','tests/unit/core/test_vector_ranking.py','tests/integration/api/test_search_predicate_authorities.py','tests/integration/api/test_search_regressions.py','tests/integration/api/test_search_planning_equivalence.py','tests/integration/api/test_memory_vector_topk_contract.py','tests/integration/api/test_memory_vector_cache_contract.py','tests/property/test_search_runtime_equivalence_properties.py','tests/property/test_search_planning_properties.py','tests/unit/test_search_reference_oracle.py','tests/unit/core/test_search_candidate_context.py','tests/unit/core/test_search_filter_prefilter.py','--tb=short']))
