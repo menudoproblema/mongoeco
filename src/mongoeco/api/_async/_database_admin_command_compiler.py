@@ -204,7 +204,7 @@ class DatabaseAdminCommandCompiler:
             message = (
                 "Database-level aggregation currently requires a $documents source"
             )
-            raise OperationFailure(message)
+            raise server_error(message, code=115, reason="capability_unsupported")
         cursor_spec = spec.get(cursor_field, {})
         if not isinstance(cursor_spec, dict):
             message = "cursor field must be missing or an object"

@@ -16,7 +16,7 @@ from unittest.mock import patch
 import pymongo
 import pytest
 
-from bson import BSON, Decimal128, Timestamp
+from bson import BSON, DBRef, Decimal128, Timestamp
 
 from mongoeco import AsyncMongoClient, MongoClient, SearchIndexModel
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
@@ -379,11 +379,33 @@ def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest a
     capture = _capture(dialect, corpus)
     seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
     expected = capture["cases"][name]
+
+    def check(actual):
+        if corpus == "bson_catalog" and name == "semantic_catalog_create_options":
+            # Native success is evidence of the excluded capability, not local parity.
+            actual, native = deepcopy(actual), deepcopy(expected)
+            for key in ("capped-size-string", "capped-max-zero"):
+                observed, supported = actual.pop(key), native.pop(key)
+                assert supported["ok"]
+                assert supported["aux_exists"]
+                assert observed == {
+                    "ok": False,
+                    "phase": "invoke",
+                    "exception": "OperationFailure",
+                    "code": 115,
+                    "state": supported["state"],
+                    "aux_exists": False,
+                    "indexes": [],
+                }
+            assert _normalize(actual) == _normalize(native)
+        else:
+            assert _normalize(actual) == _normalize(expected)
+
     if surface == "sync":
         with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
             collection = client.semantic_group.records
             collection.insert_many(seed)
-            assert _normalize(action(collection)) == _normalize(expected)
+            check(action(collection))
         return
 
     async def async_action(client):
@@ -392,7 +414,7 @@ def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest a
         result = await asyncio.to_thread(
             action, _AsyncView(collection, asyncio.get_running_loop(), client)
         )
-        assert _normalize(result) == _normalize(expected)
+        check(result)
 
     async def exercise():
         if surface == "async":
@@ -413,9 +435,7 @@ def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest a
                         ) as client:
                             collection = client.semantic_group.records
                             collection.insert_many(seed)
-                            assert _normalize(action(collection)) == _normalize(
-                                expected
-                            )
+                            check(action(collection))
 
                     await asyncio.to_thread(run)
                 else:
@@ -1080,3 +1100,32 @@ def test_followup_f10_capabilities_are_rejected_without_effects(
         for option in ("return_key", "show_record_id"):
             with pytest.raises((TypeError, OperationFailure)):
                 list(collection.find({}, **{option: True}))
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("dialect", DIALECTS)
+def test_followup_f07_dbref_identity_preserves_reference_payload(
+    engine_factory, dialect
+):
+    values = [
+        (DBRef("items", 1), True),
+        ({"$ref": "items", "$id": 1}, True),
+        ({"a": DBRef("items", 1)}, True),
+        ({"$ref": "items"}, False),
+        ({"$ref": "items", "$id": {"$bad": 1}}, True),
+        ({"$ref": "items", "$id": 1, "$bad": 1}, False),
+        ({"$ref": "items", "$id": 1, "a": {"$bad": 1}}, False),
+    ]
+    with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+        for index, (identifier, valid) in enumerate(values):
+            collection = client.references[f"case{index}"]
+            if valid:
+                collection.insert_one({"_id": identifier})
+                assert BSON.encode(collection.find_one()) == BSON.encode(
+                    {"_id": identifier}
+                )
+            else:
+                with pytest.raises(OperationFailure) as error:
+                    collection.insert_one({"_id": identifier})
+                assert error.value.code == 52  # noqa: PLR2004 - native invalid dollar field
+                assert collection.count_documents({}) == 0

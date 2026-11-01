@@ -17,7 +17,7 @@ from mongoeco.errors import OperationFailure
 from tests.differential.version_delta_cases import VERSION_DELTA_CASES
 
 
-_UNRECOGNIZED_STAGE_CODE = 40324
+_UNIMPLEMENTED_STAGE_CODE = 115
 CASES = tuple(
     case for case in VERSION_DELTA_CASES if case.name.startswith("densify_bounds_")
 )
@@ -105,20 +105,20 @@ def test_out_remains_an_explicit_rejection_without_writes(backend, surface, dial
     if surface == "sync":
         with MongoClient(engine, mongodb_dialect=dialect) as client:
             with pytest.raises(
-                OperationFailure, match=r"Unrecognized pipeline stage name: '\$out'"
+                OperationFailure, match=r"\$out is recognized but outside"
             ) as caught:
                 list(client.test.records.aggregate(pipeline))
-            assert caught.value.code == _UNRECOGNIZED_STAGE_CODE
+            assert caught.value.code == _UNIMPLEMENTED_STAGE_CODE
             assert "output" not in client.test.list_collection_names()
     else:
 
         async def exercise():
             async with AsyncMongoClient(engine, mongodb_dialect=dialect) as client:
                 with pytest.raises(
-                    OperationFailure, match=r"Unrecognized pipeline stage name: '\$out'"
+                    OperationFailure, match=r"\$out is recognized but outside"
                 ) as caught:
                     await client.test.records.aggregate(pipeline).to_list()
-                assert caught.value.code == _UNRECOGNIZED_STAGE_CODE
+                assert caught.value.code == _UNIMPLEMENTED_STAGE_CODE
                 assert "output" not in await client.test.list_collection_names()
 
         asyncio.run(exercise())

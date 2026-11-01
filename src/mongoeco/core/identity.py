@@ -89,8 +89,18 @@ def is_valid_root_document_id(value: Any) -> bool:
 def _id_contains_dollar_field(value):
     mapping = document_mapping(value)
     if mapping is not None:
+        permitted = (
+            {"$ref", "$id", "$db"}
+            if (
+                isinstance(mapping.get("$ref"), str)
+                and "$id" in mapping
+                and (mapping.get("$db") is None or isinstance(mapping["$db"], str))
+            )
+            else ()
+        )
         return any(
-            key.startswith("$") or _id_contains_dollar_field(item)
+            (key.startswith("$") and key not in permitted)
+            or (key not in permitted and _id_contains_dollar_field(item))
             for key, item in mapping.items()
         )
     return isinstance(value, list) and any(
