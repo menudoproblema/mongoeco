@@ -93,9 +93,17 @@ GIT_SHA_LENGTH = 40
 
 
 def _assert_test_reference_exists(reference: str) -> None:
-    path_text, class_name, method_name = reference.split("::")
+    path_text, *names = reference.split("::")
     source_path = PROJECT_ROOT / path_text
     tree = ast.parse(source_path.read_text(encoding="utf-8"))
+    if len(names) == 1:
+        assert any(
+            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name == names[0]
+            for node in tree.body
+        ), reference
+        return
+    class_name, method_name = names
     test_class = next(
         node for node in tree.body
         if isinstance(node, ast.ClassDef) and node.name == class_name
@@ -206,7 +214,7 @@ def test_wire_hello_field_matrix_covers_bounded_request_and_result_fields() -> N
         assert row["source"] == expected_source
         assert row["disposition"] == "owner_operational"
         assert row["status"] == "bounded_behavior_verified"
-        assert row["source_revision"] == "1b8369ff8d8466fab6bcfa51393a9bd43ee2ec61"
+        assert row["source_revision"] == "073dc33e81528a47b575f295b809633fd21b0cfe"
         assert row["meaning"]
         assert row["conditions_scope"]
         assert row["consumer_decision"]

@@ -2432,3 +2432,21 @@ d05-clock-inventory-before.json.gz y d05-error-inventory-before.json.gz. Son
 inventarios locales, no capturas nativas, y su conciliación no admite nuevos
 emisores sin identidad. O5 sigue abierta hasta resolver los demás fallos y el
 99% de cobertura.
+
+
+### O5/O7 — Inventarios de campos y unidades de error
+
+Pasan 55 pruebas del corte de inventarios y sobres de error. Se conservan los
+campos, significados acotados, evidencias positivas/negativas y comprobaciones
+de fuentes. Los cinco CSV existentes se vinculan a fuentes de 073dc33e; sus
+originales están retenidos con prefijo d05-before-. La fila de ID de cursor
+precisa EOF establecido por la respuesta, sin equipararlo al conocimiento previo
+de todo el sufijo; añade el test de protocolo con spill ya existente. El helper
+de referencias admite funciones pytest además de métodos unittest y continúa
+exigiendo su existencia real. No se crea otro inventario ni un runner.
+
+Los dobles de find_modify_errors reciben el owner mínimo y CodecOptions,
+conservando su camino cliente de materialización y las aserciones de identidad,
+labels y diagnóstico; no se evita ese camino con server_command. La conciliación
+no modifica código productivo. Quedan 79 padres de los fallos originales por
+resolver en O5; esta cifra interna no cambia las ocho obligaciones de cierre.

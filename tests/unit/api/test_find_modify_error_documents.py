@@ -2,10 +2,13 @@
 
 import asyncio
 
+from types import SimpleNamespace
+
 import pytest
 
 from mongoeco.api._async._write_errors import find_modify_errors
 from mongoeco.errors import DuplicateKeyError, OperationFailure
+from mongoeco.types import CodecOptions
 
 
 @pytest.mark.parametrize("error_type", [OperationFailure, DuplicateKeyError])
@@ -16,11 +19,11 @@ def test_find_modify_completes_details_without_mutating_or_reformatting_them(
     original = error_type("outer diagnostic", code=14, details=source)
 
     @find_modify_errors
-    async def fail():
+    async def fail(_collection):
         raise original
 
     with pytest.raises(error_type) as caught:
-        asyncio.run(fail())
+        asyncio.run(fail(SimpleNamespace(_codec_options=CodecOptions())))
     error = caught.value
     assert error.details == {
         **source,
@@ -40,11 +43,11 @@ def test_find_modify_completes_an_unknown_server_code():
     original = OperationFailure("unknown", code=999)
 
     @find_modify_errors
-    async def fail():
+    async def fail(_collection):
         raise original
 
     with pytest.raises(OperationFailure) as caught:
-        asyncio.run(fail())
+        asyncio.run(fail(SimpleNamespace(_codec_options=CodecOptions())))
     assert caught.value.code == original.code
     assert caught.value.details == {
         "ok": 0.0,
@@ -60,10 +63,10 @@ def test_find_modify_uses_the_raw_diagnostic_when_existing_details_lack_errmsg()
     )
 
     @find_modify_errors
-    async def fail():
+    async def fail(_collection):
         raise original
 
     with pytest.raises(OperationFailure) as caught:
-        asyncio.run(fail())
+        asyncio.run(fail(SimpleNamespace(_codec_options=CodecOptions())))
     assert caught.value.details["errmsg"] == "invalid field"
     assert str(caught.value).count("full error:") == 1
