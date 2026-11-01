@@ -1710,7 +1710,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
         with self.assertRaises(TypeError):
             asyncio.run(self.collection.distinct(1))  # type: ignore[arg-type]
 
-    def test_distinct_includes_null_for_documents_without_matching_values(
+    def test_distinct_omits_documents_without_matching_values(
         self,
     ):
         async def _exercise():
@@ -1726,7 +1726,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
 
         result = asyncio.run(_exercise())
 
-        self.assertEqual(result, ["view", None])
+        self.assertEqual(result, ["view"])
 
     def test_distinct_honors_custom_dialect_equality(self):
         class CaseInsensitiveDialect(MongoDialect70):

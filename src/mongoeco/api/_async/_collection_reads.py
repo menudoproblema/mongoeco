@@ -365,7 +365,7 @@ def resolve_distinct_candidates(
 ) -> list[object]:
     if not values:
         if not exact_found:
-            return [None]
+            return []
         if isinstance(exact_value, list):
             return []
         return [exact_value]

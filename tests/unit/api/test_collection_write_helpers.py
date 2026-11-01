@@ -1110,7 +1110,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
                 )
             )  # type: ignore[arg-type]
 
-    def test_distinct_includes_null_once_for_missing_fields(self):
+    def test_distinct_skips_missing_fields_and_empty_arrays(self):
         async def _exercise():
             engine = MemoryEngine()
             await engine.connect()
@@ -1131,7 +1131,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
             finally:
                 await engine.disconnect()
 
-        self.assertEqual(asyncio.run(_exercise()), [None, 'Madrid'])
+        self.assertEqual(asyncio.run(_exercise()), ['Madrid'])
 
     def test_distinct_uses_scalar_fallback_when_exact_path_exists_but_extract_values_is_empty(
         self,
@@ -1196,7 +1196,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
             _resolve_distinct_candidates(
                 [], exact_found=False, exact_value=None
             ),
-            [None],
+            [],
         )
         self.assertEqual(
             _resolve_distinct_candidates([], exact_found=True, exact_value=[]),

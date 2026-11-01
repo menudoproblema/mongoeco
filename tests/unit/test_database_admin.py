@@ -584,7 +584,7 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
 
         values = asyncio.run(_run())
 
-        self.assertEqual(values, [None, "scalar", "Ada"])
+        self.assertEqual(values, ["scalar", "Ada"])
 
     def test_command_insert_collects_unordered_errors_after_successes(self):
         database = AsyncDatabase(MemoryEngine(), "db")
