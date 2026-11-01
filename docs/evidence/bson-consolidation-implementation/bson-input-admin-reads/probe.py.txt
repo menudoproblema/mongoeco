@@ -1,0 +1,21 @@
+from pathlib import Path
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from tests.differential.semantic_bson_admin_read_cases import SEMANTIC_BSON_ADMIN_READ_CASES,SEED
+from tests.differential._real_parity_base import _decode_capture
+from tests.integration.api.test_semantic_group_regressions import _normalize
+failures=[]
+for target in ('7.0','8.0','9.0'):
+ expected=_decode_capture(Path(f'tests/fixtures/semantic_bson_admin_read_{target.replace(".","_")}.json').read_text())['cases']
+ for factory in (MemoryEngine,SQLiteEngine):
+  for name,action in SEMANTIC_BSON_ADMIN_READ_CASES:
+   with MongoClient(factory(),mongodb_dialect=target) as client:
+    coll=client.test.records;coll.insert_many(SEED)
+    got=action(coll)
+    different={k:(v,expected[name].get(k)) for k,v in got.items() if _normalize(v)!=_normalize(expected[name].get(k))}
+    if different:
+     failures.append((target,factory.__name__,name,len(different)))
+     print(failures[-1],flush=True)
+     for k,v in list(different.items())[:2]:print(k,str(v)[:1500],flush=True)
+assert not failures,failures
+print('all native observations match')

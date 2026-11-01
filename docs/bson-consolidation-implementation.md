@@ -715,7 +715,7 @@ solo owner en el plan.
 - Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
-- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El replay conserva 72 fallos previos obligatorios y dos tests antiguos de batching siguen rojos. `c715ae7` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; quedan 13 entradas administrativas del censo sin disposición antes del default UUID coordinado. Continúan positivos/batching y otros contextos D06/B08. STANDARD global permanece y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
+- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El replay conserva 72 fallos previos obligatorios y dos tests antiguos de batching siguen rojos. `c715ae7` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; `d9c9c80` añade las seis entradas de listados/validate, lectores fuente preparados y controles de flags. Quedan siete entradas del censo (drop/rename y cinco Search) antes del default UUID coordinado. Continúan positivos/batching y otros contextos D06/B08. STANDARD global permanece y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
 
 La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
 `3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
@@ -1949,3 +1949,33 @@ ABBA×2 registrados, sin aceptar presupuesto D05.
 UUID coordinado y unidad 5 de positivos/respuestas. Esta admisión no cierra toda
 la semántica de los listados, errores servidor o tandas. STANDARD global, otros
 contextos D06, H53, decisión D07 y cierre D05 mantienen sus obligaciones.
+
+
+## B07 — listados y validación administrativa
+
+✅ Cerrado el corte acotado en `d9c9c80`;
+[evidencia](evidence/bson-consolidation-implementation/bson-input-admin-reads/README.md)
+y [receipt](evidence/bson-consolidation-implementation/bson-input-admin-reads/receipt.json).
+Listados admiten una vez con opciones propias; validate reutiliza Database.command.
+Los lectores de validación/stats/hash operan sobre el snapshot SPI preparado y
+no decodifican con codecs del usuario. Se conserva Mapping cliente solo para names,
+namespace 73/26, filtro servidor 14, comentarios y el contrato valid:false del SDK.
+Las reglas BSON legacy y de booleanos tipados permanecen distintas, con vista
+numérica común para evitar que Decimal128 cero cuente como verdadero.
+
+Seis acciones: 269 + 18 observaciones por versión nativa. Base 120 fallos/30
+correctos; candidato 150 checks nuevos correctos. Replay instalado: 9909
+correctos y los mismos 72 fallos previos. Cohorte: 2192 correctos/4686 subtests
+con los mismos dos fallos antiguos de batching; 27 controles de frontera.
+SDK-free real: 1566 + 108 observaciones y siete familias anteriores. API idéntica,
+typing/lint pasan; 290 históricos intactos y 45 recursos temporales ausentes.
+La proyección CSV conserva identidad del owner; el test deja de duplicar su SHA
+literal. Costes diagnósticos de stats/hash ~0.75 Memory/~0.88 SQLite y names
+~1.67/~1.27 frente a la base; no se acepta presupuesto D05.
+
+→ Sigue: siete entradas del censo, UUID coordinado y positivos/respuestas/batching.
+Background local continúa accepted-noop y síncrono: las referencias de ese flag
+fijan full=True para aislar incompatibilidad/conversión antes de checkpoints.
+No se simula el 115 observado sin checkpoint en 8/9 ni corrupción física del
+servidor mediante el control SDK de respuesta inválida. Otros contextos D06,
+H53, decisión D07 y matrices/cobertura/costes integrados D05 siguen abiertos.

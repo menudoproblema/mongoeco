@@ -1,0 +1,69 @@
+import gzip,hashlib,json,re,shutil,subprocess
+from pathlib import Path
+out=Path('docs/evidence/bson-consolidation-implementation/bson-input-admin-reads');out.mkdir(exist_ok=True)
+root=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip());wheel=json.loads((root/'wheel.json').read_text())
+def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def nodes(s):return set(re.findall(r'^FAILED (\S+)',s,re.M))
+replay=Path('/tmp/mongoeco-admin-read-replay.txt').read_text()
+old=gzip.decompress(Path('docs/evidence/bson-consolidation-implementation/bson-input-index-admin/replay.txt.gz').read_bytes()).decode()
+assert nodes(replay)==nodes(old) and len(nodes(replay))==72
+assert '72 failed, 9909 passed' in replay
+unit=Path('/tmp/mongoeco-admin-read-unit-final.txt').read_text()
+assert nodes(unit)=={'tests/unit/test_database_command_option_conservation.py::test_batch_size_limits_wire_first_batch[find]','tests/unit/test_database_command_option_conservation.py::test_find_batch_size_prefetches_locally_without_truncating_api_result'}
+assert '2 failed, 2192 passed, 4686 subtests passed' in unit
+assert '120 failed, 30 passed' in Path('/tmp/mongoeco-admin-read-baseline-final.txt').read_text()
+protected=json.loads(Path('/tmp/mongoeco-admin-read-protected.json').read_text())
+for path,digest in protected.items():assert sha(path)==digest,path
+runtime=json.loads((root/'runtime.json').read_text());site=Path(wheel['site_packages'])
+for path,digest in runtime.items():assert sha(path)==digest and sha(site/Path(path).relative_to('src'))==digest,path
+native={}
+for key,observations in [('bson_admin_read',269),('bson_command_flags',18)]:
+ native[key]={}
+ for target in ('7.0','8.0','9.0'):
+  path=Path(f'tests/fixtures/semantic_{key}_{target.replace(".","_")}.json')
+  data=json.loads(path.read_text());assert sum(map(len,data['cases'].values()))==observations
+  assert path.read_bytes()==Path('/tmp/mongoeco-admin-read-native-consumers',target,key+'-check.json').read_bytes()
+  native[key][target]={'fixture':str(path),'sha256':sha(path),'observations':observations,'runtime':data['runtime']}
+for path in sorted(Path('/tmp').glob('mongoeco-admin-read-*.txt')):
+ if path.name in ('mongoeco-admin-read-README.txt',):continue
+ label=path.name.removeprefix('mongoeco-admin-read-')
+ if 'previous-' in label:shutil.copy2(path,out/label)
+ else:(out/(label+'.gz')).write_bytes(gzip.compress(path.read_bytes(),mtime=0))
+for label in ('baseline','api','unit','replay','sdk-free','sdk-free-prepare','cost','resources','native','native-flags','native-final','native-frozen','native-consumers','archive','probe'):
+ path=Path('/tmp/mongoeco-admin-read-'+label+'.py')
+ if path.exists():shutil.copy2(path,out/(label+'.py.txt'))
+for label in ('resources','protected','cost','api-delta','sdk-free-expected'):
+ shutil.copy2('/tmp/mongoeco-admin-read-'+label+'.json',out/(label+'.json'))
+for label in ('api-baseline','api-candidate'):
+ (out/(label+'.json.gz')).write_bytes(gzip.compress(Path('/tmp/mongoeco-admin-read-'+label+'.json').read_bytes(),mtime=0))
+assert json.loads(gzip.decompress((out/'api-baseline.json.gz').read_bytes()))==json.loads(gzip.decompress((out/'api-candidate.json.gz').read_bytes()))
+for label in ('native','native-flags','native-final','native-frozen','native-consumers'):
+ for target in ('7.0','8.0','9.0'):
+  original=Path('/tmp/mongoeco-admin-read-'+label);dest=out/label/target;dest.mkdir(parents=True,exist_ok=True)
+  for filename in ('fixture.json','bson_admin_read-check.json','bson_command_flags-check.json'):
+   p=original/target/filename
+   if p.exists():
+    if filename.endswith('-check.json') and label!='native-consumers':
+     (dest/(filename+'.gz')).write_bytes(gzip.compress(p.read_bytes(),mtime=0))
+    else:shutil.copy2(p,dest/filename)
+  (dest/'capture.txt.gz').write_bytes(gzip.compress((original/(target+'.log')).read_bytes(),mtime=0))
+  if label=='native-consumers':(dest/'mongod.txt.gz').write_bytes(gzip.compress((original/target/'mongod.log').read_bytes(),mtime=0))
+for path in root.glob('wheel-imports-admin-read-*.json'):shutil.copy2(path,out/path.name)
+for source,name in [('wheel.json','wheel.json'),('runtime.json','runtime-sources.json')]:shutil.copy2(root/source,out/name)
+base=Path(Path('/tmp/mongoeco-admin-read-baseline-location.txt').read_text().strip())
+shutil.copy2(base/'runtime.json',out/'baseline-runtime-sources.json')
+for path in base.glob('wheel-imports-*.json'):shutil.copy2(path,out/('baseline-'+path.name))
+for original,name in [('/tmp/mongoeco-bson-input-typing.txt','typing.txt'),('/tmp/mongoeco-dispatch-build.py','build.py.txt'),('/tmp/mongoeco_dispatch_artifact_guard.py','artifact-guard.py.txt')]:shutil.copy2(original,out/name)
+paths=subprocess.check_output(['git','diff','--name-only','bd09bcc','--','src','tests','docs/cxp-database-command-option-conservation.csv'],text=True).splitlines()
+paths+=subprocess.check_output(['git','ls-files','--others','--exclude-standard','src','tests'],text=True).splitlines()
+(out/'changed-sources.json').write_text(json.dumps({p:sha(p) for p in paths},indent=2)+'\n')
+receipt={'base_commit':'bd09bcc','scope':'B07 listing/validate frames, prepared administrative source readers and numeric command boolean controls; not complete B07/UUID/positive reply/batching/D05',
+ 'admitted_entrypoints':['AsyncDatabase.list_collection_names','AsyncDatabase.list_collections','AsyncDatabase.validate_collection','AsyncDatabaseAdminService.list_collection_names','AsyncDatabaseAdminService.list_collections','AsyncDatabaseAdminService.validate_collection'],
+ 'remaining_administrative_census_entries':7,'native':native,'wheel':wheel,'baseline':{'failed':120,'passed':30},'new_corpora':{'passed':150},'boundary':{'passed':27},
+ 'unit_summary':unit.splitlines()[-1],'replay_summary':replay.splitlines()[-1],'pending_replay_nodes':sorted(nodes(replay)),'pending_unit_nodes':sorted(nodes(unit)),
+ 'sdk_free':json.loads(Path('/tmp/mongoeco-admin-read-sdk-free-final.txt').read_text()),'protected_artifacts':len(protected),'resources_confirmed_absent':len(json.loads((out/'resources.json').read_text())),
+ 'public_api_manifest_unchanged':True,'catalog_changes':'comment admitted and retained for two listing operations; validate uses native legacy BSON truth conversion with local accepted-noop effects retained',
+ 'cost_diagnostic':json.loads((out/'cost.json').read_text())['ratios'],
+ 'limits':['background-alone checkpoint effects not implemented; early native 8/9 returned 115 before checkpoint; final background controls use full=True to test flag incompatibility 72','invalid valid:false response wrapper uses actual PyMongo method with controlled command response, not server corruption','positive metadata/reply/batching and global UUID default remain open']}
+(out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+print(receipt['unit_summary']);print(receipt['replay_summary']);print(out)

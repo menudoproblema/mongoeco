@@ -1,0 +1,68 @@
+import hashlib,json,subprocess,shutil
+from pathlib import Path
+code=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip();short=code[:7]
+assert subprocess.check_output(['git','show','-s','--format=%s',code],text=True).strip()=='fix(api): preserve BSON boundaries in administrative reads'
+root=Path('docs/evidence/bson-consolidation-implementation/bson-input-admin-reads')
+receipt=json.loads((root/'receipt.json').read_text());receipt['code_commit']=code
+(root/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+readme=Path('/tmp/mongoeco-admin-read-README.md').read_text().replace('Base `bd09bcc`.',f'Base `bd09bcc`; código `{short}`.')
+readme+='''\nResultado instalado final: 9909 correctos/72 fallos previos; cohorte 2192
+correctos/4686 subtests y dos fallos previos de batching. API 18 pruebas/13
+subtests, typing dos positivos y 20/25 negativos, lint sin infracciones nuevas
+en 20 archivos Python. Es aceptación acotada con gates globales pendientes.\n'''
+(root/'README.md').write_text(readme)
+p=Path('docs/bson-semantics-consolidation-plan.md');s=p.read_text()
+header=next(line for line in s.splitlines() if line.startswith('**Entrada vigente'))
+s=s.replace(header,f'**Entrada vigente (1 de noviembre; último corte aceptado `{short}`):**',1)
+old='''Antes del default, disponer las 13 entradas restantes del [censo histórico de 17](evidence/bson-consolidation-implementation/bson-input-catalog/frontier-census.json): namespace/validación y métodos Search, incluyendo tres delegaciones. No son 13 bugs ni obligación de implementar Atlas; las respuestas positivas completas y batching conservan unidad 5.'''
+new=f'''`{short}` acepta listados/validate y sus tres delegaciones: [admisión, lectores preparados y flags](evidence/bson-consolidation-implementation/bson-input-admin-reads/README.md). Se corrigen los lectores fuente compartidos de stats/hash y Decimal128 cero en flags, con políticas legacy/tipada separadas. Antes del default, disponer siete entradas restantes del [censo histórico de 17](evidence/bson-consolidation-implementation/bson-input-catalog/frontier-census.json): drop/rename y cinco Search. No son siete bugs ni obligación de implementar Atlas/checkpoints; positivos completos y batching conservan unidad 5.'''
+assert old in s;s=s.replace(old,new,1)
+old='''**Siguiente corte.** Disponer las 13 entradas administrativas restantes del
+censo: namespace/validación y Search, con sus delegaciones y opciones propias.
+Comandos, creación de catálogo y las cuatro admisiones de índices conservan
+aceptación acotada; no se reimplementan por repetir el censo.'''
+new='''**Siguiente corte.** Disponer siete entradas restantes del censo: drop/rename
+y cinco Search, con sus opciones propias. Comandos, creación de catálogo,
+cuatro admisiones de índices y seis entradas de listados/validate conservan
+aceptación acotada; no se reimplementan por repetir el censo.'''
+assert old in s;s=s.replace(old,new,1)
+s=s.replace('''admisiones de índices en `c715ae7`; conserva las 13 disposiciones administrativas
+restantes antes del default''',f'''admisiones de índices en `c715ae7`; `{short}` entrega las seis entradas de
+listados/validate y conserva siete disposiciones restantes antes del default''',1)
+p.write_text(s)
+p=Path('docs/bson-consolidation-implementation.md');s=p.read_text()
+old='''quedan 13 entradas administrativas del censo sin disposición antes del default UUID coordinado. Continúan positivos/batching y otros contextos D06/B08.'''
+new=f'''`{short}` añade las seis entradas de listados/validate, lectores fuente preparados y controles de flags. Quedan siete entradas del censo (drop/rename y cinco Search) antes del default UUID coordinado. Continúan positivos/batching y otros contextos D06/B08.'''
+assert old in s;s=s.replace(old,new,1)
+marker='## B07 — listados y validación administrativa'
+assert marker not in s
+s+=f'''\n\n{marker}
+
+✅ Cerrado el corte acotado en `{short}`;
+[evidencia](evidence/bson-consolidation-implementation/bson-input-admin-reads/README.md)
+y [receipt](evidence/bson-consolidation-implementation/bson-input-admin-reads/receipt.json).
+Listados admiten una vez con opciones propias; validate reutiliza Database.command.
+Los lectores de validación/stats/hash operan sobre el snapshot SPI preparado y
+no decodifican con codecs del usuario. Se conserva Mapping cliente solo para names,
+namespace 73/26, filtro servidor 14, comentarios y el contrato valid:false del SDK.
+Las reglas BSON legacy y de booleanos tipados permanecen distintas, con vista
+numérica común para evitar que Decimal128 cero cuente como verdadero.
+
+Seis acciones: 269 + 18 observaciones por versión nativa. Base 120 fallos/30
+correctos; candidato 150 checks nuevos correctos. Replay instalado: 9909
+correctos y los mismos 72 fallos previos. Cohorte: 2192 correctos/4686 subtests
+con los mismos dos fallos antiguos de batching; 27 controles de frontera.
+SDK-free real: 1566 + 108 observaciones y siete familias anteriores. API idéntica,
+typing/lint pasan; 290 históricos intactos y 45 recursos temporales ausentes.
+La proyección CSV conserva identidad del owner; el test deja de duplicar su SHA
+literal. Costes diagnósticos de stats/hash ~0.75 Memory/~0.88 SQLite y names
+~1.67/~1.27 frente a la base; no se acepta presupuesto D05.
+
+→ Sigue: siete entradas del censo, UUID coordinado y positivos/respuestas/batching.
+Background local continúa accepted-noop y síncrono: las referencias de ese flag
+fijan full=True para aislar incompatibilidad/conversión antes de checkpoints.
+No se simula el 115 observado sin checkpoint en 8/9 ni corrupción física del
+servidor mediante el control SDK de respuesta inválida. Otros contextos D06,
+H53, decisión D07 y matrices/cobertura/costes integrados D05 siguen abiertos.
+'''
+p.write_text(s)
