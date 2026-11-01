@@ -715,7 +715,7 @@ solo owner en el plan.
 - Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
-- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El replay conserva 72 fallos previos obligatorios y dos tests antiguos de batching siguen rojos. `c715ae7` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; `d9c9c80` añade las seis entradas de listados/validate, lectores fuente preparados y controles de flags. Quedan siete entradas del censo (drop/rename y cinco Search) antes del default UUID coordinado. Continúan positivos/batching y otros contextos D06/B08. STANDARD global permanece y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
+- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El replay conserva 72 fallos previos obligatorios y dos tests antiguos de batching siguen rojos. `c715ae7` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; `d9c9c80` añade las seis entradas de listados/validate, lectores fuente preparados y controles de flags. `b938556d` añade drop/rename y mantiene cinco entradas Search del censo antes del default UUID coordinado. Continúan positivos/batching y otros contextos D06/B08. STANDARD global permanece y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
 
 La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
 `3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
@@ -1979,3 +1979,32 @@ fijan full=True para aislar incompatibilidad/conversión antes de checkpoints.
 No se simula el 115 observado sin checkpoint en 8/9 ni corrupción física del
 servidor mediante el control SDK de respuesta inválida. Otros contextos D06,
 H53, decisión D07 y matrices/cobertura/costes integrados D05 siguen abiertos.
+
+
+## B07 — solicitudes públicas de namespace
+
+✅ Cerrado el corte acotado en `b938556d`;
+[evidencia](evidence/bson-consolidation-implementation/bson-input-namespace/README.md)
+y [receipt](evidence/bson-consolidation-implementation/bson-input-namespace/receipt.json).
+Drop/rename admiten una vez con opciones propias UNSPECIFIED y reutilizan
+la ejecución DDL preparada. InvalidName conserva el puente SDK/portable y
+su precedencia cliente. Se conserva Collection con nombre String confirmado y
+opciones/contexto anteriores. Code scope se codifica en drop y se descarta al
+construir namespaces en rename, según referencia nativa. El parser drop exige
+dialecto y conserva sus códigos no String 2/14/73 en 7/8/9.
+
+Cuatro acciones/55 observaciones por versión; base 72 fallos/27 correctos,
+candidato 99 checks nuevos correctos. Replay instalado 10008 correctos y los
+mismos 72 fallos previos; cohorte 2250 correctos/4686 subtests, con los mismos
+dos fallos antiguos de batching. Dieciséis controles de frontera y los contratos
+DDL de rollback/journal/checkpoint pasan. Se corrige el testigo obsoleto de
+comentario persistido sin retirar las garantías de estado/índices/publicación:
+la base reproduce sus seis fallos. SDK-free: 240 observaciones y ocho familias
+previas. Firmas API, typing y lint pasan; 296 históricos intactos y 27 recursos
+propios ausentes. El nuevo módulo privado eleva la wheel a 286 módulos.
+
+→ Sigue: cinco entradas Search del censo, UUID coordinado y positivos/respuestas/
+batching. El retorno Collection local y los parámetros namespace existentes se
+conservan; no se acepta todo reply drop ni paridad distribuida de eventos por
+las capturas standalone. Otros contextos D06, H53, decisión D07 y cierre D05
+mantienen sus obligaciones, incluidos costes y matrices integrados.

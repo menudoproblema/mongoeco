@@ -1,6 +1,6 @@
 # Consolidación BSON: contraste de informes y plan integrado
 
-**Entrada vigente (1 de noviembre; último corte aceptado `d9c9c80`):**
+**Entrada vigente (1 de noviembre; último corte aceptado `b938556d`):**
 [contraste y orden actual](#contraste-actual-y-orden-mínimo-de-ejecución),
 [detalle de B07](#b07--admisión-en-la-fase-y-el-lote-correctos) y
 [estado de implementación](bson-consolidation-implementation.md).
@@ -1316,7 +1316,7 @@ PreparedPipeline se corrige conservando slices; no exige otra caché.
 
 | Orden / prioridad | Trabajo y dependencia | Aceptación / owner |
 | --- | --- | --- |
-| 1 / P1 — B07, escrituras y comandos | `c715ae7` acepta admisión/dueños de codecs en list_indexes/index_information/drop_index/drop_indexes y su [respuesta de retirada](evidence/bson-consolidation-implementation/bson-input-index-admin/README.md). `7524e39` conserva creación de catálogo y `3bfe5fb`, comandos. `d9c9c80` acepta listados/validate y sus tres delegaciones: [admisión, lectores preparados y flags](evidence/bson-consolidation-implementation/bson-input-admin-reads/README.md). Se corrigen los lectores fuente compartidos de stats/hash y Decimal128 cero en flags, con políticas legacy/tipada separadas. Antes del default, disponer siete entradas restantes del [censo histórico de 17](evidence/bson-consolidation-implementation/bson-input-catalog/frontier-census.json): drop/rename y cinco Search. No son siete bugs ni obligación de implementar Atlas/checkpoints; positivos completos y batching conservan unidad 5. Lecturas, inserciones, mutaciones y bulk clásico conservan aceptación propia. Conservar originales hasta codificar, sin endurecer `DocumentCodec.to_internal` ni preparar todo el bulk como un solo envío. | Unidades 2/3 de B07: errores cliente, fase, precedencia, efectos parciales, IDs, índices y eventos. Comandos wire ya decodificados usan la entrada interna preparada. |
+| 1 / P1 — B07, escrituras y comandos | `c715ae7` acepta admisión/dueños de codecs en list_indexes/index_information/drop_index/drop_indexes y su [respuesta de retirada](evidence/bson-consolidation-implementation/bson-input-index-admin/README.md). `7524e39` conserva creación de catálogo y `3bfe5fb`, comandos. `d9c9c80` acepta listados/validate y sus tres delegaciones: [admisión, lectores preparados y flags](evidence/bson-consolidation-implementation/bson-input-admin-reads/README.md). Se corrigen los lectores fuente compartidos de stats/hash y Decimal128 cero en flags, con políticas legacy/tipada separadas. `b938556d` acepta [drop/rename](evidence/bson-consolidation-implementation/bson-input-namespace/README.md), InvalidName, gramática por dialecto y ejecución DDL preparada compartida, conservando el retorno Collection. Antes del default quedan cinco entradas Search del [censo histórico de 17](evidence/bson-consolidation-implementation/bson-input-catalog/frontier-census.json). No son cinco bugs ni obligación de implementar Atlas/checkpoints; positivos completos y batching conservan unidad 5. Lecturas, inserciones, mutaciones y bulk clásico conservan aceptación propia. Conservar originales hasta codificar, sin endurecer `DocumentCodec.to_internal` ni preparar todo el bulk como un solo envío. | Unidades 2/3 de B07: errores cliente, fase, precedencia, efectos parciales, IDs, índices y eventos. Comandos wire ya decodificados usan la entrada interna preparada. |
 | 2 / P1 — B07, UUID | Después de integrar entradas de escritura, aplicar opciones del dueño de la solicitud y coordinar el default. | Unidad 4: default/UNSPECIFIED, STANDARD y legacy; directa/wire, persistencia y perfil realmente sin SDK. Mantener STANDARD hasta completar el corte. |
 | 3 / P1 — B07, positivos y respuestas | Reusar preparación de proyección, DTO y materializador; no crear otra autoridad BSON. Puede avanzar antes del cambio de default. | Unidad 5: valores y tipos, orden de sobres, resultado bulk, callbacks y fábricas una sola vez. |
 | 4 / P1 — Resto D06a/b/c | Completar contextos y consumidores aún sin aceptación sobre vistas, gramática, contexto y claves existentes. Conservar cortes raw/dispatch/fábricas/cursores, grupo/conjuntos y Search ya aceptados. | Diferenciales por contexto, representación, collation y persistencia. No inferir cierre completo de D06 por una familia verde. |
@@ -1437,8 +1437,8 @@ checks nuevos y 518 observaciones nativas por versión. El replay amplio mantien
 96 fallos B07 y 9246 correctos. La propiedad bulk_api_result
 cierra ese testigo de unidad 5, sin cerrar todos los efectos de respuestas.
 
-**Siguiente corte.** Disponer siete entradas restantes del censo: drop/rename
-y cinco Search, con sus opciones propias. Comandos, creación de catálogo,
+**Siguiente corte.** Disponer cinco entradas Search del censo con sus opciones
+propias y ejecutores preparados, distinguiendo admisión cliente y soporte Atlas. Comandos, creación de catálogo,
 cuatro admisiones de índices y seis entradas de listados/validate conservan
 aceptación acotada; no se reimplementan por repetir el censo. Reutilizar encoder,
 parsing y ejecutores. La
@@ -1504,7 +1504,8 @@ al reconstruir un DBRef con el decoder SDK.
 Las unidades 1 y 3 tienen aceptación acotada; 2 comparte el encoder entregado
 e integra comandos en `3bfe5fb`, creación de catálogo en `7524e39` y las cuatro
 admisiones de índices en `c715ae7`; `d9c9c80` entrega las seis entradas de
-listados/validate y conserva siete disposiciones restantes antes del default, y 4 coordina las opciones
+listados/validate y `b938556d` entrega drop/rename. Se conservan cinco entradas
+Search antes del default, y 4 coordina las opciones
 de sus dueños antes del nuevo default. Los consumidores positivos tienen owner propio: una codificación
 correcta no acepta su proyección/sobre. No se crea otro comparador, planificador,
 contexto o formato de almacenamiento para resolver esta frontera. Los demás

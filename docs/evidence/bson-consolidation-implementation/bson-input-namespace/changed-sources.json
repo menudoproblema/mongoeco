@@ -1,0 +1,18 @@
+{
+  "src/mongoeco/api/_async/_database_admin_write_commands.py": "e1a86d51d45d87a1ac3676ee52d437cdb3e5f7a0849c185b07eab76362240872",
+  "src/mongoeco/api/_async/collection.py": "1aa1f0021f117b97f0f30ac9d9ac5dcbf52e3dfa41b866f677d446b8179dd5d4",
+  "src/mongoeco/api/_sync/collection.py": "1cac1a78a6a31fdbd8ac690ed52641faee062135c6dc0d4616491e1111eef8e2",
+  "src/mongoeco/api/admin_parsing.py": "46596f8a337f54fe0dc8a976bd69286a6a15bcc8669a64fb35095a1a40e155bc",
+  "src/mongoeco/errors.py": "2d37c42de58f9a0efe20c897bd357255050629a708af5e4890b0c5eb7b92e9fd",
+  "src/mongoeco/wire/_executor_validation.py": "a4a593014ad3fa74e79af141b4c7e1e770939df0625588b630c01526edd02908",
+  "tests/differential/semantic_corpora.py": "603772af03e93e1866e45b3ddb98978d31f73ed6edf8e0346e077bc15946ac36",
+  "tests/integration/api/test_semantic_group_regressions.py": "f83aaf0eb0bbd76392ac8aa2b2d7e9ba3abe410f07922909aa43e288a7ae00e9",
+  "tests/integration/api/test_watch_namespace_contract.py": "cd3b7eadc1f33f5d5a7baa404b86c804d48b0baff79f2cc4ac8b155d6fbbd0b6",
+  "tests/unit/api/test_collection_management_helpers.py": "4a5adcb710ffdf87121dfeeae9d014f8f53032443983870fe054ea4fdb806804",
+  "src/mongoeco/api/_async/_collection_namespace.py": "b681896f979131f5ff8adcc59eaec7473cdcbf748da986bb0fdbef1cd126d634",
+  "tests/differential/semantic_bson_namespace_cases.py": "c95c27499e936c57a034a5dce67364d1e58fbdecb14f6fd5ae9546eb9d6fcd0f",
+  "tests/fixtures/semantic_bson_namespace_7_0.json": "8a259c183d847c61342aa7858d03e7127cc0c4142ae045a08ce9cd1faf71bd0f",
+  "tests/fixtures/semantic_bson_namespace_8_0.json": "4663b0f000a04c971faa14cd9a3538f40f08f43625187f9e80a7321ce5b22662",
+  "tests/fixtures/semantic_bson_namespace_9_0.json": "5bfe8beab741c02678e0560de0227187b8719e3a6c21d80b2adfcfcc59762157",
+  "tests/integration/api/test_bson_namespace_boundary.py": "8e72beda03eec7fd823dc2b86eeb7bba158e6e11ee29143cb95b67341f1b70a9"
+}

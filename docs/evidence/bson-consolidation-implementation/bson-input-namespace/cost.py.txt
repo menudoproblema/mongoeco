@@ -1,0 +1,39 @@
+import json,subprocess,sys
+from pathlib import Path
+candidate=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())
+baseline=Path(Path('/tmp/mongoeco-namespace-baseline-location.txt').read_text().strip())
+body='''import json,sys,time
+sys.path.insert(0,sys.argv[1])
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from pathlib import Path
+import mongoeco
+assert Path(mongoeco.__file__).resolve().is_relative_to(Path(sys.argv[1]).resolve())
+factory=MemoryEngine if sys.argv[2]=='memory' else SQLiteEngine
+route=sys.argv[3];collections=[]
+with MongoClient(factory()) as client:
+ for n in range(110):
+  coll=client.test['source_'+str(n)];coll.insert_one({'_id':0,'v':1});collections.append(coll)
+ total=0
+ for n,coll in enumerate(collections):
+  start=time.perf_counter_ns()
+  if route=='drop':coll.drop()
+  else:coll.rename('target_'+str(n))
+  if n>=10:total+=time.perf_counter_ns()-start
+print(json.dumps({'ns':total,'operations':100}))
+'''
+observations=[]
+for backend in ('memory','sqlite'):
+ for route in ('drop','rename'):
+  for round_no in range(2):
+   for tag,root in [('baseline',baseline),('candidate',candidate),('candidate',candidate),('baseline',baseline)]:
+    site=json.loads((root/'wheel.json').read_text())['site_packages']
+    result=subprocess.run([sys.executable,'-I','-c',body,site,backend,route],check=True,capture_output=True,text=True)
+    observations.append({'backend':backend,'route':route,'round':round_no,'variant':tag,**json.loads(result.stdout)})
+ratios={}
+for backend in ('memory','sqlite'):
+ for route in ('drop','rename'):
+  sums={v:sum(r['ns'] for r in observations if r['backend']==backend and r['route']==route and r['variant']==v) for v in ('baseline','candidate')}
+  ratios[backend+'/'+route]=sums['candidate']/sums['baseline']
+Path('/tmp/mongoeco-namespace-cost.json').write_text(json.dumps({'method':'diagnostic ABBA x 2; 100 fresh collections + 10 warmups; concurrent replay/unit gates; not D05 budget acceptance','ratios':ratios,'observations':observations},indent=2)+'\n')
+print(ratios)

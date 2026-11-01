@@ -1,0 +1,77 @@
+import gzip,hashlib,json,re,shutil,subprocess
+from pathlib import Path
+repo=Path.cwd();out=repo/'docs/evidence/bson-consolidation-implementation/bson-input-namespace';out.mkdir(exist_ok=True)
+root=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip());wheel=json.loads((root/'wheel.json').read_text())
+
+def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+def nodes(raw):return set(re.findall(r'^FAILED (\S+)',raw,re.M))
+replay=Path('/tmp/mongoeco-namespace-replay.txt').read_text()
+previous=gzip.decompress(Path('docs/evidence/bson-consolidation-implementation/bson-input-admin-reads/replay.txt.gz').read_bytes()).decode()
+assert nodes(replay)==nodes(previous) and len(nodes(replay))==72,(len(nodes(replay)),nodes(replay)-nodes(previous))
+assert re.search(r'72 failed, 10008 passed',replay),replay[-1000:]
+unit=Path('/tmp/mongoeco-namespace-unit-final.txt').read_text()
+assert len(nodes(unit))==2 and nodes(unit)=={
+ 'tests/unit/test_database_command_option_conservation.py::test_batch_size_limits_wire_first_batch[find]',
+ 'tests/unit/test_database_command_option_conservation.py::test_find_batch_size_prefetches_locally_without_truncating_api_result'},nodes(unit)
+assert 'subtests passed' in unit
+baseline=Path('/tmp/mongoeco-namespace-baseline-final.txt').read_text();assert '72 failed, 27 passed' in baseline
+protected=json.loads(Path('/tmp/mongoeco-namespace-protected.json').read_text())
+for path,digest in protected.items():assert sha(path)==digest,path
+runtime=json.loads((root/'runtime.json').read_text());site=Path(wheel['site_packages'])
+for path,digest in runtime.items():assert sha(path)==digest and sha(site/Path(path).relative_to('src'))==digest,path
+native={}
+for target in ('7.0','8.0','9.0'):
+ path=Path(f'tests/fixtures/semantic_bson_namespace_{target.replace(".","_")}.json')
+ data=json.loads(path.read_text());assert sum(map(len,data['cases'].values()))==55
+ check=Path('/tmp/mongoeco-namespace-native-frozen',target,'bson_namespace-check.json')
+ assert path.read_bytes()==check.read_bytes()
+ native[target]={'fixture':str(path),'sha256':sha(path),'observations':55,'runtime':data['runtime']}
+for label in ('baseline-final','baseline-watch','feedback-direct','feedback-all','unit-feedback','unit-feedback2','unit-feedback3','boundary','boundary-final','unit-final','replay','cost','api','sdk-free'):
+ path=Path('/tmp/mongoeco-namespace-'+label+'.txt')
+ if path.exists():(out/(label+'.txt.gz')).write_bytes(gzip.compress(path.read_bytes(),mtime=0))
+for path in sorted(Path('/tmp').glob('mongoeco-namespace-previous-*-sdk-free.txt')):shutil.copy2(path,out/path.name.removeprefix('mongoeco-namespace-'))
+for label in ('baseline','api','unit','replay','sdk-free','sdk-free-prepare','cost','resources','native','native-types','native-frozen','archive'):
+ path=Path('/tmp/mongoeco-namespace-'+label+'.py')
+ if path.exists():shutil.copy2(path,out/(label+'.py.txt'))
+for label in ('resources','protected','cost','sdk-free-expected'):
+ shutil.copy2('/tmp/mongoeco-namespace-'+label+'.json',out/(label+'.json'))
+for label in ('api-baseline','api-candidate'):
+ (out/(label+'.json.gz')).write_bytes(gzip.compress(Path('/tmp/mongoeco-namespace-'+label+'.json').read_bytes(),mtime=0))
+for label in ('native','native-types','native-frozen'):
+ for target in ('7.0','8.0','9.0'):
+  original=Path('/tmp/mongoeco-namespace-'+label);dest=out/label/target;dest.mkdir(parents=True,exist_ok=True)
+  for filename in ('fixture.json','bson_namespace-check.json'):
+   p=original/target/filename
+   if p.exists():
+    if filename.endswith('-check.json') and label!='native-frozen':(dest/(filename+'.gz')).write_bytes(gzip.compress(p.read_bytes(),mtime=0))
+    else:shutil.copy2(p,dest/filename)
+  (dest/'capture.txt.gz').write_bytes(gzip.compress((original/(target+'.log')).read_bytes(),mtime=0))
+  (dest/'mongod.txt.gz').write_bytes(gzip.compress((original/target/'mongod.log').read_bytes(),mtime=0))
+for path in root.glob('wheel-imports-namespace-*.json'):shutil.copy2(path,out/path.name)
+shutil.copy2(root/'wheel.json',out/'wheel.json');shutil.copy2(root/'runtime.json',out/'runtime-sources.json')
+base=Path(Path('/tmp/mongoeco-namespace-baseline-location.txt').read_text().strip())
+shutil.copy2(base/'runtime.json',out/'baseline-runtime-sources.json')
+for path in base.glob('wheel-imports-*.json'):shutil.copy2(path,out/('baseline-'+path.name))
+
+shutil.copy2('/tmp/mongoeco-bson-input-typing.txt',out/'typing.txt')
+shutil.copy2('/tmp/mongoeco-namespace-lint.txt',out/'lint.txt')
+shutil.copy2('/tmp/mongoeco-namespace-wheel-build.txt',out/'wheel-build.txt')
+shutil.copy2('/tmp/mongoeco-dispatch-build.py',out/'build.py.txt')
+shutil.copy2('/tmp/mongoeco_dispatch_artifact_guard.py',out/'artifact-guard.py.txt')
+changed={path:sha(path) for path in subprocess.check_output(['git','diff','--name-only','32f8d7f5','--','src','tests'],text=True).splitlines()}
+for path in subprocess.check_output(['git','ls-files','--others','--exclude-standard','src','tests'],text=True).splitlines():changed[path]=sha(path)
+(out/'changed-sources.json').write_text(json.dumps(changed,indent=2)+'\n')
+receipt={'base_commit':'32f8d7f5','scope':'B07 collection drop/rename frames, lexical InvalidName, typed namespace grammar and prepared execution; preserve local Collection return; not complete B07/UUID/replies/D05',
+ 'admitted_entrypoints':['drop','rename'],
+ 'remaining_administrative_census_entries':5,
+ 'native':native,'wheel':wheel,'baseline':{'failed':72,'passed':27},'new_corpus':{'passed':99},'boundary':{'passed':16},
+ 'unit_summary':unit.splitlines()[-1],'replay_summary':replay.splitlines()[-1],
+ 'protected_artifacts':len(protected),'resources_confirmed_absent':len(json.loads((out/'resources.json').read_text())),
+ 'sdk_free':json.loads(Path('/tmp/mongoeco-namespace-sdk-free.txt').read_text()),
+ 'pending_replay_nodes':sorted(nodes(replay)),'pending_unit_nodes':sorted(nodes(unit)),
+ 'api_signatures_manifest_unchanged':json.loads(gzip.decompress((out/'api-baseline.json.gz').read_bytes()))==json.loads(gzip.decompress((out/'api-candidate.json.gz').read_bytes())),
+ 'cost_diagnostic':json.loads((out/'cost.json').read_text())['ratios'],
+ 'intentional_api_change':'mongoeco.errors.InvalidName bridges the SDK class and remains available without SDK; rename continues to return Collection',
+ 'limits':['only accepted namespace method parameters are covered; no new comment/dropTarget public kwargs','raw drop reply DTO fields remain under positive reply unit 5','native captures standalone; existing native watch references preserved; local DDL rollback/restart/checkpoint exercised','six baseline rollback checks failed on obsolete comment-as-storage assumption; replaced by actual validator option, preserving effect assertions']}
+(out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+print(receipt['unit_summary']);print(receipt['replay_summary']);print(out)
