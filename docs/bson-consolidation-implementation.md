@@ -2934,7 +2934,7 @@ Pruebas focales por bloque; suites globales reservadas a F11.
 | F04 | Cerrado | 1.179 diferenciales/metadatos, 44 controles focales y ratchet. |
 | F05 | Cerrado | 492 diferenciales/contexto/metadatos, 54 spill y fronteras focales. |
 | F06 | Cerrado | Catálogo/unique/hashed, cuatro superficies, eventos RS 7/8/9, archivos previos e inventarios CXP. |
-| F07 | Pendiente | Escrituras, identidad, campos, contadores y efectos. |
+| F07 | Implementado y comprobado focalmente | Escrituras/identidad/campos, 7/8/9, contadores/eventos y validadores; aceptación integrada en F11. |
 | F08 | Pendiente | Sort/natural y acumuladores del inventario. |
 | F09 | Pendiente | Gramática/recursos, fechas y texto; tres subunidades. |
 | F10 | Pendiente | Fachadas, metadata y capacidades explícitas. |
@@ -3097,3 +3097,40 @@ replacement upsert; no en _id, objetos/arrays embebidos, modificadores o pipelin
 Estas sondas requieren incorporarse al corpus y contrastarse en 7/8/9 al retomar
 F07. Los servidores temporales propios se detienen en esta pausa; los receipts
 y capturas aceptados de F00–F06 quedan conservados.
+
+Ejecución ajustada por el usuario: se conserva el alcance F00–F11 y las
+aceptaciones anteriores. En adelante cada bloque se registra como implementado
+y comprobado focalmente; la aceptación de la entrega completa corresponde a
+F11. Sólo se agrupan pruebas focales y diferenciales causalmente necesarios.
+Suites globales, cobertura, matrices, packaging, compatibilidad y coste se
+reservan a F11 sobre el candidato final. No se añaden mecanismos de validación.
+F07 se retoma desde las reproducciones conservadas, sin repetir F00–F06.
+
+F07 implementado y comprobado focalmente: replacement reutiliza _id primero
+sin reordenar valores embebidos; ambos motores aplican la misma regla al upsert.
+Bit reutiliza la promoción existente y conserva int64 aunque el resultado quepa
+en int32. Pull distingue ausencia de traversal bloqueado mediante el lector de
+ruta de update, sin introducir traversal MQL implícito. Se valida dólar en _id
+recursivamente y campos raíz modificados según insert/replacement/modificador/
+pipeline, conservando no-op, nested y upsert. La precedencia de _id inmutable
+frente a dólar anidado difiere en 7 respecto a 8/9 y queda en el helper que ya
+posee esa política. No se aplica una prohibición global de dólar al BSON.
+
+La sustitución de timestamps vacíos sólo afecta a insert y replacement, antes
+de validar/almacenar/publicar, con el reloj de operación y contador local al
+lote; excluye _id y documentos/arrays embebidos. No crea reloj de replicación.
+La imagen confirmada alimenta el evento y findOneAndReplace conserva su imagen
+anterior. Continúan los límites públicos de change streams; no se añade una
+API de preimágenes ni otra capacidad X.
+
+Dos matrices nuevas y un flujo RS completan los testigos: 231 standalone y 15
+flujos RS por dialecto; las 229/14 observaciones anteriores son idénticas en
+7/8/9. Pasan 290 controles focales agrupados, incluidos cuatro transportes,
+metadatos, reloj inyectado/imagen anterior y controles de validación; 259 tests
+locales/67 subtests de consumidores afectados. La matriz detectó precedencias
+que se corrigieron: 24 controles afectados pasan. Se conserva evidencia roja
+intermedia. El diff se revisa y ratchet es verde. Los controles nativos de
+insert y validadores previos se reutilizan y repiten sólo por el cambio causal
+en identidad/finalización, sin ejecutar de nuevo sus corpus completos.
+Compatibilidad de archivos, matrices, suites globales, cobertura, packaging,
+coste y aceptación de toda la entrega quedan para F11. F08 es el siguiente gate.

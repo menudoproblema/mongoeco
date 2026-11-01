@@ -47,14 +47,17 @@ from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import (
     assert_document_kept_storage_key,
     assert_document_matches_storage_key,
+    assert_valid_replacement_fields,
     assert_valid_root_document_id,
     assert_valid_upsert_document_id,
     document_matches_root_id_lookup,
+    document_with_id_first,
     materialize_merge_insert_document,
     materialize_replacement_document,
     preserve_and_validate_pipeline_id,
     replacement_document_changed,
     root_id_needs_semantic_lookup,
+    substitute_empty_root_timestamps,
     updated_document_storage_key,
 )
 from mongoeco.core.operation_context import (
@@ -4020,6 +4023,10 @@ class MemoryEngine(AsyncStorageEngine):
                     storage_key_for_id=self._storage_key,
                 )
                 if replacement_document is not None:
+                    assert_valid_replacement_fields(document)
+                    document = substitute_empty_root_timestamps(
+                        document, semantics.variables.now
+                    )
                     preserve_and_validate_pipeline_id(
                         original_document, document, dialect=semantics.dialect
                     )
@@ -4181,6 +4188,11 @@ class MemoryEngine(AsyncStorageEngine):
                 )
             if "_id" not in new_doc:
                 new_doc["_id"] = ObjectId()
+            if replacement_document is not None:
+                new_doc = substitute_empty_root_timestamps(
+                    new_doc, semantics.variables.now
+                )
+            new_doc = document_with_id_first(new_doc)
             assert_valid_upsert_document_id(
                 new_doc["_id"], is_replacement=replacement_document is not None
             )

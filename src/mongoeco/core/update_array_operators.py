@@ -11,6 +11,7 @@ from mongoeco.core.bson_values import document_mapping
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import (
     get_document_value,
+    get_update_path_value,
     set_document_value,
 )
 from mongoeco.core.query_operators import is_elem_match_value_document
@@ -333,7 +334,7 @@ def apply_pull(
     ):
         value = application.instruction.value
         for target in application.targets:
-            found, current = get_document_value(doc, target.concrete_path)
+            found, current = get_update_path_value(doc, target.concrete_path)
             if not found:
                 continue
             if not isinstance(current, list):

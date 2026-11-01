@@ -489,6 +489,135 @@
         "11000000105f696400010000000a610000",
         "15000000105f696400020000001061000500000000"
       ]
+    },
+    "semantic_followup_f07_finalization_events": {
+      "replacement": {
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          },
+          "upserted": false
+        },
+        "events": [
+          {
+            "operationType": "replace",
+            "documentKey": "0e000000105f6964000100000000",
+            "scope_matches": true,
+            "fullDocument": "2b000000105f696400010000000376001300000010620002000000106100010000000008646f6e65000100"
+          }
+        ],
+        "state": [
+          "2b000000105f696400010000000376001300000010620002000000106100010000000008646f6e65000100"
+        ]
+      },
+      "replacement_upsert": {
+        "result": {
+          "matched": {
+            "$numberInt": "0"
+          },
+          "modified": {
+            "$numberInt": "0"
+          },
+          "upserted": true
+        },
+        "events": [
+          {
+            "operationType": "insert",
+            "documentKey": "0e000000105f6964000100000000",
+            "scope_matches": true,
+            "fullDocument": "24000000105f696400010000000376001300000010620002000000106100010000000000"
+          }
+        ],
+        "state": [
+          "24000000105f696400010000000376001300000010620002000000106100010000000000"
+        ]
+      },
+      "operator_upsert": {
+        "result": {
+          "matched": {
+            "$numberInt": "0"
+          },
+          "modified": {
+            "$numberInt": "0"
+          },
+          "upserted": true
+        },
+        "events": [
+          {
+            "operationType": "insert",
+            "documentKey": "0e000000105f6964000100000000",
+            "scope_matches": true,
+            "fullDocument": "24000000105f696400010000000376001300000010620002000000106100010000000000"
+          }
+        ],
+        "state": [
+          "24000000105f696400010000000376001300000010620002000000106100010000000000"
+        ]
+      },
+      "bit": {
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          },
+          "upserted": false
+        },
+        "events": [
+          {
+            "operationType": "update",
+            "documentKey": "0e000000105f6964000100000000",
+            "scope_matches": true,
+            "updateDescription": "4e00000003757064617465644669656c647300100000001276000500000000000000000472656d6f7665644669656c6473000500000000047472756e636174656441727261797300050000000000"
+          }
+        ],
+        "state": [
+          "19000000105f69640001000000127600050000000000000000"
+        ]
+      },
+      "bit_noop": {
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "0"
+          },
+          "upserted": false
+        },
+        "events": [],
+        "state": [
+          "19000000105f69640001000000127600050000000000000000"
+        ]
+      },
+      "pull_blocked": {
+        "result": {
+          "error": "WriteError",
+          "code": {
+            "$numberInt": "28"
+          }
+        },
+        "events": [],
+        "state": [
+          "2d000000105f696400010000000476001c000000033000140000000478000c0000001030000100000000000000"
+        ]
+      },
+      "dollar_rejected": {
+        "result": {
+          "error": "WriteError",
+          "code": {
+            "$numberInt": "52"
+          }
+        },
+        "events": [],
+        "state": [
+          "0e000000105f6964000100000000"
+        ]
+      }
     }
   },
   "runtime": {
@@ -546,7 +675,7 @@
       "$clusterTime": {
         "clusterTime": {
           "$timestamp": {
-            "t": 1793564008,
+            "t": 1793564598,
             "i": 1
           }
         },
@@ -564,7 +693,7 @@
       },
       "operationTime": {
         "$timestamp": {
-          "t": 1793564008,
+          "t": 1793564598,
           "i": 1
         }
       }
@@ -577,7 +706,7 @@
     "hello": {
       "topologyVersion": {
         "processId": {
-          "$oid": "6ae79a71506fa583aef5e7cf"
+          "$oid": "6ae79f9546f5b3f1140da487"
         },
         "counter": {
           "$numberLong": "6"
@@ -601,7 +730,7 @@
         "opTime": {
           "ts": {
             "$timestamp": {
-              "t": 1793564008,
+              "t": 1793564598,
               "i": 1
             }
           },
@@ -611,13 +740,13 @@
         },
         "lastWriteDate": {
           "$date": {
-            "$numberLong": "1793564008000"
+            "$numberLong": "1793564598000"
           }
         },
         "majorityOpTime": {
           "ts": {
             "$timestamp": {
-              "t": 1793564008,
+              "t": 1793564598,
               "i": 1
             }
           },
@@ -627,7 +756,7 @@
         },
         "majorityWriteDate": {
           "$date": {
-            "$numberLong": "1793564008000"
+            "$numberLong": "1793564598000"
           }
         }
       },
@@ -642,7 +771,7 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793564008709"
+          "$numberLong": "1793564599447"
         }
       },
       "logicalSessionTimeoutMinutes": {
@@ -664,7 +793,7 @@
       "$clusterTime": {
         "clusterTime": {
           "$timestamp": {
-            "t": 1793564008,
+            "t": 1793564598,
             "i": 1
           }
         },
@@ -682,7 +811,7 @@
       },
       "operationTime": {
         "$timestamp": {
-          "t": 1793564008,
+          "t": 1793564598,
           "i": 1
         }
       }
@@ -690,7 +819,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_followup_cases.py",
-    "sha256": "027b9bc6aeee600772a074d553eba9dfe253cd04220859cc59afcae88ef7506b"
+    "sha256": "44e55a986026a94fcbd5a32ddff4101b278ba3eac0e7e44746276c4dda1700a2"
   },
   "case_manifests": [
     {
@@ -958,6 +1087,25 @@
         }
       ],
       "selector": "semantic_followup_f06_events_hashed_insert_many_False"
+    },
+    {
+      "name": "semantic_followup_f07_finalization_events",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f07_finalization_events"
     }
   ]
 }

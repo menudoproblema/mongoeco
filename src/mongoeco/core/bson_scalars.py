@@ -444,10 +444,8 @@ def bson_bitwise(operator: str, left: object, right: object) -> object:
         result = left_value ^ right_value
     else:
         raise ValueError(f"unsupported BSON bitwise operator: {operator}")
-    if not isinstance(left, BsonInt32 | BsonInt64) and not isinstance(right, BsonInt32 | BsonInt64):
-        return result
-    wrapped = wrap_bson_numeric(result)
-    if not isinstance(wrapped, BsonInt32 | BsonInt64):
+    wrapped = _wrap_from_templates(result, left, right)
+    if not isinstance(wrap_bson_numeric(wrapped), BsonInt32 | BsonInt64):
         raise TypeError("BSON bitwise operations require signed 64-bit integer results")
     return wrapped
 

@@ -187,7 +187,7 @@ class BsonScalarTests(unittest.TestCase):
     def test_bson_bitwise_and_integral_helpers_cover_wrapped_and_error_paths(self):
         self.assertEqual(bson_bitwise("and", 0b1100, 0b1010), 0b1000)
         self.assertEqual(bson_bitwise("or", BsonInt32(0b1100), 0b0011), BsonInt32(0b1111))
-        self.assertEqual(bson_bitwise("xor", BsonInt64(0b1100), BsonInt32(0b1010)), BsonInt32(0b0110))
+        self.assertEqual(bson_bitwise("xor", BsonInt64(0b1100), BsonInt32(0b1010)), BsonInt64(0b0110))
         self.assertEqual(bson_bitwise("xor", BsonInt64(1 << 40), 1), BsonInt64((1 << 40) ^ 1))
         with self.assertRaises(ValueError):
             bson_bitwise("nope", 1, 1)

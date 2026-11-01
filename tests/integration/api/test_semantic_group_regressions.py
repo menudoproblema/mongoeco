@@ -1,6 +1,7 @@
 """Public group witnesses replay native captures across APIs and transports."""
 
 import asyncio
+import datetime
 import hashlib
 import inspect
 import pickle
@@ -15,7 +16,7 @@ from unittest.mock import patch
 import pymongo
 import pytest
 
-from bson import BSON, Decimal128
+from bson import BSON, Decimal128, Timestamp
 
 from mongoeco import AsyncMongoClient, MongoClient, SearchIndexModel
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
@@ -38,15 +39,21 @@ from tests.differential.semantic_average_route_cases import GROUP, SEED as AVERA
 from tests.differential.semantic_command_let_cases import VALID as COMMAND_LET_VALID
 from tests.differential.semantic_corpora import SEMANTIC_CORPORA
 from tests.differential.semantic_followup_cases import (
-    lookup_paths,
     index_write_flow,
+    lookup_paths,
     path_contexts,
     read_collation_persisted,
     setup_collation_persisted,
 )
 from tests.differential.semantic_object_grammar_cases import numeric_group_identity
 from tests.differential.semantic_sum_cases import STREAM_PIPELINE, STREAM_SEED
-from tests.support_write_parity import BSONObservation
+from tests.differential.write_cases import WRITE_CASES
+from tests.integration.api.test_write_parity_corpus import native_observations
+from tests.support_write_parity import (
+    BSONObservation,
+    assert_write_observations,
+    observe_write_case,
+)
 
 
 FIXTURES = Path(__file__).parents[2] / "fixtures"
@@ -730,6 +737,60 @@ def test_followup_collation_survives_sqlite_reopen(tmp_path, dialect):
             collection = client.followup.rows
             assert read_collation_persisted(collection) == expected[phase]
             assert collection.index_information() == metadata
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+def test_followup_f07_root_timestamps_use_operation_clock_and_committed_images(
+    engine_factory,
+):
+    fixed = datetime.datetime(2021, 3, 27, 12, 0, 0, 1000, tzinfo=datetime.UTC)
+    expected_seconds = 1616846400
+    with MongoClient(engine_factory(), now_factory=lambda: fixed) as client:
+        collection = client.followup.rows
+        stream = collection.watch()
+        try:
+            collection.insert_many(
+                [
+                    {"_id": n, "t": Timestamp(0, 0), "nested": {"t": Timestamp(0, 0)}}
+                    for n in [1, 2]
+                ]
+            )
+            stamps = []
+            for n in [1, 2]:
+                row = collection.find_one({"_id": n})
+                event = stream.try_next()
+                assert BSON.encode(event["fullDocument"]) == BSON.encode(row)
+                assert row["t"].time == expected_seconds
+                assert row["t"].inc > 0
+                assert row["nested"]["t"] == Timestamp(0, 0)
+                stamps.append(row["t"])
+            assert stamps[0] < stamps[1]
+            original = collection.find_one({"_id": 1})
+            before = collection.find_one_and_replace(
+                {"_id": 1}, {"nested": {"b": 2, "a": 1}, "_id": 1, "t": Timestamp(0, 0)}
+            )
+            assert BSON.encode(before) == BSON.encode(original)
+            row = collection.find_one({"_id": 1})
+            assert list(row) == ["_id", "nested", "t"]
+            assert list(row["nested"]) == ["b", "a"]
+            assert row["t"].time == expected_seconds
+            assert BSON.encode(stream.try_next()["fullDocument"]) == BSON.encode(row)
+        finally:
+            stream.close()
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("dialect", DIALECTS)
+@pytest.mark.parametrize("family", ["V", "I"])
+def test_followup_f07_write_consumers_reuse_native_corpus(
+    engine_factory, dialect, family
+):
+    expected = native_observations(dialect)
+    with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+        for case in WRITE_CASES:
+            if case.id.startswith(family):
+                actual = observe_write_case(client.write_corpus, case.id, case)
+                assert_write_observations(actual, expected[case.id], case)
 
 
 @pytest.mark.parametrize("dialect", DIALECTS)

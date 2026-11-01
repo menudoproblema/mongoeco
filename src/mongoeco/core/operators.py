@@ -160,6 +160,20 @@ class CompiledUpdatePlan:
                 original,
                 working,
             )
+        if modified and not context.is_upsert_insert:
+            for key, value in working.items():
+                if (
+                    key.startswith("$")
+                    and key not in {"$ref", "$id", "$db"}
+                    and (
+                        key not in original
+                        or not same_bson_update_value(original[key], value)
+                    )
+                ):
+                    message = (
+                        f"The dollar-prefixed field '{key}' is not allowed in an update"
+                    )
+                    raise server_error(message, code=52)
         if modified and change is not None:
             assert context.applied_paths is not None  # noqa: S101 - allocated with capture
             applications = UpdateEngine._resolve_instruction_applications(
@@ -229,6 +243,7 @@ class CompiledUpdatePipelinePlan:
             original,
             replacement,
             dialect=self.context.dialect,
+            is_upsert_insert=self.context.is_upsert_insert,
         )
         if modified and change is not None:
             change.update(

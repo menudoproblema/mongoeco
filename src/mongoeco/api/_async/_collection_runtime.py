@@ -4,14 +4,15 @@ import time
 
 from contextlib import contextmanager
 from copy import deepcopy
+from itertools import count
 from typing import TYPE_CHECKING, cast
 
+from mongoeco.api._async.cursor import AsyncCursor, _operation_issue_message
 from mongoeco.api._change_delivery import (
     change_delivery_scope,
     dispatch_change_delivery,
     prepare_change_delivery,
 )
-from mongoeco.api._async.cursor import AsyncCursor, _operation_issue_message
 from mongoeco.api.operations import (
     AggregateOperation,
     FindOperation,
@@ -20,9 +21,10 @@ from mongoeco.api.operations import (
 )
 from mongoeco.core.error_documents import error_message
 from mongoeco.core.identity import (
-    is_valid_root_document_id,
     document_with_id_first,
+    is_valid_root_document_id,
     materialize_replacement_document,
+    substitute_empty_root_timestamps,
 )
 from mongoeco.core.operation_context import OperationContext, resolve_operation_session
 from mongoeco.engines.adapter import EngineSpiAdapter
@@ -535,6 +537,12 @@ class CollectionRuntimeCoordinator:
             operation_context = await self._collection._resolve_operation_context(
                 operation_context
             )
+        document = substitute_empty_root_timestamps(
+            document,
+            operation_context.expressions.now
+            if operation_context is not None
+            else self._collection._resolve_now(),
+        )
         with self._engine_change_delivery_scope(operation_context):
             return await self._engine_spi.insert_outcome(
                 self._collection._db_name,
@@ -559,6 +567,16 @@ class CollectionRuntimeCoordinator:
             operation_context = await self._collection._resolve_operation_context(
                 operation_context
             )
+        increments = count(1)
+        now = (
+            operation_context.expressions.now
+            if operation_context is not None
+            else self._collection._resolve_now()
+        )
+        documents = [
+            substitute_empty_root_timestamps(item, now, increments=increments)
+            for item in documents
+        ]
         with self._engine_change_delivery_scope(operation_context):
             return await self._engine_spi.insert_many_outcomes(
                 self._collection._db_name,
@@ -837,7 +855,10 @@ class CollectionRuntimeCoordinator:
         if (
             "_id" in seeded
             and "_id" in replacement
-            and is_valid_root_document_id(replacement["_id"])
+            and (
+                is_valid_root_document_id(replacement["_id"])
+                or isinstance(replacement["_id"], dict)
+            )
         ):
             if not self._collection._mongodb_dialect.values_equal(
                 seeded["_id"], replacement["_id"]

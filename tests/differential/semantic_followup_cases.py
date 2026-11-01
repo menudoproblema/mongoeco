@@ -9,7 +9,7 @@ from bson import BSON, Binary, Decimal128, Int64, ObjectId, Regex, Timestamp
 from pymongo import IndexModel, InsertOne, ReplaceOne, UpdateOne
 
 from tests.differential.semantic_bson_grammar_context_cases import _aggregate
-from tests.differential.semantic_update_event_cases import _drain
+from tests.differential.semantic_update_event_cases import _drain, _single
 from tests.support_write_parity import BSONObservation, public_error
 
 
@@ -664,6 +664,104 @@ def empty_timestamp(collection):
         "root_replaced": row["t"] != Timestamp(0, 0),
         "nested_unchanged": row["nested"]["t"] == Timestamp(0, 0),
     }
+
+
+def write_field_contexts(collection):
+    result = {}
+    for kind in ["insert", "replace", "set", "pipeline"]:
+        for matched in [True, False]:
+            for label, fields in [
+                ("root_dollar", {"$a": 2}),
+                ("nested_dollar", {"o": {"$a": 2}}),
+                ("dotted_nested", {"o.$a": 2}),
+                ("id_dollar", {"_id": {"$a": 2}}),
+                ("id_nested_dollar", {"_id": {"a": {"$b": 2}}}),
+                ("id_dotted", {"_id": {"a.b": 2}}),
+            ]:
+                collection.drop()
+                if matched:
+                    collection.insert_one({"_id": 1, "o": {"keep": 1}})
+
+                def invoke(fields=fields, kind=kind, matched=matched):
+                    doc = {"_id": 1, **fields}
+                    if kind == "insert":
+                        collection.insert_one(doc)
+                        return {"inserted": True}
+                    if kind == "replace":
+                        response = collection.replace_one(
+                            {"_id": 1}, doc, upsert=not matched
+                        )
+                    else:
+                        update = (
+                            {"$set": fields}
+                            if kind == "set"
+                            else [{"$replaceWith": {"$literal": doc}}]
+                        )
+                        response = collection.update_one(
+                            {"_id": 1}, update, upsert=not matched
+                        )
+                    return {
+                        "matched": response.matched_count,
+                        "modified": response.modified_count,
+                        "upserted": response.upserted_id is not None,
+                    }
+
+                entry = outcome(invoke, write=True)
+                entry["state"] = [
+                    BSON.encode(row).hex()
+                    for row in collection.find({}, sort=[("_id", 1)])
+                ]
+                result[f"{kind}/{matched}/{label}"] = entry
+    return result
+
+
+def timestamp_contexts(collection):
+    result = {}
+    for kind in [
+        "insert",
+        "replace",
+        "set",
+        "pipeline",
+        "replace_upsert",
+        "set_upsert",
+        "pipeline_upsert",
+    ]:
+        collection.drop()
+        matched = kind != "insert" and not kind.endswith("upsert")
+        if matched:
+            collection.insert_one({"_id": 1})
+        fields = {
+            "t": Timestamp(0, 0),
+            "u": Timestamp(0, 0),
+            "fixed": Timestamp(7, 3),
+            "nested": {"t": Timestamp(0, 0)},
+            "array": [Timestamp(0, 0)],
+        }
+        if kind == "insert":
+            collection.insert_one({"_id": 1, **fields})
+        elif kind.startswith("replace"):
+            collection.replace_one({"_id": 1}, {"_id": 1, **fields}, upsert=not matched)
+        else:
+            update = (
+                {"$set": fields}
+                if kind.startswith("set")
+                else [{"$set": {k: {"$literal": v} for k, v in fields.items()}}]
+            )
+            collection.update_one({"_id": 1}, update, upsert=not matched)
+        row = collection.find_one()
+        result[kind] = {
+            "t_zero": row["t"] == Timestamp(0, 0),
+            "u_zero": row["u"] == Timestamp(0, 0),
+            "same_second": row["t"].time == row["u"].time,
+            "increasing": row["t"].inc < row["u"].inc,
+            "fixed": row["fixed"],
+            "nested": row["nested"],
+            "array": row["array"],
+        }
+    collection.drop()
+    collection.insert_one({"_id": Timestamp(0, 0)})
+    result["id"] = collection.find_one()["_id"]
+    return result
 
 
 def natural_order(collection, *, direction, hint=False):
@@ -1638,4 +1736,59 @@ SEMANTIC_FOLLOWUP_CASES += (
             ],
         ),
     ),
+)
+
+SEMANTIC_FOLLOWUP_CASES += (
+    ("semantic_followup_f07_fields_contextual", write_field_contexts),
+    ("semantic_followup_f07_timestamp_contextual", timestamp_contexts),
+)
+
+
+def write_finalization_events(collection):
+    result = {}
+    for label, seed, update, mode, options in [
+        (
+            "replacement",
+            {"_id": 1, "v": {"b": 2, "a": 1}},
+            {"v": {"b": 2, "a": 1}, "_id": 1, "done": True},
+            "replacement",
+            {},
+        ),
+        (
+            "replacement_upsert",
+            None,
+            {"v": {"b": 2, "a": 1}, "_id": 1},
+            "replacement",
+            {"upsert": True},
+        ),
+        (
+            "operator_upsert",
+            None,
+            {"$set": {"_id": 1, "v": {"b": 2, "a": 1}}},
+            "classic",
+            {"upsert": True},
+        ),
+        ("bit", {"_id": 1, "v": 5}, {"$bit": {"v": {"and": Int64(7)}}}, "classic", {}),
+        (
+            "bit_noop",
+            {"_id": 1, "v": Int64(5)},
+            {"$bit": {"v": {"and": Int64(7)}}},
+            "classic",
+            {},
+        ),
+        (
+            "pull_blocked",
+            {"_id": 1, "v": [{"x": [1]}]},
+            {"$pull": {"v.x": 1}},
+            "classic",
+            {},
+        ),
+        ("dollar_rejected", {"_id": 1}, {"$set": {"$a": 2}}, "classic", {}),
+    ]:
+        result[label] = _single(collection, seed, update, mode=mode, options=options)
+    return result
+
+
+SEMANTIC_FOLLOWUP_WRITE_CASES += (
+    ("semantic_followup_f07_finalization_events", write_finalization_events),
 )

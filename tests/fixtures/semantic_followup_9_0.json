@@ -6735,6 +6735,542 @@
         }
       ]
     },
+    "semantic_followup_f07_fields_contextual": {
+      "insert/True/root_dollar": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "insert/True/nested_dollar": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "insert/True/dotted_nested": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "insert/True/id_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "52"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "insert/True/id_nested_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "52"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "insert/True/id_dotted": {
+        "ok": true,
+        "value": {
+          "inserted": true
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000",
+          "18000000035f6964000e00000010612e6200020000000000"
+        ]
+      },
+      "insert/False/root_dollar": {
+        "ok": true,
+        "value": {
+          "inserted": true
+        },
+        "state": [
+          "16000000105f69640001000000102461000200000000"
+        ]
+      },
+      "insert/False/nested_dollar": {
+        "ok": true,
+        "value": {
+          "inserted": true
+        },
+        "state": [
+          "1e000000105f69640001000000036f000d00000010246100020000000000"
+        ]
+      },
+      "insert/False/dotted_nested": {
+        "ok": true,
+        "value": {
+          "inserted": true
+        },
+        "state": [
+          "18000000105f69640001000000106f2e2461000200000000"
+        ]
+      },
+      "insert/False/id_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "52"
+        },
+        "state": []
+      },
+      "insert/False/id_nested_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "52"
+        },
+        "state": []
+      },
+      "insert/False/id_dotted": {
+        "ok": true,
+        "value": {
+          "inserted": true
+        },
+        "state": [
+          "18000000035f6964000e00000010612e6200020000000000"
+        ]
+      },
+      "replace/True/root_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "52"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "replace/True/nested_dollar": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          },
+          "upserted": false
+        },
+        "state": [
+          "1e000000105f69640001000000036f000d00000010246100020000000000"
+        ]
+      },
+      "replace/True/dotted_nested": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          },
+          "upserted": false
+        },
+        "state": [
+          "18000000105f69640001000000106f2e2461000200000000"
+        ]
+      },
+      "replace/True/id_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "52"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "replace/True/id_nested_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "52"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "replace/True/id_dotted": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "66"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "replace/False/root_dollar": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "0"
+          },
+          "modified": {
+            "$numberInt": "0"
+          },
+          "upserted": true
+        },
+        "state": [
+          "16000000105f69640001000000102461000200000000"
+        ]
+      },
+      "replace/False/nested_dollar": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "0"
+          },
+          "modified": {
+            "$numberInt": "0"
+          },
+          "upserted": true
+        },
+        "state": [
+          "1e000000105f69640001000000036f000d00000010246100020000000000"
+        ]
+      },
+      "replace/False/dotted_nested": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "0"
+          },
+          "modified": {
+            "$numberInt": "0"
+          },
+          "upserted": true
+        },
+        "state": [
+          "18000000105f69640001000000106f2e2461000200000000"
+        ]
+      },
+      "replace/False/id_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "66"
+        },
+        "state": []
+      },
+      "replace/False/id_nested_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "66"
+        },
+        "state": []
+      },
+      "replace/False/id_dotted": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "66"
+        },
+        "state": []
+      },
+      "set/True/root_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "52"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "set/True/nested_dollar": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          },
+          "upserted": false
+        },
+        "state": [
+          "1e000000105f69640001000000036f000d00000010246100020000000000"
+        ]
+      },
+      "set/True/dotted_nested": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          },
+          "upserted": false
+        },
+        "state": [
+          "28000000105f69640001000000036f0017000000106b656570000100000010246100020000000000"
+        ]
+      },
+      "set/True/id_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "66"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "set/True/id_nested_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "66"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "set/True/id_dotted": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "66"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "set/False/root_dollar": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "0"
+          },
+          "modified": {
+            "$numberInt": "0"
+          },
+          "upserted": true
+        },
+        "state": [
+          "16000000105f69640001000000102461000200000000"
+        ]
+      },
+      "set/False/nested_dollar": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "0"
+          },
+          "modified": {
+            "$numberInt": "0"
+          },
+          "upserted": true
+        },
+        "state": [
+          "1e000000105f69640001000000036f000d00000010246100020000000000"
+        ]
+      },
+      "set/False/dotted_nested": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "0"
+          },
+          "modified": {
+            "$numberInt": "0"
+          },
+          "upserted": true
+        },
+        "state": [
+          "1e000000105f69640001000000036f000d00000010246100020000000000"
+        ]
+      },
+      "set/False/id_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "66"
+        },
+        "state": []
+      },
+      "set/False/id_nested_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "66"
+        },
+        "state": []
+      },
+      "set/False/id_dotted": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "66"
+        },
+        "state": []
+      },
+      "pipeline/True/root_dollar": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          },
+          "upserted": false
+        },
+        "state": [
+          "16000000105f69640001000000102461000200000000"
+        ]
+      },
+      "pipeline/True/nested_dollar": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          },
+          "upserted": false
+        },
+        "state": [
+          "1e000000105f69640001000000036f000d00000010246100020000000000"
+        ]
+      },
+      "pipeline/True/dotted_nested": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          },
+          "upserted": false
+        },
+        "state": [
+          "18000000105f69640001000000106f2e2461000200000000"
+        ]
+      },
+      "pipeline/True/id_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "52"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "pipeline/True/id_nested_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "52"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "pipeline/True/id_dotted": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "66"
+        },
+        "state": [
+          "20000000105f69640001000000036f000f000000106b65657000010000000000"
+        ]
+      },
+      "pipeline/False/root_dollar": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "0"
+          },
+          "modified": {
+            "$numberInt": "0"
+          },
+          "upserted": true
+        },
+        "state": [
+          "16000000105f69640001000000102461000200000000"
+        ]
+      },
+      "pipeline/False/nested_dollar": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "0"
+          },
+          "modified": {
+            "$numberInt": "0"
+          },
+          "upserted": true
+        },
+        "state": [
+          "1e000000105f69640001000000036f000d00000010246100020000000000"
+        ]
+      },
+      "pipeline/False/dotted_nested": {
+        "ok": true,
+        "value": {
+          "matched": {
+            "$numberInt": "0"
+          },
+          "modified": {
+            "$numberInt": "0"
+          },
+          "upserted": true
+        },
+        "state": [
+          "18000000105f69640001000000106f2e2461000200000000"
+        ]
+      },
+      "pipeline/False/id_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "66"
+        },
+        "state": []
+      },
+      "pipeline/False/id_nested_dollar": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "66"
+        },
+        "state": []
+      },
+      "pipeline/False/id_dotted": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "66"
+        },
+        "state": []
+      }
+    },
     "semantic_followup_f07_invalid_id": {
       "ok": false,
       "family": "WriteError",
@@ -6803,6 +7339,210 @@
     "semantic_followup_f07_timestamp": {
       "root_replaced": true,
       "nested_unchanged": true
+    },
+    "semantic_followup_f07_timestamp_contextual": {
+      "insert": {
+        "t_zero": false,
+        "u_zero": false,
+        "same_second": true,
+        "increasing": true,
+        "fixed": {
+          "$timestamp": {
+            "t": 7,
+            "i": 3
+          }
+        },
+        "nested": {
+          "t": {
+            "$timestamp": {
+              "t": 0,
+              "i": 0
+            }
+          }
+        },
+        "array": [
+          {
+            "$timestamp": {
+              "t": 0,
+              "i": 0
+            }
+          }
+        ]
+      },
+      "replace": {
+        "t_zero": false,
+        "u_zero": false,
+        "same_second": true,
+        "increasing": true,
+        "fixed": {
+          "$timestamp": {
+            "t": 7,
+            "i": 3
+          }
+        },
+        "nested": {
+          "t": {
+            "$timestamp": {
+              "t": 0,
+              "i": 0
+            }
+          }
+        },
+        "array": [
+          {
+            "$timestamp": {
+              "t": 0,
+              "i": 0
+            }
+          }
+        ]
+      },
+      "set": {
+        "t_zero": true,
+        "u_zero": true,
+        "same_second": true,
+        "increasing": false,
+        "fixed": {
+          "$timestamp": {
+            "t": 7,
+            "i": 3
+          }
+        },
+        "nested": {
+          "t": {
+            "$timestamp": {
+              "t": 0,
+              "i": 0
+            }
+          }
+        },
+        "array": [
+          {
+            "$timestamp": {
+              "t": 0,
+              "i": 0
+            }
+          }
+        ]
+      },
+      "pipeline": {
+        "t_zero": true,
+        "u_zero": true,
+        "same_second": true,
+        "increasing": false,
+        "fixed": {
+          "$timestamp": {
+            "t": 7,
+            "i": 3
+          }
+        },
+        "nested": {
+          "t": {
+            "$timestamp": {
+              "t": 0,
+              "i": 0
+            }
+          }
+        },
+        "array": [
+          {
+            "$timestamp": {
+              "t": 0,
+              "i": 0
+            }
+          }
+        ]
+      },
+      "replace_upsert": {
+        "t_zero": false,
+        "u_zero": false,
+        "same_second": true,
+        "increasing": true,
+        "fixed": {
+          "$timestamp": {
+            "t": 7,
+            "i": 3
+          }
+        },
+        "nested": {
+          "t": {
+            "$timestamp": {
+              "t": 0,
+              "i": 0
+            }
+          }
+        },
+        "array": [
+          {
+            "$timestamp": {
+              "t": 0,
+              "i": 0
+            }
+          }
+        ]
+      },
+      "set_upsert": {
+        "t_zero": true,
+        "u_zero": true,
+        "same_second": true,
+        "increasing": false,
+        "fixed": {
+          "$timestamp": {
+            "t": 7,
+            "i": 3
+          }
+        },
+        "nested": {
+          "t": {
+            "$timestamp": {
+              "t": 0,
+              "i": 0
+            }
+          }
+        },
+        "array": [
+          {
+            "$timestamp": {
+              "t": 0,
+              "i": 0
+            }
+          }
+        ]
+      },
+      "pipeline_upsert": {
+        "t_zero": true,
+        "u_zero": true,
+        "same_second": true,
+        "increasing": false,
+        "fixed": {
+          "$timestamp": {
+            "t": 7,
+            "i": 3
+          }
+        },
+        "nested": {
+          "t": {
+            "$timestamp": {
+              "t": 0,
+              "i": 0
+            }
+          }
+        },
+        "array": [
+          {
+            "$timestamp": {
+              "t": 0,
+              "i": 0
+            }
+          }
+        ]
+      },
+      "id": {
+        "$timestamp": {
+          "t": 0,
+          "i": 0
+        }
+      }
     },
     "semantic_followup_f08_buckets_equal": {
       "empty": {
@@ -8336,7 +9076,7 @@
       "isWritablePrimary": true,
       "topologyVersion": {
         "processId": {
-          "$oid": "6ae78ade365770d3e68171c1"
+          "$oid": "6ae79f7251b28010d7a14196"
         },
         "counter": {
           "$numberLong": "0"
@@ -8353,14 +9093,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793563981309"
+          "$numberLong": "1793564587754"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "108"
+        "$numberInt": "3"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -8376,7 +9116,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_followup_cases.py",
-    "sha256": "027b9bc6aeee600772a074d553eba9dfe253cd04220859cc59afcae88ef7506b",
+    "sha256": "44e55a986026a94fcbd5a32ddff4101b278ba3eac0e7e44746276c4dda1700a2",
     "topology": "standalone"
   },
   "case_manifests": [
@@ -12730,6 +13470,44 @@
         }
       ],
       "selector": "semantic_followup_f02_duplicate_sort"
+    },
+    {
+      "name": "semantic_followup_f07_fields_contextual",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f07_fields_contextual"
+    },
+    {
+      "name": "semantic_followup_f07_timestamp_contextual",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f07_timestamp_contextual"
     }
   ]
 }

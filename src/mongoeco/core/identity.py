@@ -1,19 +1,21 @@
 from collections.abc import Callable
 from copy import deepcopy
+from itertools import count
 from re import Pattern
 from typing import Any
 
 from mongoeco.core.bson_identity import same_bson_update_value
 from mongoeco.core.bson_scalars import (
     _is_nan_numeric_value,
+    bson_datetime_milliseconds,
     is_bson_numeric,
     wrap_bson_numeric,
 )
-from mongoeco.core.bson_values import binary_parts
+from mongoeco.core.bson_values import binary_parts, document_mapping
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.server_errors import retain_diagnostic, server_error
 from mongoeco.errors import WriteError
-from mongoeco.types import Regex
+from mongoeco.types import Regex, Timestamp
 
 
 try:
@@ -33,6 +35,23 @@ def document_with_id_first(document):
     if next(iter(document)) == "_id":
         return document
     return {"_id": document["_id"], **document}
+
+
+def substitute_empty_root_timestamps(document, now, *, increments=None):
+    """Insert/replacement policy; modifier and pipeline values stay literal."""
+    if not any(
+        key != "_id" and isinstance(value, Timestamp) and value == Timestamp(0, 0)
+        for key, value in document.items()
+    ):
+        return document
+    increments = count(1) if increments is None else increments
+    seconds = bson_datetime_milliseconds(now) // 1000
+    return {
+        key: Timestamp(seconds, next(increments))
+        if key != "_id" and isinstance(value, Timestamp) and value == Timestamp(0, 0)
+        else value
+        for key, value in document.items()
+    }
 
 
 def canonical_document_id(value: Any) -> Any:
@@ -60,17 +79,43 @@ def root_id_needs_semantic_lookup(value: Any) -> bool:
 
 
 def is_valid_root_document_id(value: Any) -> bool:
-    return not isinstance(value, (list, Regex, Pattern)) and not (
-        BsonRegex is not None and isinstance(value, BsonRegex)
+    return (
+        not isinstance(value, (list, Regex, Pattern))
+        and not (BsonRegex is not None and isinstance(value, BsonRegex))
+        and not _id_contains_dollar_field(value)
+    )
+
+
+def _id_contains_dollar_field(value):
+    mapping = document_mapping(value)
+    if mapping is not None:
+        return any(
+            key.startswith("$") or _id_contains_dollar_field(item)
+            for key, item in mapping.items()
+        )
+    return isinstance(value, list) and any(
+        _id_contains_dollar_field(item) for item in value
     )
 
 
 def assert_valid_root_document_id(value: Any) -> None:
+    if not isinstance(value, list) and _id_contains_dollar_field(value):
+        message = "The _id field cannot contain a dollar-prefixed field name"
+        raise WriteError(message, code=52)
     if is_valid_root_document_id(value):
         return
     kind = "array" if isinstance(value, list) else "regex"
     message = f"The '_id' value cannot be of type {kind}"
     raise WriteError(message, code=53)
+
+
+def assert_valid_replacement_fields(document):
+    for key in document:
+        if key.startswith("$") and key not in {"$ref", "$id", "$db"}:
+            message = (
+                f"The dollar-prefixed field '{key}' is not allowed in a replacement"
+            )
+            raise WriteError(message, code=52)
 
 
 def assert_valid_upsert_document_id(value: Any, *, is_replacement: bool) -> None:
@@ -189,28 +234,15 @@ def materialize_replacement_document(
     original_document: dict[str, Any],
     replacement: dict[str, Any],
 ) -> dict[str, Any]:
-    """Preserve the stored _id and its BSON field position in replacements."""
-    if "_id" in replacement:
+    """Store root _id first, retaining the authored order of embedded values."""
+    if "_id" in replacement and not _id_contains_dollar_field(replacement["_id"]):
         assert_valid_root_document_id(replacement["_id"])
-    if "_id" in replacement or "_id" not in original_document:
-        # Command-owned documents intentionally survive deepcopy unchanged.
-        # A materialized replacement needs its own mutable root for _id policy.
-        return {key: deepcopy(value) for key, value in replacement.items()}
-
-    replacement_items = [(key, deepcopy(value)) for key, value in replacement.items()]
-    materialized: dict[str, Any] = {}
-    id_position = list(original_document).index("_id")
-    inserted_id = False
-    for index in range(len(replacement_items) + 1):
-        if index == id_position:
-            materialized["_id"] = deepcopy(original_document["_id"])
-            inserted_id = True
-        if index < len(replacement_items):
-            key, value = replacement_items[index]
-            materialized[key] = value
-    if not inserted_id:
+    materialized = {key: deepcopy(value) for key, value in replacement.items()}
+    if "_id" not in materialized and "_id" in original_document:
         materialized["_id"] = deepcopy(original_document["_id"])
-    return materialized
+    return (
+        document_with_id_first(materialized) if "_id" in materialized else materialized
+    )
 
 
 def materialize_merge_insert_document(
@@ -268,7 +300,17 @@ def preserve_and_validate_pipeline_id(
     replacement_doc: dict[str, Any],
     *,
     dialect: Any,
+    is_upsert_insert: bool = False,
 ) -> None:
+    replacement_id = replacement_doc.get("_id")
+    mapping = document_mapping(replacement_id)
+    invalid_before_immutable = (
+        any(key.startswith("$") for key in mapping)
+        if mapping is not None and dialect.key == "7.0"
+        else mapping is not None and _id_contains_dollar_field(replacement_id)
+    )
+    if not is_upsert_insert and invalid_before_immutable:
+        assert_valid_root_document_id(replacement_id)
     if "_id" in original_doc:
         original_id = original_doc["_id"]
         if "_id" not in replacement_doc:

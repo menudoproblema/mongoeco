@@ -240,7 +240,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
         self.assertEqual(result.modified_count, 0)
         self.assertEqual(document, {"_id": "1", "a": 1, "b": 2})
 
-    def test_replace_one_identical_document_without_id_preserves_non_initial_id_position(
+    def test_replacement_normalizes_non_initial_id_position(
         self,
     ):
         async def _exercise():
@@ -261,9 +261,9 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
 
         self.assertEqual(result.matched_count, 1)
         self.assertEqual(result.modified_count, 1)
-        self.assertEqual(list(document.keys()), ["a", "_id", "b"])
+        self.assertEqual(list(document.keys()), ["_id", "a", "b"])
 
-    def test_replace_one_identical_document_without_id_preserves_trailing_id_position(
+    def test_replace_one_identical_document_without_id_normalizes_trailing_id_position(
         self,
     ):
         async def _exercise():
@@ -283,9 +283,9 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
 
         self.assertEqual(result.matched_count, 1)
         self.assertEqual(result.modified_count, 1)
-        self.assertEqual(list(document.keys()), ["a", "b", "_id"])
+        self.assertEqual(list(document.keys()), ["_id", "a", "b"])
 
-    def test_materialize_replacement_document_inserts_trailing_id_when_selected_has_it_last(
+    def test_materialize_replacement_document_places_id_first_when_selected_has_it_last(
         self,
     ):
         selected = {"a": 1, "b": 2, "_id": "1"}
@@ -296,7 +296,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
         )
 
         self.assertEqual(materialized, {"a": 1, "_id": "1"})
-        self.assertEqual(list(materialized.keys()), ["a", "_id"])
+        self.assertEqual(list(materialized.keys()), ["_id", "a"])
 
     def test_materialize_replacement_document_does_not_invent_missing_id(self):
         selected = {"kind": "legacy"}

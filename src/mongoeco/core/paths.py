@@ -90,6 +90,26 @@ def get_document_value(  # noqa: PLR0912 - BSON path traversal cases
     return get_document_value(first_value, rest)
 
 
+def get_update_path_value(doc, path):
+    """Resolve an update target, distinguishing missing from blocked traversal."""
+    current = doc
+    for part in path.split("."):
+        mapping = _path_mapping(current)
+        if mapping is not None:
+            if part not in mapping:
+                return False, None
+            current = mapping[part]
+        elif isinstance(current, list) and part.isdigit():
+            index = int(part)
+            if index >= len(current):
+                return False, None
+            current = current[index]
+        else:
+            message = f"Cannot traverse update path '{path}' at '{part}'"
+            raise server_error(message, code=28)
+    return True, current
+
+
 def set_document_value(doc: dict[str, Any] | list[Any], path: str, value: Any) -> bool:
     if isinstance(doc, list):
         if "." not in path:

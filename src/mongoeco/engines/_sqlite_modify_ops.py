@@ -10,10 +10,13 @@ from mongoeco.core.change_events import captures_changes
 from mongoeco.core.identity import (
     assert_document_kept_storage_key,
     assert_document_matches_storage_key,
+    assert_valid_replacement_fields,
     assert_valid_upsert_document_id,
+    document_with_id_first,
     materialize_replacement_document,
     preserve_and_validate_pipeline_id,
     replacement_document_changed,
+    substitute_empty_root_timestamps,
     updated_document_storage_key,
 )
 from mongoeco.core.operators import apply_update_with_change
@@ -324,6 +327,10 @@ def update_with_operation(
             else deepcopy(original_document)
         )
         if replacement_document is not None:
+            assert_valid_replacement_fields(document)
+            document = substitute_empty_root_timestamps(
+                document, semantics.variables.now
+            )
             preserve_and_validate_pipeline_id(
                 original_document, document, dialect=semantics.dialect
             )
@@ -525,6 +532,9 @@ def update_with_operation(
         semantics.compiled_upsert_plan.apply(new_doc, variables=semantics.variables)
     if "_id" not in new_doc:
         new_doc["_id"] = new_object_id()
+    if replacement_document is not None:
+        new_doc = substitute_empty_root_timestamps(new_doc, semantics.variables.now)
+    new_doc = document_with_id_first(new_doc)
     assert_valid_upsert_document_id(
         new_doc["_id"], is_replacement=replacement_document is not None
     )
