@@ -703,6 +703,13 @@ entrega dispatch, consumo y ownership de respuestas con su
 [aceptación acotada](evidence/bson-consolidation-implementation/codec-dispatch/README.md).
 No vuelve a abrir los cortes anteriores ni cierra todos los contextos D06.
 
+La [revisión 16](evidence/bson-consolidation-review/review16/README.md), sobre
+`5348004`, vuelve a contrastar el mismo adjunto. Precisa en el plan los testigos
+de fábricas documentales, topología comparable y consumo/estado público. Sus
+85 regresiones y el control local de efectos no aceptan el fixture/corpus en
+curso ni equivalen a nuevas capturas físicas. El orden restante conserva un
+solo owner en el plan.
+
 - D06a/D06b/D06c: completar los contextos restantes de gramática/String/Code/DBRef/raw, planes no cubiertos y consumidores. `a53824d` añade el corte de dispatch/consumo, sin cerrar fábricas arbitrarias `document_class`, todas las combinaciones de consumo/estado público ni toda la representación portable. El corte de bytes/callbacks y String calculada de `381aa10` y los previos de sufijos/raw conservan su aceptación. Reutilizar lector y materializador actuales; no declarar D06 completo por estos cierres.
 - H53: disposición de observabilidad conforme a C03/B08; la caracterización previa no constituye aceptación.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.

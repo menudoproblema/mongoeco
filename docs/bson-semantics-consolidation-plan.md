@@ -102,6 +102,12 @@ apartado activo en lugar de añadir otra secuencia de ejecución. El
 [contraste de revisión 15](evidence/bson-consolidation-review/review15/README.md)
 separa regresiones aceptadas, fallos del candidato y controles todavía necesarios.
 
+Revisión 16, 1 de noviembre de 2026, sobre HEAD `5348004`: el adjunto vuelve a
+ser idéntico por SHA-256. El [contraste actual](evidence/bson-consolidation-review/review16/README.md)
+conserva las retractaciones y precisa la aceptación de fábricas documentales,
+topología y efectos de consumo. No añade otra secuencia de ejecución ni acepta
+el trabajo de fixture/corpus preexistente sin commitear.
+
 ## 1. Evidencia y alcance del contraste
 
 Se contrastaron los dos textos adjuntos, las propuestas previas de este chat,
@@ -1106,8 +1112,10 @@ sus controles y límites de ejecución local. El siguiente corte es D06a/b.
 
 ### Contraste actual y orden mínimo de ejecución
 
-Relectura vigente sobre HEAD `eb85ea3` y los 12 archivos de runtime/tests/referencias
-preexistentes sin commitear, identificados por hash en el
+Relectura vigente sobre HEAD `5348004`, con trabajo de fixture/corpus preexistente
+identificado en el [receipt de revisión 16](evidence/bson-consolidation-review/review16/receipt.json).
+Esta revisión no lo modifica ni acepta. La caracterización anterior sobre
+`eb85ea3` y sus 12 archivos sin commitear permanece identificada en el
 [receipt de revisión 15](evidence/bson-consolidation-review/review15/receipt.json).
 El [receipt de revisión 14](evidence/bson-consolidation-review/review14/receipt.json)
 conserva la caracterización del candidato anterior a `381aa10`.
@@ -1176,6 +1184,17 @@ La entrega mantiene STANDARD como default UUID y coordina su cambio futuro
 con B07. Los contextos D06a/b restantes, incluidas fábricas documentales con
 efectos propios y otras combinaciones de consumo/estado y representación
 portable, conservan aceptación pendiente; D06c y los demás owners no se cierran.
+
+**Contraste nuevo de revisión 16.** Pasan 85 regresiones focales. Las seis
+combinaciones locales motor/dialecto conservan selección bytes/Binary 0 frente
+a 5, contenido/subtipo de distinct y 18 trazas separadas de documento/operando.
+No se vuelven a ejecutar MongoDB ni capturas. Un control independiente con la
+API pública BSON del SDK construye cuatro documentos al decodificar una
+envoltura completa cursor/ok, frente a tres del materializador local, aunque
+las filas son iguales. Esto identifica una frontera aún pendiente, no demuestra
+por sí solo el protocolo nativo ni la decodificación selectiva del driver.
+Conservar las fábricas con efectos como criterio propio; no ampliar por ello
+el soporte público a clases/opciones actualmente no admitidas.
 
 **Causa conjunta y refactorización.** Los defectos comparten pérdida de información
 antes de que su consumidor decida: subtipo al comparar, orden al decodificar,
@@ -1307,10 +1326,37 @@ bloques ni obligan a rehacer los cortes aceptados:
    sintáctica no autoriza ignorar la validación del hint ni adelantar ventana al
    residual. Observar primer resultado y fase del error con batch 1; extender a
    getMore y plan físico alcanzado, no solo explicar el helper.
+6. **Fábricas documentales y topología comparable.** Antes del siguiente arreglo,
+   capturar con/sin TypeRegistry la construcción y asignación de campos de la
+   respuesta completa: raíz del comando, cursor, fila, anidados y Code.scope.
+   Incluir respuesta vacía, initial/getMore y fábricas que fallen en cada nivel;
+   observar fase, clase y efectos previos, sin envolver todo fallo como InvalidBSON.
+   La decodificación selectiva puede construir contenedores intermedios aun si
+   descarta sus valores: una única llamada a decode no prueba equivalencia.
+   Reutilizar APIs públicas del SDK y el materializador portable; no depender
+   de su implementación privada ni replicar un driver completo.
+
+   Elegir topología según el contrato observado. Para la superficie local que
+   anuncia standalone, usar un oráculo standalone explícito; los metadatos
+   adicionales de replica set pueden activar constructores distintos. No
+   normalizar esos efectos ni inventar relojes distribuidos para igualarlos.
+   Extender el fixture existente si hace falta, conservando RS por defecto,
+   ownership, cancelación, limpieza y verificación efectiva de hello/build/FCV.
+   Watch sigue exigiendo RS y no hereda la referencia standalone. Registrar
+   topología y versión del SDK con las capturas; validar las opciones del
+   capturador/replay existentes, sin otro runner.
+
+   Completar además consumo parcial y estado público: next/try_next donde
+   exista/to_list intercalados, límite exacto, tanda transformada vacía o
+   expandida, alive/cursor_id y cierre. Contrastar las superficies sync/async
+   soportadas; no deducir su estado del contador interno ni forzar el mismo
+   tratamiento de None o iterables sin longitud en query y command cursors.
 
 Aceptar conjuntamente estos mecanismos cuando simplifique la entrega, pero
 mantener las garantías por superficie. Los 36 fallos wire y los fallos portables
-son condiciones de cierre distintas. No crear otro runner: incorporar los
+de revisión 15 están corregidos en el corte aceptado; conservar sus regresiones,
+sin presentarlos como pendientes actuales. Los efectos de fábricas y estado
+público tienen aceptación propia todavía pendiente. No crear otro runner: incorporar los
 testigos al registro/capturador/replay y a las propiedades existentes. Antes de
 aceptar, congelar el corpus final, comprobar las nuevas referencias contra el
 servidor correspondiente y acreditar baseline/candidato con esa misma fuente.

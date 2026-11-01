@@ -1,0 +1,26 @@
+import hashlib,json,sys
+from pathlib import Path
+sys.path.insert(0,str(Path.cwd()/'src'))
+from bson import BSON
+from bson.codec_options import CodecOptions as SDKOptions
+from mongoeco._types.concerns import CodecOptions
+from mongoeco.core._public_materialization import materialize_cursor_response
+
+def probe(sdk):
+    events=[]
+    class Observed(dict):
+        def __init__(self,*args,**kwargs):
+            events.append(['init',len(args),list(kwargs)])
+            super().__init__(*args,**kwargs)
+        def __setitem__(self,key,value):
+            events.append(['set',key])
+            super().__setitem__(key,value)
+    batch=[{'v':{'n':1}}]
+    if sdk:
+        # Independent public BSON decoder, not a physical server observation.
+        body={'cursor':{'firstBatch':batch,'id':0,'ns':'db.c'},'ok':1.0}
+        rows=BSON(BSON.encode(body)).decode(codec_options=SDKOptions(document_class=Observed))['cursor']['firstBatch']
+    else:
+        rows=materialize_cursor_response(batch,codec_options=CodecOptions(document_class=Observed),namespace='db.c',cursor_id=0,initial=True)
+    return {'rows':rows,'events':events,'constructors':sum(e[0]=='init' for e in events)}
+print(json.dumps({'scope':'local public SDK full-envelope composition control; not native MongoDB acceptance','sdk_envelope':probe(True),'local_materializer':probe(False)},indent=2))
