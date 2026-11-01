@@ -1,0 +1,306 @@
+....................................... [ 35%]
+.......FFFFFFFFFFFFFFFFFFFFFFFF............... [ 77%]
+.........................                                                [100%]
+=================================== FAILURES ===================================
+_ test_equivalent_cursor_context_prepares_each_stage_once[7.0-collection-sync-memory] _
+tests/integration/api/test_aggregation_preparation_reuse.py:63: in test_equivalent_cursor_context_prepares_each_stage_once
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911436128'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[7.0-collection-sync-sqlite] _
+tests/integration/api/test_aggregation_preparation_reuse.py:63: in test_equivalent_cursor_context_prepares_each_stage_once
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911436464'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[7.0-collection-async-memory] _
+tests/integration/api/test_aggregation_preparation_reuse.py:98: in test_equivalent_cursor_context_prepares_each_stage_once
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_aggregation_preparation_reuse.py:95: in exercise
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911432432'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[7.0-collection-async-sqlite] _
+tests/integration/api/test_aggregation_preparation_reuse.py:98: in test_equivalent_cursor_context_prepares_each_stage_once
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_aggregation_preparation_reuse.py:95: in exercise
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911436800'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[7.0-command-sync-memory] _
+tests/integration/api/test_aggregation_preparation_reuse.py:63: in test_equivalent_cursor_context_prepares_each_stage_once
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911444864'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[7.0-command-sync-sqlite] _
+tests/integration/api/test_aggregation_preparation_reuse.py:63: in test_equivalent_cursor_context_prepares_each_stage_once
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911438480'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[7.0-command-async-memory] _
+tests/integration/api/test_aggregation_preparation_reuse.py:98: in test_equivalent_cursor_context_prepares_each_stage_once
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_aggregation_preparation_reuse.py:95: in exercise
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911434448'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[7.0-command-async-sqlite] _
+tests/integration/api/test_aggregation_preparation_reuse.py:98: in test_equivalent_cursor_context_prepares_each_stage_once
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_aggregation_preparation_reuse.py:95: in exercise
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911435792'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[8.0-collection-sync-memory] _
+tests/integration/api/test_aggregation_preparation_reuse.py:63: in test_equivalent_cursor_context_prepares_each_stage_once
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911434448'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[8.0-collection-sync-sqlite] _
+tests/integration/api/test_aggregation_preparation_reuse.py:63: in test_equivalent_cursor_context_prepares_each_stage_once
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911438480'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[8.0-collection-async-memory] _
+tests/integration/api/test_aggregation_preparation_reuse.py:98: in test_equivalent_cursor_context_prepares_each_stage_once
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_aggregation_preparation_reuse.py:95: in exercise
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911443520'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[8.0-collection-async-sqlite] _
+tests/integration/api/test_aggregation_preparation_reuse.py:98: in test_equivalent_cursor_context_prepares_each_stage_once
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_aggregation_preparation_reuse.py:95: in exercise
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911444192'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[8.0-command-sync-memory] _
+tests/integration/api/test_aggregation_preparation_reuse.py:63: in test_equivalent_cursor_context_prepares_each_stage_once
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911439824'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[8.0-command-sync-sqlite] _
+tests/integration/api/test_aggregation_preparation_reuse.py:63: in test_equivalent_cursor_context_prepares_each_stage_once
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911436464'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[8.0-command-async-memory] _
+tests/integration/api/test_aggregation_preparation_reuse.py:98: in test_equivalent_cursor_context_prepares_each_stage_once
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_aggregation_preparation_reuse.py:95: in exercise
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911432768'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[8.0-command-async-sqlite] _
+tests/integration/api/test_aggregation_preparation_reuse.py:98: in test_equivalent_cursor_context_prepares_each_stage_once
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_aggregation_preparation_reuse.py:95: in exercise
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911436128'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[9.0-collection-sync-memory] _
+tests/integration/api/test_aggregation_preparation_reuse.py:63: in test_equivalent_cursor_context_prepares_each_stage_once
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911432768'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[9.0-collection-sync-sqlite] _
+tests/integration/api/test_aggregation_preparation_reuse.py:63: in test_equivalent_cursor_context_prepares_each_stage_once
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911436464'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[9.0-collection-async-memory] _
+tests/integration/api/test_aggregation_preparation_reuse.py:98: in test_equivalent_cursor_context_prepares_each_stage_once
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_aggregation_preparation_reuse.py:95: in exercise
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911432432'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[9.0-collection-async-sqlite] _
+tests/integration/api/test_aggregation_preparation_reuse.py:98: in test_equivalent_cursor_context_prepares_each_stage_once
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_aggregation_preparation_reuse.py:95: in exercise
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911436800'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[9.0-command-sync-memory] _
+tests/integration/api/test_aggregation_preparation_reuse.py:63: in test_equivalent_cursor_context_prepares_each_stage_once
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911444864'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[9.0-command-sync-sqlite] _
+tests/integration/api/test_aggregation_preparation_reuse.py:63: in test_equivalent_cursor_context_prepares_each_stage_once
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911438480'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[9.0-command-async-memory] _
+tests/integration/api/test_aggregation_preparation_reuse.py:98: in test_equivalent_cursor_context_prepares_each_stage_once
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_aggregation_preparation_reuse.py:95: in exercise
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911434448'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+_ test_equivalent_cursor_context_prepares_each_stage_once[9.0-command-async-sqlite] _
+tests/integration/api/test_aggregation_preparation_reuse.py:98: in test_equivalent_cursor_context_prepares_each_stage_once
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_aggregation_preparation_reuse.py:95: in exercise
+    assert validate.call_count == len(PIPELINE)
+E   AssertionError: assert 4 == 2
+E    +  where 4 = <MagicMock name='_prepare_builtin_stage' id='4911439152'>.call_count
+E    +  and   2 = len([{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}])
+=========================== short test summary info ============================
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[7.0-collection-sync-memory]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[7.0-collection-sync-sqlite]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[7.0-collection-async-memory]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[7.0-collection-async-sqlite]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[7.0-command-sync-memory]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[7.0-command-sync-sqlite]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[7.0-command-async-memory]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[7.0-command-async-sqlite]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[8.0-collection-sync-memory]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[8.0-collection-sync-sqlite]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[8.0-collection-async-memory]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[8.0-collection-async-sqlite]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[8.0-command-sync-memory]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[8.0-command-sync-sqlite]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[8.0-command-async-memory]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[8.0-command-async-sqlite]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[9.0-collection-sync-memory]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[9.0-collection-sync-sqlite]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[9.0-collection-async-memory]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[9.0-collection-async-sqlite]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[9.0-command-sync-memory]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[9.0-command-sync-sqlite]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[9.0-command-async-memory]
+FAILED tests/integration/api/test_aggregation_preparation_reuse.py::test_equivalent_cursor_context_prepares_each_stage_once[9.0-command-async-sqlite]
+24 failed, 86 passed, 1211 subtests passed in 3.97s

@@ -1,0 +1,24 @@
+import hashlib,json,statistics,subprocess,sys
+from pathlib import Path
+baseline=Path(Path('/tmp/mongoeco-frontier-base-location.txt').read_text().strip()).resolve()
+for p,digest in json.loads((baseline/'runtime.json').read_text()).items():assert hashlib.sha256((baseline/p).read_bytes()).hexdigest()==digest,p
+wheelroot=Path(Path('/tmp/mongoeco-frontier-wheel-location.txt').read_text().strip())
+site=Path(json.loads((wheelroot/'wheel.json').read_text())['site_packages']).resolve()
+for p,digest in json.loads((wheelroot/'runtime.json').read_text()).items():assert hashlib.sha256((site/Path(p).relative_to('src')).read_bytes()).hexdigest()==digest,p
+paths={'base':baseline/'src','candidate':site}
+rows=[]
+for engine in ('MemoryEngine','SQLiteEngine'):
+ for workload in ('sort','group','unwind','large_strings'):
+  for runtime in ('base','candidate','candidate','base'):
+   result=subprocess.run([sys.executable,'/tmp/mongoeco-frontier-benchmark.py',str(paths[runtime]),engine,workload],capture_output=True,text=True,check=True)
+   row=json.loads(result.stdout);row['runtime']=runtime;rows.append(row)
+   print(engine,workload,runtime,row['seconds'],row['cpu_seconds'],flush=True)
+  hashes={r['bson_sha256'] for r in rows if r['engine']==engine and r['workload']==workload}
+  assert len(hashes)==1,(engine,workload,hashes)
+summary=[]
+for engine in ('MemoryEngine','SQLiteEngine'):
+ for workload in ('sort','group','unwind','large_strings'):
+  data={runtime:[r for r in rows if r['runtime']==runtime and r['engine']==engine and r['workload']==workload] for runtime in paths}
+  summary.append({'engine':engine,'workload':workload,**{metric+'_ratio':statistics.median(r[metric] for r in data['candidate'])/statistics.median(r[metric] for r in data['base']) for metric in ('seconds','cpu_seconds')}})
+Path('/tmp/mongoeco-frontier-benchmark-final.json').write_text(json.dumps({'samples':rows,'summary':summary,'scope':'diagnostic warmed ABBA, 1500 ordinary documents or five 4MiB computed String outputs, spill threshold 8; not integrated D05 performance acceptance'},indent=2)+'\n')
+print(json.dumps(summary),flush=True)

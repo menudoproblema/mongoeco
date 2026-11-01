@@ -700,7 +700,7 @@ El orden vigente se mantiene en el [plan, contraste actual](bson-semantics-conso
 La revisión 14 caracteriza demanda interna y límites String del candidato;
 no acepta sus cambios ni vuelve a abrir los cortes funcionalmente cerrados.
 
-- D06a/D06b/D06c: completar contextos de gramática/String/DBRef/raw y consumidores. Los cortes de sufijos y raw por cantidades/contenido tienen aceptación acotada; siguen bytes/callbacks y el resto de contextos/consumidores. El diagnóstico nativo siguiente ya reproduce ambos fallos de respuesta. No acredita cierre de D06.
+- D06a/D06b/D06c: completar los contextos restantes de gramática/String/Code/DBRef/raw, planes no cubiertos y consumidores. El corte de bytes/callbacks y String calculada de `381aa10` tiene aceptación acotada, además de los cortes previos de sufijos y raw por cantidades/contenido. Conservar sus controles; no repetir la extracción del lector ni declarar D06 completo por este cierre.
 - H53: disposición de observabilidad conforme a C03/B08; la caracterización previa no constituye aceptación.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
@@ -1305,3 +1305,58 @@ reevaluarlo y separar evaluación de respuesta de codecs públicos. Después,
 resto de contextos/consumidores D06c. La inspección independiente confirma que
 los 15 contenedores y 30 volúmenes propios de estos cohorts ya no existen.
 H53, sNaN, decisión D07, D05 y admisión B07 conservan sus pendientes.
+
+## D06a/b — Fronteras por bytes, capacidad y efectos de codec
+
+`381aa10` entrega el siguiente corte sobre `e941554`. El
+[receipt](evidence/bson-consolidation-implementation/response-frontier/receipt.json)
+identifica la fuente final, los fallos previos, las capturas y sus límites.
+Nueve acciones de respuesta y dos de comandos amplían registro/capturador/replay
+existentes; se capturan y comprueban con MongoDB 7.0.43/8.0.32/9.0.2, FCV de su
+major, en replica sets propios fijados por digest. No cambian observadores,
+goldens históricos ni catálogos protegidos.
+
+`ResponseBatchReader` comparte cota por cantidad/bytes y conserva un documento
+evaluado que no cabe, sin reevaluarlo. El framing distingue primer find 7 de
+8/9, aggregate y getMore; el documento devuelto admite hasta 16 MiB + 16 KiB
+inclusive en las referencias observadas. La capacidad String calculada es otra
+frontera: `$concat`/`$replaceAll`, UTF-8 y cola null prueban la guarda compartida
+del evaluador existente. No se crea otro intérprete ni se cierra admisión B07.
+
+La respuesta se evalúa antes de materializarla y ejecutar decoders públicos.
+Raw conserva BSON sin callbacks; los adaptadores sync consumen una respuesta
+cada vez. Fase/clase/código/codeName/errmsg se contrastan en apertura/getMore y
+ante fallos del servidor o decoder. El control de entrada pequeña/salida grande
+también falla al abrir en los tres servidores: se conserva esa prelectura, sin
+introducir una fuente unitaria por una hipótesis local. El acceso primario
+probado con `_id_` ordena antes del residual; `v_1` fuerza el control bloqueante.
+Ni skip ni límite se adelantan a un residual eliminatorio.
+
+El cierre conserva recursos hasta completar cleanup y permite reintento sin
+sustituir el error original. Los tests cubren overflow, rewind, cancelación
+repetida y fallos de cierre. Los tres constructores internos, incluidos sus
+fallbacks, desactivan codecs y difieren diagnóstico al aggregate propietario.
+Se corrigen además dos pérdidas de frontera compartidas: wrappers numéricos que
+escapaban sin SDK, concentrando conversión en el materializador público, y slices
+streamables que perdían PreparedPipeline, conservando preparación y direcciones
+sin otra caché ni debilitar invalidación por contexto/registro.
+
+En wire, getMore con batchSize cero elimina la cota por cantidad y killCursors
+codifica sus arrays como int64, con Unknown vacío cuando se conoce el estado.
+Las guardas de namespace/sesión/principal y los arrays del usuario se conservan.
+
+Aceptación: base aislada con 283 módulos verificados, 228 fallos/18 positivos en
+el corpus final; candidato con **7.447 checks de replay completos**, 3.216 pruebas
+amplias y 1.120 subtests, 110 de integración y 1.211 subtests. El wheel limpio
+coincide por hash en sus 284 módulos y pasa 246 checks. Python 3.13.15 sin SDK
+pasa 180 escenarios de fases/spill/tipos/raw/bytes/String. Typing, SPI v2, lint y
+manifiesto público efectivo conservan sus contratos. La auditoría independiente
+comprueba ausencia de 30 contenedores y 60 volúmenes propios.
+
+El coste diagnóstico ABBA mantiene resultados BSON: ratios CPU candidato/base
+Memory sort/group/unwind/Strings grandes 1,22/1,07/0,96/1,36; SQLite
+1,16/1,12/0,95/1,23. Son 32 muestras calentadas, sin otros gates propios activos;
+no se afirma ausencia de coste ni aceptación del presupuesto global D05.
+La guarda y formación de respuestas añaden trabajo, especialmente con Strings
+grandes. Los demás contextos D06a/b, consumidores D06c, H53, sNaN, decisión D07,
+D05 y B07 mantienen sus obligaciones.

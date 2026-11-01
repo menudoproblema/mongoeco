@@ -1137,11 +1137,13 @@ aceptado conserva su receipt y no acredita bytes/callbacks.
 
 **Actualización de ejecución.** El corte raw de contenido/apertura/cantidades
 `30c8ae2` ya tiene su aceptación acotada en el [registro](bson-consolidation-implementation.md#d06ab--lecturas-raw-apertura-y-cantidades).
-Conservar sus controles; la siguiente modificación productiva es el paso 2.
-Las [sondas nativas posteriores](evidence/bson-consolidation-implementation/response-frontier-diagnostic/README.md)
-reproducen cortes por bytes distintos por ruta/major y callbacks antes de un
-error que invalida la respuesta. Incorporarlas al corpus antes de corregir el
-coordinador. No declarar resuelto ese comportamiento por el replay verde raw.
+El corte posterior `381aa10` acepta bytes/callbacks, capacidad String calculada
+y sus controles de preparación/cierre en el
+[registro de fronteras](bson-consolidation-implementation.md#d06ab--fronteras-por-bytes-capacidad-y-efectos-de-codec).
+Conservar ambos conjuntos de controles; no volver a extraer el lector ni
+reabrir sus fallos corregidos por repetir el adjunto. Siguen los demás contextos
+D06a/b y los consumidores D06c, según sus dependencias. Ni el replay raw anterior
+ni este corte acotado declaran D06/D05 completos.
 
 **Causa conjunta y refactorización.** Los defectos comparten pérdida de información
 antes de que su consumidor decida: subtipo al comparar, orden al decodificar,
@@ -1151,21 +1153,21 @@ vistas BSON, identidad física, gramática y contexto existentes; cada consumido
 conserva su equivalencia. No crear un comparador universal ni un `mode` que mezcle
 consulta, grupo, Search e identidad de modificación.
 
-La oportunidad adicional está en la respuesta del cursor. El candidato ya añade
-`ResponseBatchReader` y pospone la materialización hasta completar la respuesta;
-son cambios en curso, no garantías aceptadas. Reutilizar ese componente y el
-cálculo BSON existente, sin otra abstracción equivalente. La separación debe
-llegar hasta la fuente: demanda de documentos internos, formación de respuesta
-y decodificación pública tienen dueños distintos. Raw y wire consumen BSON sin
+La respuesta del cursor ya comparte `ResponseBatchReader` y pospone la
+materialización hasta completar la respuesta en el corte aceptado. Reutilizar
+ese componente y el cálculo BSON existente, sin otra abstracción equivalente.
+Demanda interna, formación de respuesta y decodificación pública conservan
+dueños distintos, incluidas las rutas legacy. Raw y wire consumen BSON sin
 codecs del usuario. Los adaptadores mantienen sus reglas de apertura/getMore;
 no duplicar evaluador, contexto ni almacén de cursores. Las vistas de tipos,
 identidad física, gramática y límites de valores siguen siendo primitivas
-separadas: una clase universal no reduce estas obligaciones.
+separadas: una clase universal no reduce estas obligaciones. La pérdida de
+PreparedPipeline se corrige conservando slices; no exige otra caché.
 
 | Orden / prioridad | Trabajo, dependencia y simplificación | Aceptación necesaria |
 | --- | --- | --- |
 | 1 / P1 — D06a/b, raw y representación | Conservar el corte raw de contenido/cantidades aceptado y completar contextos String/Code/DBRef/raw que falten sobre cursor/materializador/bridge actuales. No llamar a la apertura normal de aggregate y asumir que raw tiene la misma primera tanda. | Diferenciales 7/8/9 de find/aggregate raw y decodificado, sync/async y wire soportado. BSON exacto independiente del decoder productivo; orden/extras/`$db:null`, Binary 0/5 y Code scope anidados. Codec mutante con control decodificado activo y cero callbacks en raw. Batch ausente/0/1/2, fase de error y ejecución de `$merge` al abrir observadas por superficie. Fuente final congelada y `--check` de las referencias nuevas; no regenerar goldens para ocultar fallos. |
-| 2 / P1 — D06a/b, demanda, bytes y callbacks | Completar el lector existente con demanda interna sin prelectura de tandas públicas y salida pendiente sin reevaluar. Reusar `bson_size`; distinguir capacidad de String calculada, documento devuelto, tanda y mensaje, además de admisión de escritura B07. Caracterizar antes de fijar constantes, lookahead o prioridad de errores; retirar guardas aisladas reemplazadas. | Fronteras exactas y controles del apartado siguiente, cantidad simultánea, expansión/materialización y entrada pequeña/salida grande con error de filtro tardío. Observar documentos/tandas, fase/clase/código/codeName/errmsg, orden, callbacks y ausencia de pérdida/duplicación. Contrastar find/aggregate y apertura/getMore. Un error de servidor que invalida la respuesta no activa sus decoders; un fallo del decoder cliente conserva los efectos anteriores que observe el SDK, sin prometer rollback. |
+| 2 / P1 — D06a/b, demanda, bytes y callbacks | Conservar el corte `381aa10` aceptado y usar sus primitivas en los contextos/planes restantes. Mantener la prelectura demostrada y salida pendiente sin reevaluar. Reusar `bson_size`; distinguir String calculada, documento devuelto, tanda y mensaje, además de admisión B07. Retirar guardas reemplazadas; no repetir otro lector, evaluador o caché. | Mantener las fronteras y controles del apartado siguiente, con cantidad simultánea y expansión/materialización. Nuevos contextos/planes requieren testigo nativo propio, no aceptación por asociación. Documentos/tandas, fase/clase/código/codeName/errmsg, orden y callbacks deben coincidir. Un fallo del servidor invalida su respuesta antes de decoders; un fallo del decoder cliente conserva los efectos anteriores observados en el SDK. |
 | 3 / P1 — D06c, consumidores y claves | Después de las vistas disponibles y preservación necesarias, revisar group/sets/lookup/spill/Search según equivalencia propia. Compartir átomos, retirar duplicación junto con sus guardas; no cambiar storage keys ni desempates persistidos. | Mismo resultado BSON con/sin hash/spill y bajo collation. Clave exclusiva: equivalencia en ambos sentidos; hash: colisiones permitidas solo con comparación posterior. Prefiltros Search conservan candidatos antes de residual y ventana. Contextos de subpipeline y persistencia tienen testigos propios. |
 | 4 / P2 — H53, conversión y D07 | H53 permanece en C03/B08, sin logging nuevo implícito. String sNaN conserva su owner de conversión. Resolver continuar/descartar el piloto schema con hipótesis medible; D07 puede descartarse. | Separar evaluación, permiso y warning en strict/moderate/off × error/warn/bypass, antiguo/candidato. Captura/regresión sNaN 7/8/9 con clase/código/fase y controles válidos. No deducir rechazo de escrituras por ausencia de warning. |
 | 5 — D05 integrado y B07 por su owner | Congelar el candidato después de revisión/focales, ejecutar gates alcanzados y cerrar commits semánticos por bloque. La admisión BSON general conserva su obligación independiente: no depende de adoptar otro normalizador ni queda resuelta por raw. | Matrices Python/SDK/pytest del contrato, wheel instalado, SPI/typing, cobertura, persistencia y coste; recursos sin fugas. B07 prueba tipos arbitrarios/Decimal crudo y clases/fases de rechazo en filtros y escrituras. Evidencia de fuente exacta, baseline que falla y candidato que pasa; no presentar un gate previo al último cambio como aceptación final. |
@@ -1175,19 +1177,21 @@ cambio, pero conservan testigos y aceptación separados. H53/conversión pueden
 avanzar de forma independiente de D06c. No hace falta esperar un fixture RS ya
 aceptado ni repetir D01/D02/D03/D04 para empezar estos pendientes.
 
-**Orden interno del paso 2, sin crear otro bloque.**
+**Garantías del paso 2, conservadas tras su corte aceptado.**
 
 1. Congelar las funciones del corpus y capturar/`--check` contra 7/8/9. Añadir
    el testigo de entrada pequeña y salida expandida antes de corregir la demanda;
    incluir filtro fallido después del primer corte por bytes y controles de
    batch ausente/0/1/2. El baseline debe fallar por el contrato observado, no
    por importación, dependencia o fixture ausente.
-2. Exponer demanda interna en el cursor existente, con el mismo ownership,
-   snapshot, sesión y cierre. No usar la iteración pública que llena una tanda
-   como fuente de una demanda menor. Conservar evaluación bloqueante cuando
-   sort/group o una extensión la requieran; no forzar streaming por el nombre
-   de la etapa. Comprobar residual antes de ventana y acceso ordenado frente a
-   sort bloqueante con controles de hint/índice.
+2. Corregir la demanda interna solo cuando lo exija el diferencial, conservando
+   ownership, snapshot, sesión y cierre. Las capturas posteriores 7/8/9 del
+   control de entrada pequeña/salida grande también fallan al abrir sin filas:
+   la prelectura local, por sí sola, no justifica una fuente unitaria distinta.
+   Conservar evaluación bloqueante cuando sort/group o una extensión la
+   requieran; no forzar streaming por el nombre de la etapa. Comprobar residual
+   antes de ventana y acceso ordenado frente a sort bloqueante con controles
+   de hint/índice. El registro del corte conserva la evidencia de ese contraste.
 3. Compartir una comprobación estrecha de capacidad String entre los productores
    alcanzados, después de contrastar `$concat` y `$replaceAll` en el servidor.
    La ubicación en el dispatcher solo se adopta si respeta sus cortocircuitos

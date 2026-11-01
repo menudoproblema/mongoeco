@@ -1,0 +1,155 @@
+import asyncio,json,sys,tempfile
+from pathlib import Path
+import mongoeco
+from mongoeco import MongoClient,AsyncMongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.errors import OperationFailure
+from tests.differential.semantic_aggregation_response_cases import _pipeline
+assert Path(mongoeco.__file__).resolve().is_relative_to(Path(sys.argv[1]).resolve()),mongoeco.__file__
+try:import bson
+except ImportError:pass
+else:raise AssertionError('SDK must be absent')
+kinds=('sort','group','group_twice','unwind','sorted_unwind','single_unwind')
+
+def seed(kind):
+ return ([{'_id':1,'items':list(range(226))}] if kind=='single_unwind' else [{'_id':n,'items':[0,1]} for n in range(1,114)])
+
+async def run():
+ checked=0
+ with tempfile.TemporaryDirectory(prefix='mongoeco-sdkfree-response-') as owned:
+  previous=tempfile.tempdir;tempfile.tempdir=owned
+  try:
+   for factory in (MemoryEngine,SQLiteEngine):
+    for dialect in ('7.0','8.0','9.0'):
+     for kind in kinds:
+      with MongoClient(factory(aggregation_spill_threshold=2),mongodb_dialect=dialect) as client:
+       c=client.responses.rows;c.insert_many(seed(kind))
+       cursor=c.aggregate(_pipeline(kind,103,None),allowDiskUse=True)
+       received=[]
+       try:
+        for row in cursor:received.append(row)
+       except OperationFailure as error:assert error.code==2,error
+       else:raise AssertionError('expected evaluation failure')
+       finally:cursor.close()
+       assert len(received)==101,(factory,dialect,kind,len(received))
+      checked+=1
+      async with AsyncMongoClient(factory(aggregation_spill_threshold=2),mongodb_dialect=dialect) as client:
+       c=client.responses.rows;await c.insert_many(seed(kind))
+       cursor=await c.aggregate(_pipeline(kind,103,None),allowDiskUse=True)
+       received=[]
+       try:
+        async for row in cursor:received.append(row)
+       except OperationFailure as error:assert error.code==2,error
+       else:raise AssertionError('expected evaluation failure')
+       finally:await cursor.close()
+       assert len(received)==101,(factory,dialect,kind,len(received))
+      checked+=1
+      assert not list(Path(owned).glob('*.mongoeco-agg*'))
+  finally:tempfile.tempdir=previous
+ print(json.dumps({'python':sys.version,'import':mongoeco.__file__,'sdk_absent':True,'scenarios':checked,'received_before_error':101,'code':2,'owned_spill_files_remaining':0}),flush=True)
+asyncio.run(run())
+
+async def check_prefix_types():
+ checked=0
+ pipeline=[{'$set':{'pre':{'$toLong':'$n'}}},{'$sort':{'pre':1}},{'$project':{'kind':{'$type':'$pre'},'value':'$pre'}}]
+ for factory in (MemoryEngine,SQLiteEngine):
+  for dialect in ('7.0','8.0','9.0'):
+   for spill in (False,True):
+    with MongoClient(factory(aggregation_spill_threshold=2),mongodb_dialect=dialect) as client:
+     c=client.types.rows;c.insert_many([{'_id':n,'n':n} for n in range(1,4)])
+     cursor=c.aggregate(pipeline,allowDiskUse=spill,batchSize=2)
+     rows=list(cursor);cursor.close()
+     assert [row['kind'] for row in rows]==['long']*3,(factory,dialect,spill,rows)
+     assert [row['value'] for row in rows]==[1,2,3]
+    checked+=1
+    async with AsyncMongoClient(factory(aggregation_spill_threshold=2),mongodb_dialect=dialect) as client:
+     c=client.types.rows;await c.insert_many([{'_id':n,'n':n} for n in range(1,4)])
+     cursor=await c.aggregate(pipeline,allowDiskUse=spill,batchSize=2)
+     rows=await cursor.to_list();await cursor.close()
+     assert [row['kind'] for row in rows]==['long']*3,(factory,dialect,spill,rows)
+     assert [row['value'] for row in rows]==[1,2,3]
+    checked+=1
+ print(json.dumps({'type_scenarios':checked,'kind_before_public_conversion':'long','both_spill_modes':True}),flush=True)
+asyncio.run(check_prefix_types())
+
+async def check_raw_dependency_guard():
+ checked=0
+ for factory in (MemoryEngine,SQLiteEngine):
+  for dialect in ('7.0','8.0','9.0'):
+   with MongoClient(factory(),mongodb_dialect=dialect) as client:
+    collection=client.raw.rows;collection.insert_one({'_id':1})
+    for cursor in (collection.find_raw_batches(),collection.aggregate_raw_batches([])):
+     try:cursor.first()
+     except OperationFailure as error:assert "optional" in str(error),error
+     else:raise AssertionError('raw BSON must require SDK')
+     finally:cursor.close()
+     checked+=1
+   async with AsyncMongoClient(factory(),mongodb_dialect=dialect) as client:
+    collection=client.raw.rows;await collection.insert_one({'_id':1})
+    for cursor in (collection.find_raw_batches(),await collection.aggregate_raw_batches([])):
+     try:await cursor.first()
+     except OperationFailure as error:assert "optional" in str(error),error
+     else:raise AssertionError('raw BSON must require SDK')
+     finally:await cursor.close()
+     checked+=1
+ print(json.dumps({'raw_sdk_dependency_guard_scenarios':checked,'import':mongoeco.__file__}),flush=True)
+asyncio.run(check_raw_dependency_guard())
+
+from mongoeco.types import CodecOptions
+async def check_byte_and_string_frontiers():
+ checked=0
+ for factory in (MemoryEngine,SQLiteEngine):
+  for dialect in ('7.0','8.0','9.0'):
+   for asynchronous in (False,True):
+    for aggregate in (False,True):
+     calls=[]
+     def observe(value):
+      calls.append(value)
+      return value
+     options=CodecOptions(type_registry={int:observe})
+     seed=[{'_id':n,'p':'x'*(4*1024*1024)} for n in range(1,6)]
+     seen=[]
+     if asynchronous:
+      async with AsyncMongoClient(factory(),mongodb_dialect=dialect) as client:
+       c=client.frontier.rows;await c.insert_many(seed)
+       c=c.with_options(codec_options=options)
+       cursor=await c.aggregate([{'$sort':{'_id':1}}]) if aggregate else c.find({},sort=[('_id',1)])
+       try:
+        async for row in cursor:seen.append([row['_id'],len(calls)])
+       finally:await cursor.close()
+     else:
+      with MongoClient(factory(),mongodb_dialect=dialect) as client:
+       c=client.frontier.rows;c.insert_many(seed)
+       c=c.with_options(codec_options=options)
+       cursor=c.aggregate([{'$sort':{'_id':1}}]) if aggregate else c.find({},sort=[('_id',1)])
+       try:
+        for row in cursor:seen.append([row['_id'],len(calls)])
+       finally:cursor.close()
+     assert seen==[[1,3],[2,3],[3,3],[4,5],[5,5]],(factory,dialect,asynchronous,aggregate,seen)
+     checked+=1
+    expected_code=10334 if dialect=='9.0' else 16493
+    for operator in ('concat','replaceAll','null_tail'):
+     expression=({'$replaceAll':{'input':'$p','find':'x','replacement':'xx'}} if operator=='replaceAll' else {'$concat':['$p','$p',*([None] if operator=='null_tail' else [])]})
+     pipeline=[{'$project':{'p':expression}}]
+     if asynchronous:
+      async with AsyncMongoClient(factory(),mongodb_dialect=dialect) as client:
+       c=client.frontier.rows;await c.insert_one({'_id':1,'p':'x'*(8*1024*1024)})
+       try:
+        cursor=await c.aggregate(pipeline)
+       except OperationFailure as error:assert operator!='null_tail' and error.code==expected_code,(operator,error)
+       else:
+        assert operator=='null_tail'
+        assert (await cursor.to_list())[0]['p'] is None
+        await cursor.close()
+     else:
+      with MongoClient(factory(),mongodb_dialect=dialect) as client:
+       c=client.frontier.rows;c.insert_one({'_id':1,'p':'x'*(8*1024*1024)})
+       try:cursor=c.aggregate(pipeline)
+       except OperationFailure as error:assert operator!='null_tail' and error.code==expected_code,(operator,error)
+       else:
+        assert operator=='null_tail'
+        assert list(cursor)[0]['p'] is None
+        cursor.close()
+     checked+=1
+ print(json.dumps({'new_byte_and_string_scenarios':checked,'sdk_absent':True,'import':mongoeco.__file__}),flush=True)
+asyncio.run(check_byte_and_string_frontiers())

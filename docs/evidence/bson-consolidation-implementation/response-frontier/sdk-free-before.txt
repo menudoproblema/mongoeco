@@ -1,0 +1,18 @@
+{"python": "3.13.15 (main, Aug  5 2026, 12:25:43) [Clang 17.0.0 (clang-1700.6.4.2)]", "import": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-clean-wheel-rcv3v67d/installed/mongoeco/__init__.py", "sdk_absent": true, "scenarios": 72, "received_before_error": 101, "code": 2, "owned_spill_files_remaining": 0}
+Traceback (most recent call last):
+  File "/tmp/mongoeco-frontier-sdk-free.py", line 73, in <module>
+    asyncio.run(check_prefix_types())
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.15/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.15/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.15/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/tmp/mongoeco-frontier-sdk-free.py", line 63, in check_prefix_types
+    assert [row['value'] for row in rows]==[1,2,3]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

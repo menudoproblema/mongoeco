@@ -1,0 +1,842 @@
+[
+  {
+    "fixture": "/tmp/mongoeco-byte-boundary-native-v1/7.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "bce5714bc379b34456fc85d65d892491d7488ed5110b92c03cca9e46e3379af0",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-bcf8c73da30943a58d97e364b7d0bc5d",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "9ca2f2ea04765bd8252bb5ad72097427c52736464380b58b69ab45e38397c1e9",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "130d6b2f7f96fe3a184863098b6ce321075ed21423b2ab3702687702b3402d13",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-byte-boundary-native-v1/8.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "9e9c8dd9d553b303d11ca1d8d61f92c13301ab8a4dd3552ef826dbf793a31dbc",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-a3446154fcec48fbbf3155e27a8b9cf9",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "d67031e3421e065c09a5985634d704f379dbdea3afa20309107ceb526f7c8891",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "3f0abcb7a6788bbf108d1e33bfd5d6d2bf6fb8d57d626e7cb5580947518f6f21",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-byte-boundary-native-v1/9.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "40984c6b65485e4f9850acafe4a6cfd0c2a31855f5ee166a5400b30a9876d43f",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-306a445009024cee8de994ab91b5b67e",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "961d50950ea4f66aca7ee6a4b7ae0b6df012be5b9326d380362e2e46ad5316fd",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "44a0aecb12b2c1e7cfcf7c1628593c91120ad09fd8f3c128f087d5bfb2a2ef4f",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-frontier-native-v1/7.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "0efb2f0b17240d5b52d0657d3a2100e392a08ef2f9087cf791844d3e9ef5759c",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-f7508adc3dcf45d8899a0b68f7276763",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "175cd130a3e6f5aa77fc747b0663a0008c053ba9a9d5a750765412dc25ba1bf2",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "ee2250ce7b0c67937a3d4bfa68b0b1b84af4a9576883d77d7d9b70748b4c3c82",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-frontier-native-v1/8.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "06b1fa9130095aa10b160f8dc16c828e4e297e09484ea8975e80b11964ffaf2a",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-a9a17c1cda0b4b41870da7bdffb6b89d",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "f61106e3ef4f4a974a590d656c3a5d049326091e5386eeaee048525388c06242",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "3514dc54550f331e1561237d22b1e8f9244ab5317c88e8b8f76308242c667311",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-frontier-native-v1/9.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "4c08440308e12fb6adb320fdc501eb967d2cf82815b5ca8556d102bd48c8ba3d",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-1d0a3adf67294f41a56f7bb295f78eba",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "1349ad30e3dd7293da45b418e10339314251c9205b14ad0b61e83a9a747c4649",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "d2958243c53b7c1a97e87c7b8cdc594164b8947aabd28888f9c80192b849ff7c",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-frontier-native-v2/7.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "a048f1862a30aefe5f1d2f12391d13879204e257add78ceb5316e6636d4929b5",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-69e46d4f4e3e470c9680ab46a2493c58",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "a71b6fe03821e5ae5102fcb0d2c2e3d67c906d44bde4678b69820b863540a933",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "2cb92d5a2e9da483cd554a0bffcdb832764752547b458f0c1d891ad116da2942",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-frontier-native-v2/8.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "43c1cd22b29dca0d2def86c3fee7dfe11116a37073d071611d6ccb4c17d7035b",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-deaf7546d8524b3da6e759270d457d5d",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "39c27cd99e429cb7de913a6622fab7c0449633213137606f1c26401ec317fd65",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "e867facd2fed6d3ddb1ddefff0d99b812b08b4890063a9129203904337909d79",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-frontier-native-v2/9.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "70da570b2e74987e2baaa241a5f3c2e32f1961b4fd47378481b3601836587469",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-336ee5d4c473479b9dc8a081cef03ba1",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "f7d5928b25fc7f1621edcbd00fee73d8943dfb34e4b4cae5a61ac56a4bf8876d",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "854f80919ef21bae1054669529d0983eb78d7481623d401a7eb36a761ca4eeb4",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-command-native-v1/7.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "920b94c0f96553292b94c982a1e8e3803664b1a90ee92853e194d8b184bbf197",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-ad5c07a5974847979ba7c7fa3a4f483d",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "c68af0c737ca09d4e907113fc16fc0cc6a5b6784e13a6e471831872daec8b2d2",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "843ebc0e3d324a540c131b8262300c7226dd72ddf7463f4d12df18e85c96a6b9",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-command-native-v1/8.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "0465d60f4e1e34455d02aa9c935da3979f9a1585762c5e150276ba581e940fa2",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-ce04a5334710461bb2415d9155c3c925",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "6542ee460284a4afb7c69e6dd3860ef6ef5a0e212c28de2c59a49fcde5315024",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "2b33df169f5f30367adad46e7ceffc5feb4d7a6facce318c6070884a897d784f",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-command-native-v1/9.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "da717935a8dcfdc22cfb69147939deace1456eb26a42344d8d36447a8a41a5e1",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-787c88a6afd64429a5f61104b8b7b74b",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "bc7e42fd873b25a12c42cf834b86374d4c79865bf662df4dd02943e04dca3164",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "4cbf358d5914bcd873b1febba4be1d7b5aca1e3887f635fdf6687f8a9cf765d9",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-command-native-v2/7.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "e0c455bc7457a90ee1e86158a61fc3b32c8aa56096b417ae397714a7d083ebc6",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-9d7286d9b3194dfc8ce6cf47ae528d78",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "c6853e98f6b56177f21fb1f57c02e5b5de20b49cf238dd19d45018f8ac94572d",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "c7513b3a455383adbea73e58eacccd28c38581177bff3d10f3615965d6afaec4",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-command-native-v2/8.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "1007ceccb0eaa9d4e0e001aab9b40baa8dc5c2d7273841a3ac4a53eb0b1b923e",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-a2ff734b3cb44624820f7f070a6fd32f",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "47ffbbe25b0e86e78182ed3a34d7455499be00505fd1b679ff71a964c511c135",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "cad2aae93011af15d445f437df507c08f473e0ed736db48f34a7d9c8e2df549e",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-command-native-v2/9.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "cd7a0b9d5a903519bc5997ef8ecccc2b76a1a0cfe58f75c7c768e5ee9919a2a6",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-6aeb0c02e8484b93964e7d9921772842",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "ac639bff18de64995dc9ae77e052ca393f79bb505567b22abc92b1ad6ec0c351",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "ad709e05c94a075cb46012acfec632d01128cc4fb16a6230a34df62a69c4aa24",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-document-limit-probe/7.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "79a371c9b5ffc5c9850140c6b1a9a9bb72a22c3b3403296c409d5b05f0a701e2",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-ec24b80bbc5d4d62800a177a4d63d21b",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "6d7554a057f68c66bd6523333d8b86e93d0bedf0e9bae32ddbe395e69f13f478",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "59c930d2b3b1e6d4629f50b4d3cbd9057e0ccfb33c3e9346f38280416ac3ddaa",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-document-limit-probe/8.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "b04eafdf956c6049225930537b9be1b2a8279260315e3ff63a7bf681bb2b5761",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-994a81fbada4428d821bde14acc6e098",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "2c8efc3118a0880f6cf4c6383bafc48bb745190d25975fa9fe452872039601e3",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "41423b7e713c2fb8b9d0580965c0884cb4fb1a2684457a4aeb1dde7290e5c6f0",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-document-limit-probe/9.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "de89cf6d2dcd71e438bf82723ff80bf6d903005424229bc3c69bedff816f5cff",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-7437803cba6141f8a4c43f18df47fb38",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "967dedab24f126e30ed1e8ae4f833544946f475bf3ba971bacf2f7654b7e4b9b",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "66c04c761800f21b01b9889eb2a24b570fb8d6e166eeedca2473d3001cc1a18d",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-balanced-limit-probe/7.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "ee639dca2666c8d9a117e3db4bdd8e7562e54e25d6f09f5f22a2f67bcc0850f4",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-896076bde4854fad8bda7411486490f0",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "49857234b19c127cc10928fdaa1c0356b72095e68d05a0de7d5a20ce670805e5",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "96f25979aa01247c9aabdbcc83edd998ee4fb343b1b9488c098e8f55361c6ff5",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-balanced-limit-probe/8.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "64c14f73c460927ce6f22124f1bccb9ec8d6b7f4ae256ffe92b28d8ea571e5b3",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-a3804bd0d37443ed80c0f882ff94f91e",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "c21e0287e61280f21d8dc6cbb31636ffdb50dc9643194d166c022162586f0e6c",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "90cdc15af6140a59878e6d7592d84bc38c5c24a15e00c0ccf732809a4813b646",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-balanced-limit-probe/9.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "a6660cb46e168cbccc3e007dd86f5251ac84f20c88869534191d064992172151",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-e7579e8c587941ada1630cc2e1959529",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "d993c0909c028a5574b966b89be1c7ab481c898eb85a3d069893c03f51788972",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "7dd4eb29c0bcd690005ce873913c0589a2c0c6cb80ec362823e11abbf5fe887e",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-string-limit-probe/7.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "6ae9acce01b2578c90ae0eb7549323b2df4233986aba1b7e10a50c2af612a1a3",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-7660bf15e8f746ff8d7547aa214f4c3d",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "bede58ea840f6124238a6d47c19b5fcde7a84131f31c97a713eaae355e7903ee",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "497f348b7c5a83396c72fe4c1311fc5a4bd21ed8d15a6e8a4959504000f28490",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-string-limit-probe/8.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "b51fca1af5d9dd607119885c275dce35d1a544b64f7580c8b4e1f5c5e21754f3",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-3cf47e76a13245e9b2ec0f67df0624b2",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "5634e0f49aeb1bc99d0d92963f084c42d413c2181d26f7e137603b57546c76c9",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "31a3f6c78487b01254daa7db951fc768d35f243eb6321047f4636c38b88ddc62",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-string-limit-probe/9.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "5b8d99ef15888b40c699568816540cc04ba660e6729b4ad8748c1d9f4ea72afd",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-87114dddb3b248a2bdb46641fd563e4e",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "d0e1f5bd37d9ba2a8dc689ab3ec324c131805cd629edb56d162d7a6d40467f6d",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "96debc4e42105761d8b808dbe7fcbef57201035aa779f454db34e28e2f3008f4",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-frontier-native-v3/7.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "01602010607ca150d4122ed52a9e0ba6b18ba026749f9f6fa0ef12b73c5b9810",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-85360efaba724dd6af67042bde239002",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "cbbba8ba24d681cdc80d276d5975f430b644337f3dc5c8a28310238dea6dd046",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "c2cef3e3da152f3ddbebd66589602eb998d486750ddb93c2672fb310c78db76b",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-frontier-native-v3/8.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "814c9f00d908027f110d0f6c961f105d9a2ff2c8ab503b46fa1dc0bc57b674a7",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-52d43e7fda40416196168134dce3cbdb",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "3b2596db860108c6634d7f9ad479bb73351e8493c3cd9edc715a26140135c3f2",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "7a49ef163aff52802b54f0eee2f1f097de3d4059dd312420b25b630d294d2663",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-frontier-native-v3/9.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "ce638cc55d1d8aaaaf6d568480d50ff8243b4aea1a44837ea2c0656c5d1f4f02",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-38cb2ddd14ed4986adec5c058fcf2853",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "0f2edc65cdcadd495e40f58ca883d4158427935d5eb900ed6feca6c14d6f47ff",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "a309c71a1791ac90b3be5af58e982a34837615d1c3360c8573e911c043a2039e",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-frontier-native-v4/7.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "600918810c29532106df197645d2f211ac1806f96d27e17c68a9cac49f1bbc7d",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-392940652d0e43f7ade0c3a7baab9daf",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "055b76ff3c0c601793b48768bb51ad9ac1c6aae5e80990c723bdcefb7a882c89",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "c52fa5c62f40eace0d446fba6b2930d71089203c2040d01d59e305101a1944ab",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-frontier-native-v4/8.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "a926e06b165594ee47e387ef829b641e700448d21432c615daf8108dbb541ce7",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-f6aad2fe911142fda2dd6e4009416c8c",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "11e8bc858c0cb0bd51e749a10ac75f3633485a37696dda7d7a15cc966afd6973",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "39ba23391656476ddc1838fe34735f7e0b657292e5d9fafd4d7cae4ed900ddc4",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-frontier-native-v4/9.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "d220c26312ea3bc4e9afc3f8144db01d5a32a7a789670d233fdf85829ba1de23",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-74c34292e70d448e9d1dfc901a19a42a",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "10ac77d09d97f19a1938a8119c7e9635b9161ab97e60635d28cf3d380b26bc87",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "64cf54d60bfba5ed4c95530af931450e446e34e0b5493cb311d8e22ea1e7a61f",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  }
+]

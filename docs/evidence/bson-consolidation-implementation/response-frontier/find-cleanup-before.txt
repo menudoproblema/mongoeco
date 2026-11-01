@@ -1,0 +1,51 @@
+..F                                                                      [100%]
+=================================== FAILURES ===================================
+_ test_evaluation_error_survives_cleanup_failure_without_reopening_source[batched_find] _
+tests/unit/api/test_response_boundaries.py:96: in __anext__
+    raise RuntimeError(message)
+E   RuntimeError: evaluation failed
+
+During handling of the above exception, another exception occurred:
+tests/unit/api/test_response_boundaries.py:129: in test_evaluation_error_survives_cleanup_failure_without_reopening_source
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/unit/api/test_response_boundaries.py:121: in exercise
+    await iterator.__anext__()
+src/mongoeco/api/_async/cursor.py:153: in __anext__
+    await self._fill_buffer()
+src/mongoeco/api/_async/cursor.py:258: in _fill_buffer
+    self._buffer.extend(await self._fetch_response(maximum))
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/mongoeco/api/_async/cursor.py:225: in _fetch_response
+    page = await self._cursor._fetch_batch(
+src/mongoeco/api/_async/cursor.py:513: in _fetch_batch
+    raw = await self._response_reader.read(
+src/mongoeco/api/_async/_response.py:56: in read
+    document = await self.next_document(next_output)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/mongoeco/api/_async/_response.py:30: in next_document
+    return await pull()
+           ^^^^^^^^^^^^
+src/mongoeco/api/_async/_response.py:52: in next_output
+    return await pull(remaining)
+           ^^^^^^^^^^^^^^^^^^^^^
+src/mongoeco/api/_async/cursor.py:507: in pull
+    await self._close_batch_source()
+src/mongoeco/api/_async/cursor.py:395: in _close_batch_source
+    await self._close_source(source)
+src/mongoeco/api/_async/cursor.py:390: in _close_source
+    await close()
+tests/unit/api/test_response_boundaries.py:102: in aclose
+    raise ValueError(message)
+E   ValueError: cleanup failed
+=========================== short test summary info ============================
+FAILED tests/unit/api/test_response_boundaries.py::test_evaluation_error_survives_cleanup_failure_without_reopening_source[batched_find]
+1 failed, 2 passed, 6 deselected in 0.42s

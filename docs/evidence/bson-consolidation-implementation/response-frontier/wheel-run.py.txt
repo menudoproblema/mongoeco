@@ -1,0 +1,10 @@
+from pathlib import Path
+import hashlib,json,sys
+root=Path(Path('/tmp/mongoeco-frontier-wheel-location.txt').read_text().strip())
+info=json.loads((root/'wheel.json').read_text());site=Path(info['site_packages']).resolve()
+for p,digest in json.loads((root/'runtime.json').read_text()).items():assert hashlib.sha256((site/Path(p).relative_to('src')).read_bytes()).hexdigest()==digest,p
+sys.path.insert(0,str(site))
+import mongoeco,pytest
+assert Path(mongoeco.__file__).resolve().is_relative_to(site),mongoeco.__file__
+print('verified installed wheel',info,flush=True)
+raise SystemExit(pytest.main(['-q','-o','pythonpath=','tests/integration/api/test_semantic_group_regressions.py','-k','response_frontier or response_command','--tb=short']))

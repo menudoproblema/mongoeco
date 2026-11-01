@@ -1,0 +1,375 @@
+{
+  "samples": [
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "MemoryEngine",
+      "workload": "sort",
+      "seconds": 0.1412792500341311,
+      "cpu_seconds": 0.14072399999999996,
+      "rows": 1500,
+      "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+      "runtime": "base"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "MemoryEngine",
+      "workload": "sort",
+      "seconds": 0.16620895802043378,
+      "cpu_seconds": 0.16560299999999994,
+      "rows": 1500,
+      "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "MemoryEngine",
+      "workload": "sort",
+      "seconds": 0.16851800004951656,
+      "cpu_seconds": 0.16817099999999996,
+      "rows": 1500,
+      "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "MemoryEngine",
+      "workload": "sort",
+      "seconds": 0.1323013750370592,
+      "cpu_seconds": 0.13175800000000004,
+      "rows": 1500,
+      "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+      "runtime": "base"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "MemoryEngine",
+      "workload": "group",
+      "seconds": 0.09944608295336366,
+      "cpu_seconds": 0.09938799999999998,
+      "rows": 50,
+      "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+      "runtime": "base"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "MemoryEngine",
+      "workload": "group",
+      "seconds": 0.10713633301202208,
+      "cpu_seconds": 0.106904,
+      "rows": 50,
+      "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "MemoryEngine",
+      "workload": "group",
+      "seconds": 0.10884466604329646,
+      "cpu_seconds": 0.10799900000000001,
+      "rows": 50,
+      "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "MemoryEngine",
+      "workload": "group",
+      "seconds": 0.1196643749717623,
+      "cpu_seconds": 0.10127400000000003,
+      "rows": 50,
+      "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+      "runtime": "base"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "MemoryEngine",
+      "workload": "unwind",
+      "seconds": 0.11819854192435741,
+      "cpu_seconds": 0.11751999999999996,
+      "rows": 3000,
+      "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+      "runtime": "base"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "MemoryEngine",
+      "workload": "unwind",
+      "seconds": 0.11493829207029194,
+      "cpu_seconds": 0.114846,
+      "rows": 3000,
+      "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "MemoryEngine",
+      "workload": "unwind",
+      "seconds": 0.11502187501173466,
+      "cpu_seconds": 0.11494900000000002,
+      "rows": 3000,
+      "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "MemoryEngine",
+      "workload": "unwind",
+      "seconds": 0.12208512506913394,
+      "cpu_seconds": 0.12139200000000006,
+      "rows": 3000,
+      "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+      "runtime": "base"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "MemoryEngine",
+      "workload": "large_strings",
+      "seconds": 0.008499916992150247,
+      "cpu_seconds": 0.008469999999999978,
+      "rows": 5,
+      "bson_sha256": "cae98222a27b370f26c25755e61207e5e998f354721a014aadbcb3703d47b8da",
+      "runtime": "base"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "MemoryEngine",
+      "workload": "large_strings",
+      "seconds": 0.011599749908782542,
+      "cpu_seconds": 0.011537999999999993,
+      "rows": 5,
+      "bson_sha256": "cae98222a27b370f26c25755e61207e5e998f354721a014aadbcb3703d47b8da",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "MemoryEngine",
+      "workload": "large_strings",
+      "seconds": 0.011673000059090555,
+      "cpu_seconds": 0.011606000000000005,
+      "rows": 5,
+      "bson_sha256": "cae98222a27b370f26c25755e61207e5e998f354721a014aadbcb3703d47b8da",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "MemoryEngine",
+      "workload": "large_strings",
+      "seconds": 0.008634041994810104,
+      "cpu_seconds": 0.00860500000000003,
+      "rows": 5,
+      "bson_sha256": "cae98222a27b370f26c25755e61207e5e998f354721a014aadbcb3703d47b8da",
+      "runtime": "base"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "SQLiteEngine",
+      "workload": "sort",
+      "seconds": 0.1350322919897735,
+      "cpu_seconds": 0.13352799999999998,
+      "rows": 1500,
+      "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+      "runtime": "base"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "SQLiteEngine",
+      "workload": "sort",
+      "seconds": 0.1563942088978365,
+      "cpu_seconds": 0.15514099999999997,
+      "rows": 1500,
+      "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "SQLiteEngine",
+      "workload": "sort",
+      "seconds": 0.15448875003494322,
+      "cpu_seconds": 0.153223,
+      "rows": 1500,
+      "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "SQLiteEngine",
+      "workload": "sort",
+      "seconds": 0.13405679201241583,
+      "cpu_seconds": 0.13252700000000006,
+      "rows": 1500,
+      "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+      "runtime": "base"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "SQLiteEngine",
+      "workload": "group",
+      "seconds": 0.10346795804798603,
+      "cpu_seconds": 0.10215999999999992,
+      "rows": 50,
+      "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+      "runtime": "base"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "SQLiteEngine",
+      "workload": "group",
+      "seconds": 0.12446154200006276,
+      "cpu_seconds": 0.11876500000000001,
+      "rows": 50,
+      "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "SQLiteEngine",
+      "workload": "group",
+      "seconds": 0.11328270891681314,
+      "cpu_seconds": 0.11143099999999995,
+      "rows": 50,
+      "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "SQLiteEngine",
+      "workload": "group",
+      "seconds": 0.10389916691929102,
+      "cpu_seconds": 0.10260399999999992,
+      "rows": 50,
+      "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+      "runtime": "base"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "SQLiteEngine",
+      "workload": "unwind",
+      "seconds": 0.12363525002729148,
+      "cpu_seconds": 0.12169200000000002,
+      "rows": 3000,
+      "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+      "runtime": "base"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "SQLiteEngine",
+      "workload": "unwind",
+      "seconds": 0.11765491694677621,
+      "cpu_seconds": 0.11629999999999996,
+      "rows": 3000,
+      "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "SQLiteEngine",
+      "workload": "unwind",
+      "seconds": 0.11742283299099654,
+      "cpu_seconds": 0.11607599999999996,
+      "rows": 3000,
+      "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "SQLiteEngine",
+      "workload": "unwind",
+      "seconds": 0.12429779197555035,
+      "cpu_seconds": 0.12237600000000004,
+      "rows": 3000,
+      "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+      "runtime": "base"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "SQLiteEngine",
+      "workload": "large_strings",
+      "seconds": 0.013021458988077939,
+      "cpu_seconds": 0.012654999999999972,
+      "rows": 5,
+      "bson_sha256": "cae98222a27b370f26c25755e61207e5e998f354721a014aadbcb3703d47b8da",
+      "runtime": "base"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "SQLiteEngine",
+      "workload": "large_strings",
+      "seconds": 0.015963499899953604,
+      "cpu_seconds": 0.015550000000000008,
+      "rows": 5,
+      "bson_sha256": "cae98222a27b370f26c25755e61207e5e998f354721a014aadbcb3703d47b8da",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed",
+      "engine": "SQLiteEngine",
+      "workload": "large_strings",
+      "seconds": 0.01677533402107656,
+      "cpu_seconds": 0.016367999999999994,
+      "rows": 5,
+      "bson_sha256": "cae98222a27b370f26c25755e61207e5e998f354721a014aadbcb3703d47b8da",
+      "runtime": "candidate"
+    },
+    {
+      "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-base-1egbx5p_/src",
+      "engine": "SQLiteEngine",
+      "workload": "large_strings",
+      "seconds": 0.013824625057168305,
+      "cpu_seconds": 0.013388000000000011,
+      "rows": 5,
+      "bson_sha256": "cae98222a27b370f26c25755e61207e5e998f354721a014aadbcb3703d47b8da",
+      "runtime": "base"
+    }
+  ],
+  "summary": [
+    {
+      "engine": "MemoryEngine",
+      "workload": "sort",
+      "seconds_ratio": 1.223503886588638,
+      "cpu_seconds_ratio": 1.224939629039716
+    },
+    {
+      "engine": "MemoryEngine",
+      "workload": "group",
+      "seconds_ratio": 0.985717437225763,
+      "cpu_seconds_ratio": 1.0709700890053921
+    },
+    {
+      "engine": "MemoryEngine",
+      "workload": "unwind",
+      "seconds_ratio": 0.9570361979212495,
+      "cpu_seconds_ratio": 0.9618395057594429
+    },
+    {
+      "engine": "MemoryEngine",
+      "workload": "large_strings",
+      "seconds_ratio": 1.358282110140722,
+      "cpu_seconds_ratio": 1.3554319180087842
+    },
+    {
+      "engine": "SQLiteEngine",
+      "workload": "sort",
+      "seconds_ratio": 1.1553161291754606,
+      "cpu_seconds_ratio": 1.159023510176467
+    },
+    {
+      "engine": "SQLiteEngine",
+      "workload": "group",
+      "seconds_ratio": 1.1464895940202307,
+      "cpu_seconds_ratio": 1.1242015197984028
+    },
+    {
+      "engine": "SQLiteEngine",
+      "workload": "unwind",
+      "seconds_ratio": 0.9481501458570345,
+      "cpu_seconds_ratio": 0.9520953176983458
+    },
+    {
+      "engine": "SQLiteEngine",
+      "workload": "large_strings",
+      "seconds_ratio": 1.2195012824161733,
+      "cpu_seconds_ratio": 1.2255884498713674
+    }
+  ],
+  "scope": "diagnostic warmed ABBA, 1500 ordinary documents or five 4MiB computed String outputs, spill threshold 8; not integrated D05 performance acceptance"
+}

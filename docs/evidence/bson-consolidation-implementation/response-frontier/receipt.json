@@ -1,0 +1,266 @@
+{
+  "status": "accepted bounded D06a/b response-frontier cut; full program remains in progress",
+  "base_runtime": "e9415546eee09927ef7d92770cef6822810bf7b5",
+  "base_documentation": "6aa7734871a2831326427fb6035af3df7981a087",
+  "contract": "docs/bson-semantics-consolidation-plan.md, active execution order, D06a/b bounded response cut",
+  "candidate": {
+    "runtime_modules": 284,
+    "runtime_manifest": "runtime.json",
+    "runtime_manifest_sha256": "7e4893c0fdac6786d8510749597ad34262c3191dbbc30984a066977fe5737232",
+    "wheel": "wheel.json",
+    "code_commit": "381aa10e90cd2c992d540b7111f2be9112f908e2"
+  },
+  "native": {
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "fcv": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "final_response_cohort": "mongoeco-frontier-native-v4",
+    "final_command_cohort": "mongoeco-response-command-native-v2",
+    "actions": {
+      "response_frontier": 9,
+      "response_command": 2
+    },
+    "capture_and_check": true,
+    "archive": "native.tar.gz",
+    "cleanup": "native-cleanup.json",
+    "containers_absent": 30,
+    "volumes_absent": 60
+  },
+  "baseline": {
+    "isolated_source": true,
+    "runtime_modules_verified": 283,
+    "command": "baseline-run.py.txt",
+    "log": "baseline.txt.gz",
+    "failed": 228,
+    "passed": 18,
+    "deselected": 7201,
+    "exit_code": 1,
+    "infrastructure_failures_counted": false,
+    "runtime_manifest": "baseline-runtime.json",
+    "identity": "baseline-identity.json"
+  },
+  "checks": [
+    {
+      "kind": "broad",
+      "log": "broad.txt",
+      "passed": 3216,
+      "skipped": 1,
+      "subtests": 1120,
+      "exit_code": 0
+    },
+    {
+      "kind": "integration",
+      "log": "integration.txt",
+      "passed": 110,
+      "subtests": 1211,
+      "exit_code": 0
+    },
+    {
+      "kind": "legacy and preparation",
+      "log": "legacy.txt",
+      "passed": 155,
+      "subtests": 41,
+      "exit_code": 0
+    },
+    {
+      "kind": "installed wheel replay",
+      "log": "wheel-replay.txt",
+      "passed": 246,
+      "deselected": 7201,
+      "exit_code": 0
+    },
+    {
+      "kind": "actual SDK-free Python 3.13.15 wheel",
+      "log": "sdk-free.txt",
+      "scenarios": 180,
+      "sdk_absent": true,
+      "exit_code": 0
+    },
+    {
+      "kind": "typing",
+      "log": "typing.txt",
+      "exit_code": 0
+    },
+    {
+      "kind": "SPI v2",
+      "log": "spi.txt",
+      "passed": 33,
+      "subtests": 2,
+      "exit_code": 0
+    },
+    {
+      "kind": "lint ratchet",
+      "log": "lint.txt",
+      "changed_python_files": 33,
+      "base_ref": "e941554",
+      "exit_code": 0
+    },
+    {
+      "kind": "full semantic replay",
+      "log": "replay.txt",
+      "passed": 7447,
+      "seconds": 579.77,
+      "exit_code": 0
+    }
+  ],
+  "review": {
+    "diff_reviewed": true,
+    "protected_sources": "protected-sources.json",
+    "effective_public_manifest": "public-api.json",
+    "no_public_api_or_SPI_changes": true,
+    "key_findings_corrected": [
+      "response byte boundary and pending ownership",
+      "decoder effects before a failed response",
+      "sync adapter combining adjacent responses",
+      "primary index order before residual versus forced blocking order",
+      "getMore zero count and kill cursor int64 metadata",
+      "SDK-free internal numeric wrappers leaking at materialization",
+      "PreparedPipeline slices losing reusable preparation",
+      "legacy builders decoding internal source batches",
+      "cleanup masking the original error and losing retryable ownership"
+    ],
+    "additional_regressions": {
+      "legacy_constructor_modes": 3,
+      "engines_per_mode": 2,
+      "failed_legacy_open_callbacks_before": 4,
+      "failed_legacy_open_callbacks_after": 0,
+      "legacy_before_log": "legacy-before.txt.gz",
+      "preparation_before_log": "integration-before.txt",
+      "sdk_free_before_log": "sdk-free-before.txt"
+    }
+  },
+  "limits": [
+    "No complete D06 or D05 closure; other contexts and consumers remain in their owners.",
+    "No Python/SDK/pytest full support matrix, global coverage, remote CI or release claimed.",
+    "B07 general BSON admission, H53, sNaN conversion and D07 disposition remain pending.",
+    "Earlier interrupted full replays and old wheels are feedback only, not final acceptance.",
+    "Fifteen downloaded pinned source hashes verified; twelve attempted source URLs returned 404.",
+    "Diagnostic CPU overhead remains visible for sort and large Strings; integrated D05 budgets are not accepted by these samples."
+  ],
+  "full_replay": {
+    "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py --tb=short",
+    "log": "replay.txt",
+    "exit_code": 0,
+    "passed": 7447,
+    "seconds": 579.77,
+    "status": "completed"
+  },
+  "cost": {
+    "scope": "diagnostic warmed ABBA, not complete D05 performance acceptance",
+    "samples": 32,
+    "own_verification_gates_idle": true,
+    "bson_hashes_identical_per_workload": true,
+    "results": "benchmark.json",
+    "summary": [
+      {
+        "engine": "MemoryEngine",
+        "workload": "sort",
+        "seconds_ratio": 1.223503886588638,
+        "cpu_seconds_ratio": 1.224939629039716
+      },
+      {
+        "engine": "MemoryEngine",
+        "workload": "group",
+        "seconds_ratio": 0.985717437225763,
+        "cpu_seconds_ratio": 1.0709700890053921
+      },
+      {
+        "engine": "MemoryEngine",
+        "workload": "unwind",
+        "seconds_ratio": 0.9570361979212495,
+        "cpu_seconds_ratio": 0.9618395057594429
+      },
+      {
+        "engine": "MemoryEngine",
+        "workload": "large_strings",
+        "seconds_ratio": 1.358282110140722,
+        "cpu_seconds_ratio": 1.3554319180087842
+      },
+      {
+        "engine": "SQLiteEngine",
+        "workload": "sort",
+        "seconds_ratio": 1.1553161291754606,
+        "cpu_seconds_ratio": 1.159023510176467
+      },
+      {
+        "engine": "SQLiteEngine",
+        "workload": "group",
+        "seconds_ratio": 1.1464895940202307,
+        "cpu_seconds_ratio": 1.1242015197984028
+      },
+      {
+        "engine": "SQLiteEngine",
+        "workload": "unwind",
+        "seconds_ratio": 0.9481501458570345,
+        "cpu_seconds_ratio": 0.9520953176983458
+      },
+      {
+        "engine": "SQLiteEngine",
+        "workload": "large_strings",
+        "seconds_ratio": 1.2195012824161733,
+        "cpu_seconds_ratio": 1.2255884498713674
+      }
+    ]
+  },
+  "document_checks": {
+    "relative_links_missing": [],
+    "runtime_and_tests_clean_after_code_commit": true,
+    "protected_sources_unchanged": true,
+    "diff_whitespace": "passes",
+    "candidate_matches_wheel_after_commit": true
+  },
+  "artifacts_sha256": {
+    "README.md": "21a881d6d81d9dd398f1a6c60cd1ca50721ba99bff538d3decc5d510cb48b28d",
+    "baseline-identity.json": "ce176f3a023fdb7eef330831c1fae823e3dd2608f02b23dbfa36637fc907c5f6",
+    "baseline-run.py.txt": "e265c4e1fdca555d05f12bd0095cafea00058fa427beea0ba59f9d7a95461b9a",
+    "baseline-runtime.json": "d8fe9dfb92574ab1fb8f3005abd677eb72011e5ab5c1582aeec9870b2c29ef72",
+    "baseline.txt.gz": "fb6ca1cffb29fa58645d8344a814a2d6aacd4c971ad3a21855b73c934cda4f96",
+    "benchmark-control.py.txt": "4ae4d13551861f05a600152f7178291700eb7dd89ee0ab2332517e3426f9d0fd",
+    "benchmark.json": "687dc8176a89937e2de8be133b7ba8bee9a57195da0eb1a695dad838a81e2e95",
+    "benchmark.py.txt": "df3074e593fe10d5bb1a49629f9187e73a18e09190de95fdacdf5800b7c67a4d",
+    "benchmark.txt": "37ac0e80a5d87f289fe76e8800519577eb483190a82c6b9d1a30343d379763f7",
+    "broad.txt": "748dd38e75aaaef6d31c6c911548989a3bb6c3d8b8d4edbd8f3fc5b743119a89",
+    "build.txt": "2017d2d348ac4587cd176ecac8eb4a0c3d52eaaf0272a9f2658db093810a9f39",
+    "cleanup-audit.py.txt": "49c1aa39337f7680c3f994cdb5b52ea85c40f941c9b8f875a075a4baf90c9d3a",
+    "cursor-feedback.txt": "098b8db7a7f641e44fa9b1cd59f35f60174daa9878c58d90973ff61fe309750b",
+    "expression-feedback.txt": "9aabd433db2770d82d230a609a373e8c6919d4d1b7c15f781d269a895a9ed6e9",
+    "find-cleanup-before.txt": "ae292aa4338e510e471fdb21690ef784bc73857ce839108591a3eb11f5e4e223",
+    "install.txt": "743c0d77771c067f1af04415342ebb19bc58cc5dd22693677322376ff3f83fa3",
+    "integration-before.txt": "4f393646a3f072cdf6c0dc56d0c4ab555a3fa2b9971651a9967e4eedd73c1241",
+    "integration.txt": "d9fb8f9b495819268997f42869805d743d85a749540f0f850029574bcd0aa0c4",
+    "legacy-before.txt.gz": "909e64f2d0af0bd2bf8efc35fc10cb3d788075af74cbf082c7a8bc87a57d6cd4",
+    "legacy.txt": "faeb02a303e961cf962ad8ec6f2a0d831a024472cb7403f536c4ed6a096e3d7b",
+    "lint.txt": "e6225fa8d91211bac6b6db3c10c8edbeeba8531f17a09b84016fd7d6fd4a2cd7",
+    "materialization-feedback.txt": "929fb54dd511cd928a24b8c117dcfb46376d005865ad4a9106d1fb32818bb6d9",
+    "native-cleanup.json": "be2bf3d7ac18a24e992dc1aec18244a30b01b05c68fe544c7fec62144f6e0978",
+    "native.tar.gz": "7cbc5e2728c3807f91328f309b7944c6666f6ad83b298ada368aca1e1c6140b7",
+    "protected-sources.json": "e2f8a10e9733ad2ff304fe61c5537ed87ac783e4ec6d8746e9719ce549a954cb",
+    "public-api.json": "5f1ec3cc98d03dce0912875939742afb8ce353c5d629325439f4c60b52db8022",
+    "replay.txt": "7c864a5d46a917fed4d78fe6b31886b1a8bca59d05df85fc03d90687e87e786e",
+    "runtime.json": "7e4893c0fdac6786d8510749597ad34262c3191dbbc30984a066977fe5737232",
+    "sdk-free-before.txt": "192c03634ac6347f66369db8b94a3ba7b2f483cdcd3c0af261334a7a194b2527",
+    "sdk-free.py.txt": "5a106d91e19b33f909204d3d4b611bb6e2c05a3b0610205589c79833590e1168",
+    "sdk-free.txt": "4d505f82e76cfeefe38a98acf790d5c8bc828afbbc31aadf0239472534373f24",
+    "sources.json": "b1be17a1c28f45f98fff6d3609b905533c14a8715b8c7fd1a28d63ca39f370b3",
+    "spi.txt": "0a034fe7c515956f0f0978e1f916068c5a6ebb875c6d3cc7ee4e216aeda7c742",
+    "typing.txt": "966627c75016896aa50b07034ca99b2ee74838d60272b742c102f0dd3af9e00b",
+    "wheel-replay.txt": "6275fa9dc7e863502804da4062532c5b76837f1509b961f81fb011baee179143",
+    "wheel-run.py.txt": "b0bfc5bb2b84e9b6bde7662ad13a78c7b2cf055857394efbac5acb9e53244e6b",
+    "wheel.json": "40b45ffef087b5334bf369eb5624b9d58a4a852cbf05790a2925ce2260311193"
+  },
+  "raw_logs_gzip_preserved": {
+    "baseline.txt": "baseline.txt.gz",
+    "legacy-before.txt": "legacy-before.txt.gz"
+  },
+  "raw_log_uncompressed_sha256": {
+    "baseline.txt.gz": "7903fb6dbeee301dd945b335918c3f5bf46f6c30cb90e2efe6d146cdbb2ad674",
+    "legacy-before.txt.gz": "2b1fda96b85c8e6aefc26f223439c3d42e812563c3fafb4eb64a1335d57accae"
+  }
+}

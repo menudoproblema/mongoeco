@@ -1,0 +1,4 @@
+{"python": "3.13.15 (main, Aug  5 2026, 12:25:43) [Clang 17.0.0 (clang-1700.6.4.2)]", "import": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed/mongoeco/__init__.py", "sdk_absent": true, "scenarios": 72, "received_before_error": 101, "code": 2, "owned_spill_files_remaining": 0}
+{"type_scenarios": 24, "kind_before_public_conversion": "long", "both_spill_modes": true}
+{"raw_sdk_dependency_guard_scenarios": 24, "import": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed/mongoeco/__init__.py"}
+{"new_byte_and_string_scenarios": 60, "sdk_absent": true, "import": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-frontier-codec-wheel-7ef6cht9/installed/mongoeco/__init__.py"}
