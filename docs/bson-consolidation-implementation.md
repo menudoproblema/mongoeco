@@ -2934,11 +2934,11 @@ Pruebas focales por bloque; suites globales reservadas a F11.
 | F04 | Cerrado | 1.179 diferenciales/metadatos, 44 controles focales y ratchet. |
 | F05 | Cerrado | 492 diferenciales/contexto/metadatos, 54 spill y fronteras focales. |
 | F06 | Cerrado | Catálogo/unique/hashed, cuatro superficies, eventos RS 7/8/9, archivos previos e inventarios CXP. |
-| F07 | Implementado y comprobado focalmente | Escrituras/identidad/campos, 7/8/9, contadores/eventos y validadores; aceptación integrada en F11. |
-| F08 | Implementado y comprobado focalmente | Claves contextuales/natural, inicializadores y acumulación, materialización/spill real; aceptación integrada en F11. |
-| F09 | Implementado y comprobado focalmente | Tres unidades y perfiles nativos; aceptación integrada y conservación CXP en F11. |
-| F10 | Implementado y comprobado focalmente | Fachadas/metadata nativas y rechazos sin efectos; aceptación integrada en F11. |
-| F11 | En ejecución: candidato corregido | Coste ABBA del wheel 417f8625 rechazado; corrección causal de EOF comprobada focalmente. Gates integrados y coste del nuevo artefacto pendientes. |
+| F07 | Comprobado focal e integrado | Escrituras/identidad/campos, 7/8/9, contadores/eventos y validadores; aceptación integrada en F11. |
+| F08 | Comprobado focal e integrado | Claves contextuales/natural, inicializadores y acumulación, materialización/spill real; aceptación integrada en F11. |
+| F09 | Comprobado focal e integrado | Tres unidades y perfiles nativos; aceptación integrada y conservación CXP en F11. |
+| F10 | Comprobado focal e integrado | Fachadas/metadata nativas y rechazos sin efectos; aceptación integrada en F11. |
+| F11 | Pendiente de aceptación del coste | Wheel a10cd637: gates funcionales, matrices y distribución comprobados; coste terminal 32/44 aceptados y 12 inconcluyentes. Sin aceptación de entrega. |
 
 F00: se reutiliza el runner y se registran 135 testigos focales de familias
 F02–F10 más el caso de límites en semantic_response_frontier. Capturas físicas
@@ -3308,3 +3308,120 @@ y conserva como parcial, sin acreditarla como gate global. Ratchet verde para
 426 archivos; diff y whitespace revisados. Este cambio material permite medir
 un nuevo candidato con el mismo contrato acotado, sin mezclar tiempos previos.
 F11 sigue abierto; O1–O8/D05/P2 y parte II conservan su disposición anterior.
+
+
+F11, verificación final del candidato congelado e4eb17ccf75634f7ff365c6f43ed8387f16e72e7
+(2026-11-02). Se mantiene la parte I; X01–X06/parte II quedan excluidos y
+O1–O8/D05/B1–B4 P2 conservan literalmente su receipt histórico. No se introducen
+cambios productivos después del freeze ni se repiten sus auditorías. Las
+correcciones de scheduling/sort/EOF invalidaron el runtime del wheel anterior;
+F11 exige expresamente suites globales y matriz sobre el candidato final. Se
+reutilizan las capturas físicas y perfiles SDK cuyos estímulos/observadores no
+cambiaron, y se ejecutan sus regresiones sobre el nuevo código.
+
+Identidad del artefacto probado:
+
+- Wheel: a10cd6375fded32d42905e2fee214309f5884c9b92c334e39184324edae4c046.
+- Sdist: 7f3bc693ef282a578c27b5e1bf5383664b661eacf0e15a18bc959febb52eeb36.
+- Ruta retenida: /var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-f11-eof-3j6yanii.
+- Dos builds limpios con SOURCE_DATE_EPOCH, normalizador de sdist existente,
+  check_distribution_sources/twine y 308 archivos coincidentes. El primer
+  cotejo anterior a aplicar el normalizador se conserva en el log; al aplicar
+  el paso obligatorio ya existente coinciden ambas distribuciones, sin
+  reconstrucciones adicionales. Se verifican los 287 módulos del runtime y
+  se conserva la identidad del payload después de todos los consumidores.
+
+El preflight valida intérpretes, dependencias, rutas, imports instalados y los
+3.587 nodos de la selección matricial antes de ejecutar. Unittest y pytest
+completos se ejecutan en los tres perfiles, primero unittest y después pytest.
+La matriz se ejecuta después, máximo tres celdas. Sólo los controles estáticos sin otra suite amplia se solapan con
+pytest. Coste, propiedades/matriz y diagnósticos adicionales quedan separados.
+No se crea runner, documento ni capa de validación nuevos: se reutilizan los
+workers/guard versionados y scripts del proyecto. Los comandos, rutas y
+resultados terminales quedan en los JSON de evidencia, con 28 pruebas de import
+que acreditan el wheel instalado, todas con salida 0.
+
+Las suites globales y la matriz final no necesitaron reintentos:
+
+- Unittest: 3.681 pruebas por cada Python 3.13/3.14/3.15, salida 0, tres skips
+  previstos en cada perfil.
+- Pytest: 64.224/64.235/64.224 passed en Python 3.13/3.14/3.15, respectivamente;
+  764/753/764 skips y 14.941 subtests por perfil. Los tres procesos completos
+  terminan con salida 0. Python 3.14 conserva las 307 ResourceWarning SQLite
+  ya presentes en el global anterior, sin convertirlas en errores ni aumentar
+  el alcance; no se afirma ausencia de warnings.
+- Cobertura instalada real: 48.244/48.727 = 99,00876310874874%, 483 líneas
+  pendientes y las 1.027 exclusiones existentes. Se verifica el cociente real,
+  además del resultado del plugin; no se añaden exclusiones.
+- Deep: 66 passed. Matriz Python 3.13/3.14/3.15 × pytest 8.4.2/9.1.1 ×
+  SDK 4.9.2/4.19.0: 12/12 celdas, 3.587 passed por celda, sin reintentos.
+- Quince gates estáticos/de consumidores, todos con salida 0: typing público
+  (20 negativos) y de engine (25), manifiesto API, mypy 9+2 módulos, canario
+  SPI v2, ratchet de 426 archivos, los dos snapshots exigidos, deep, smokes
+  wheel/sdist/pytest-kit, tres proveedores conformance y perfil sin SDK.
+  Conformance: Memory/SQLite 10 passed cada uno; canario externo 5 passed y
+  5 not-applicable según capacidades. SDK-free: 14 passed, con ausencia real
+  de bson/pymongo comprobada.
+- Once workloads existentes en cada backend, sin skips: 46 identidades de
+  salida por Memory/SQLite, 92/92 coincidentes. Se reutiliza A porque base,
+  corpus y harness permanecen idénticos; sólo se mide B nuevo. Sus tiempos
+  son diagnóstico y no sustituyen el presupuesto normativo de los 44 casos.
+
+Mapa de aceptación del candidato, usando los inventarios/casos existentes:
+
+| Contrato | Caso / owner existente | Consumidor | Evidencia en bson-grammar-context | Artefacto |
+| --- | --- | --- | --- | --- |
+| F00–F10 y conservación causal | SEMANTIC_CORPORA, fixtures 7/8/9 y suites completas | APIs/wire, Memory/SQLite, tres Python; capturas RS retenidas donde aplican | f11-eof-global-gates.json.gz y logs unittest/pytest; capturas nativas aceptadas | e4eb17cc / a10cd637 |
+| Cobertura y propiedades | CI global instalado y perfil deep | Runtime instalado | f11-eof-coverage.json.gz y f11-eof-deep.txt.gz | e4eb17cc / a10cd637 |
+| Matriz, typing/API/SPI, compatibilidad e instalación | Selecciones/scripts de CI, SDK-free y conformance | Doce perfiles, wheel/sdist y consumidor externo | f11-eof-matrix-summary.json.gz, f11-eof-static-consumer-gates.json.gz, f11-eof-build.txt.gz | e4eb17cc / a10cd637 |
+| Resultados de paths afectados | Once workloads previos por backend | Memory/SQLite | f11-eof-affected-workload-comparison.json.gz; B nuevo y A retenido | e4eb17cc / a10cd637 |
+| Identidad, contexto de ejecución, historia y recursos | Guard/manifiestos y revisión final | Repositorio y procesos propios | f11-eof-import-proofs.json.gz y f11-eof-final-review.json.gz | e4eb17cc / a10cd637 |
+| Coste obligatorio, todavía no aceptado | 44 controles retenidos / dos workers inalterados | Mismo baseline 2fa637f6 y candidato | f11-cost-eof-bounded-config/samples/look3/look6/summary.json.gz | e4eb17cc / a10cd637 |
+
+Coste terminal: primera evaluación de tres ABBA, 16 aceptados / 0 regresiones
+confirmadas / 28 inconcluyentes; segunda evaluación acumulada de seis ABBA,
+32 aceptados / 0 regresiones confirmadas / 12 inconcluyentes. Se conservan
+las 24 mediciones completas, sin descartar ninguna ni mezclar candidatos.
+Identidad BSON, tipos/resultados y presupuestos deterministas se conservan.
+Python 3.14.5, GC activo, semilla 0, política de aplicación y 500/1.000
+operaciones por muestra permanecen fijados. Se verifican bytes idénticos con
+p2-b3-accepted-consumption-worker.py.gz, p2-b3-accepted-vector-worker.py.gz y
+p2-final-artifact-guard.py.gz; no se copian ni modifican esos mecanismos.
+
+Única obligación exigida pendiente, de comprobación y no un defecto funcional
+reproducido: acreditar aumento de CPU <=5% en los 44 casos. Falta evidencia
+admisible con cota superior <=1,05 en estos doce controles; una estimación
+puntual o ausencia de regresión confirmada no satisface ese contrato:
+
+| Control inconcluyente | Razón estimada | Cota inferior | Cota superior |
+| --- | --- | --- | --- |
+| MemoryEngine-decoder-find-first-page | 1.040630 | 1.026049 | 1.055418 |
+| SQLiteEngine-default-find-limit-one | 1.053564 | 1.034618 | 1.072856 |
+| SQLiteEngine-default-find-first-page | 1.046533 | 1.009391 | 1.085043 |
+| SQLiteEngine-default-aggregate-first-page | 1.028681 | 0.998362 | 1.059920 |
+| SQLiteEngine-standard-find-limit-one | 1.050599 | 1.024264 | 1.077611 |
+| SQLiteEngine-standard-find-first-page | 1.043496 | 1.016118 | 1.071611 |
+| SQLiteEngine-standard-aggregate-first-page | 1.020783 | 0.991189 | 1.051261 |
+| SQLiteEngine-decoder-find-limit-one | 1.038216 | 1.025448 | 1.051142 |
+| SQLiteEngine-son-aggregate | 1.025232 | 1.000831 | 1.050227 |
+| SQLiteEngine-son-find-limit-one | 1.044043 | 1.033483 | 1.054711 |
+| all/limit2 | 1.051750 | 1.036018 | 1.067721 |
+| binary/limit2 | 1.025828 | 0.995699 | 1.056870 |
+
+Cierre observable pendiente: las 44 cotas superiores cumplen <=1,05 en una
+comparación admisible conforme al protocolo autorizado, manteniendo las
+garantías funcionales/deterministas. Los dos intentos están agotados: se
+detiene la medición automática. Otra medición requiere entorno adecuado y
+disposición explícita del owner; no se reinician intentos ni se cambia el
+presupuesto o el código por resultados meramente inconcluyentes. La lista queda
+cerrada en esta obligación; no se incorporan hipótesis o ampliaciones opcionales.
+
+Revisión final completada: diff productivo y pruebas revisados, documentación
+de comportamiento/alcance alineada, hashes de ambas distribuciones y runtime
+conservados, prefijo histórico intacto, sin cambios ajenos ni procesos propios
+de coste/gates pendientes. La limpieza nativa anterior se reutiliza porque no
+se han arrancado nuevos mongod/contenedores en esta continuación. Los cambios
+finales son sólo receipt y evidencia; no invalidan los gates del payload.
+F00–F10 quedan comprobados focal/integralmente (11/12 bloques); F11 y la
+aceptación de entrega permanecen pendientes exclusivamente del coste. No se
+publica ni etiqueta, ni se declara finalizado F11.
