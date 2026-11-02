@@ -318,7 +318,8 @@ def test_rewind_keeps_retired_source_owned_when_close_must_be_retried():
     asyncio.run(exercise())
 
 
-def test_repeated_cancellation_completes_aggregation_cleanup():
+@pytest.mark.parametrize("mode", ["aggregate", "find", "chunk"])
+def test_repeated_cancellation_completes_owned_cleanup(mode):
     async def exercise():
         fetching = asyncio.Event()
         closing = asyncio.Event()
@@ -326,6 +327,9 @@ def test_repeated_cancellation_completes_aggregation_cleanup():
         closed = []
 
         class WaitingSource:
+            def __aiter__(self):
+                return self
+
             async def __anext__(self):
                 fetching.set()
                 await asyncio.Future()
@@ -336,9 +340,18 @@ def test_repeated_cancellation_completes_aggregation_cleanup():
                 await release.wait()
 
         async with AsyncMongoClient(MemoryEngine()) as client:
-            cursor = client.responses.rows.aggregate([])
-            cursor._stream_batches = WaitingSource
-            task = asyncio.create_task(cursor._initialize())
+            if mode == "aggregate":
+                cursor = client.responses.rows.aggregate([])
+                cursor._stream_batches = WaitingSource
+                consume = cursor._initialize()
+            else:
+                cursor = client.responses.rows.find({})
+                cursor._open_read_source = lambda **_options: WaitingSource()
+                iterator = cursor.__aiter__()
+                consume = (
+                    iterator.pull_chunk(1) if mode == "chunk" else iterator.__anext__()
+                )
+            task = asyncio.create_task(consume)
             await asyncio.wait_for(fetching.wait(), 1)
             task.cancel()
             await asyncio.wait_for(closing.wait(), 1)
@@ -347,7 +360,7 @@ def test_repeated_cancellation_completes_aggregation_cleanup():
             with pytest.raises(asyncio.CancelledError):
                 await task
             with pytest.raises(StopAsyncIteration):
-                await cursor.__anext__()
+                await (cursor if mode == "aggregate" else iterator).__anext__()
             await cursor.close()
             assert closed == [True]
 
@@ -412,7 +425,8 @@ def test_aggregate_close_retries_only_resources_that_failed(failed_resources):
     asyncio.run(exercise())
 
 
-def test_find_exhaustion_surfaces_cleanup_failure_and_retains_retry():
+@pytest.mark.parametrize("batch_size", [None, 1])
+def test_find_exhaustion_surfaces_cleanup_failure_and_retains_retry(batch_size):
     expected_attempts = 2
 
     class Source:
@@ -437,9 +451,10 @@ def test_find_exhaustion_surfaces_cleanup_failure_and_retains_retry():
     async def exercise():
         async with AsyncMongoClient(MemoryEngine()) as client:
             source = Source()
-            cursor = client.responses.rows.find({}, batch_size=1)
+            cursor = client.responses.rows.find({}, batch_size=batch_size)
             cursor._open_read_source = lambda **_options: source
             iterator = cursor.__aiter__()
+            iterator._batch_size = 1
             assert await iterator.__anext__() == {"_id": 1}
             with pytest.raises(ValueError, match="exhausted source cleanup"):
                 await iterator.__anext__()
@@ -494,5 +509,170 @@ def test_owned_cleanup_preserves_configured_task_factory():
             loop.set_task_factory(previous)
         assert created == [coroutine]
         assert closed == [True]
+
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize("entrypoint", ["response", "chunk", "first"])
+def test_find_owns_distinct_iterable_and_iterator_without_row_wrapper(entrypoint):
+    async def exercise():
+        events = []
+
+        class Iterator:
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self):
+                events.append("pull")
+                return {"_id": 1}
+
+            async def aclose(self):
+                events.append("close iterator")
+
+        iterator = Iterator()
+
+        class Source:
+            def __aiter__(self):
+                events.append("iterate")
+                return iterator
+
+            async def aclose(self):
+                events.append("close source")
+
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            cursor = client.responses.rows.find({})
+            original_resolve = cursor._resolve_operation_collation
+
+            async def resolve():
+                events.append("resolve")
+                await original_resolve()
+
+            def open_source(**_options):
+                events.append("open")
+                return Source()
+
+            cursor._resolve_operation_collation = resolve
+            cursor._open_read_source = open_source
+            if entrypoint == "first":
+                assert await cursor.first() == {"_id": 1}
+            else:
+                owner = cursor.__aiter__()
+                assert events == []
+                assert await owner.pull_chunk(0) == []
+                assert events == []
+                if entrypoint == "chunk":
+                    assert await owner.pull_chunk(1) == [{"_id": 1}]
+                    assert await owner.pull_chunk(1) == [{"_id": 1}]
+                else:
+                    assert await owner._read_response(1) == [{"_id": 1}]
+                    assert await owner._read_response(1) == [{"_id": 1}]
+                assert owner._source is iterator
+                await cursor.close()
+            assert events[:3] == ["resolve", "open", "iterate"]
+            assert events.count("resolve") == 1
+            assert events[-2:] == ["close iterator", "close source"]
+
+    asyncio.run(exercise())
+
+
+def test_find_close_before_consumption_does_not_resolve_or_open():
+    async def exercise():
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            cursor = client.responses.rows.find({})
+
+            async def forbidden():
+                pytest.fail("unconsumed cursor resolved its context")
+
+            cursor._resolve_operation_collation = forbidden
+            cursor._open_read_source = lambda **_options: pytest.fail("opened source")
+            cursor.__aiter__()
+            await cursor.close()
+
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize("failure", ["iterate", "pull", "close"])
+def test_find_distinct_source_retains_failed_cleanup_without_reopening(failure):
+    async def exercise():
+        closes = []
+        opens = []
+
+        class Iterator:
+            attempts = 0
+
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self):
+                if failure == "pull":
+                    message = "pull failed"
+                    raise RuntimeError(message)
+                return {"_id": 1}
+
+            async def aclose(self):
+                self.attempts += 1
+                closes.append("iterator")
+                if failure == "close" and self.attempts == 1:
+                    message = "close failed"
+                    raise RuntimeError(message)
+
+        iterator = Iterator()
+
+        class Source:
+            def __aiter__(self):
+                if failure == "iterate":
+                    message = "iterate failed"
+                    raise RuntimeError(message)
+                return iterator
+
+            async def aclose(self):
+                closes.append("source")
+
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            cursor = client.responses.rows.find({})
+
+            def open_source(**_options):
+                opens.append(True)
+                return Source()
+
+            cursor._open_read_source = open_source
+            owner = cursor.__aiter__()
+            if failure == "close":
+                assert await owner.pull_chunk(1) == [{"_id": 1}]
+                with pytest.raises(RuntimeError, match="close failed"):
+                    await cursor.close()
+            else:
+                with pytest.raises(RuntimeError, match=f"{failure} failed"):
+                    await owner.pull_chunk(1)
+            await cursor.close()
+            assert opens == [True]
+            expected = {
+                "iterate": ["source"],
+                "pull": ["iterator", "source"],
+                "close": ["iterator", "iterator", "source"],
+            }
+            assert closes == expected[failure]
+            assert not cursor._retired_sources
+
+    asyncio.run(exercise())
+
+
+def test_find_lazy_open_preserves_query_counter_and_started_phase(monkeypatch):
+    async def exercise():
+        counters = []
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            cursor = client.responses.rows.find({})
+            monkeypatch.setattr(
+                client._engine, "_record_runtime_opcounter", counters.append
+            )
+            assert counters == []
+            owner = cursor.__aiter__()
+            assert counters == ["query"]
+            assert cursor._started
+            assert owner._source is None
+            assert await owner.pull_chunk(0) == []
+            assert counters == ["query"]
+            await cursor.close()
+            assert counters == ["query"]
 
     asyncio.run(exercise())

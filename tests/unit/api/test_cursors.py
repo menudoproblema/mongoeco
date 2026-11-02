@@ -1334,7 +1334,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         cursor = Cursor(_SyncClientStub(), factory, {}, None).limit(1)
         iterator = iter(cursor)
 
-        self.assertEqual(factory.last_scan.pull_count, 0)
+        self.assertIsNone(factory.last_scan)
         self.assertTrue(cursor.alive)
         self.assertEqual(next(iterator), {"_id": "1"})
         self.assertFalse(cursor.alive)

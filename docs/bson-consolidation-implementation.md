@@ -3445,7 +3445,7 @@ buffers, identidad contextual y limpieza con cancelación repetida.
 | Bloque | Estado | Cierre exigido |
 | --- | --- | --- |
 | B | Comprobado focalmente | Vinculación directa guardada cuando no cambia la semántica; programa preparado conservado y recompilación legítima intacta. |
-| A | En implementación, después de B | Apertura diferida única sin wrapper por fila; modos, fases, contadores y propiedad/limpieza conservados. |
+| A | Comprobado focalmente | Apertura diferida única sin wrapper por fila; modos, fases, contadores y propiedad/limpieza conservados. |
 | Verificación compartida | Pendiente | Selección focal prevalidada, tres Python/ambos motores/superficies afectadas, diffs revisados y commits semánticos. No acredita entrega ni coste F11. |
 
 B: se reproduce el rebind redundante con un test que conserva el programa
@@ -3457,3 +3457,23 @@ reemplazo parcial, namespace recreado en ambos motores y consumidores
 materializados/wire. Ratchet sobre tres archivos Python verde; diff revisado.
 Se conservan el rojo inicial, la selección y los logs de lint. La verificación
 compartida en tres Python sigue pendiente, igual que toda aceptación F11.
+
+A: el propietario existente resuelve el contexto en la primera lectura y abre
+una única fuente; desaparece _scan_with_effective_collation y su avance por
+fila. _prepare_scan conserva el contador query y el bloqueo de opciones al
+crear el iterador. El streaming, pull_chunk y first comparten esa apertura;
+el camino batch conserva su lector y sus fronteras originales. Se conserva
+AsyncIterable incluso con iterador separado, propiedad de ambos objetos,
+limpieza protegida con finish_cleanup, retención de recursos fallidos y
+reintento existente. No se añade caché ni cambia el SPI.
+
+La reproducción inicial falla en los tres entrypoints (wrapper e iterador
+separado sin cierre). El focal definitivo pasa 335 pruebas/1.094 subtests en
+Python 3.14: errores de apertura/iteración/lectura/cierre, prioridad y notas,
+reintento sin reapertura, cancelación repetida, EOF, límites, bytes pendientes,
+codecs, rewind/clone, contexto/sesión/reloj y namespace recreado en ambos
+motores. La prueba antigua de lazy sobre un stub sin resolver se ajusta para
+exigir que ni siquiera se abra la fuente antes del primer I/O. Se conservan
+los fallos intermedios: dos eran la extensión del test de cancelación usando
+__anext__ en AsyncCursor en vez del iterador; corregida la prueba, la limpieza
+pasa. Verificación compartida y replay nativo pendientes; no aceptación F11.

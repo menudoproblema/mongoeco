@@ -2,7 +2,7 @@ import sys
 import time
 
 from collections import deque
-from collections.abc import AsyncIterable, AsyncIterator, Mapping
+from collections.abc import AsyncIterable, Callable, Mapping
 from copy import deepcopy
 from dataclasses import replace
 from typing import TYPE_CHECKING, cast
@@ -126,7 +126,7 @@ class _AsyncCursorIterator:
         *,
         batch_size: int | None,
         enforce_ownership: bool,
-        source=None,
+        source_factory: Callable[[], AsyncIterable[Document]] | None = None,
     ):
         self._cursor = cursor
         self._batch_size = batch_size
@@ -137,12 +137,42 @@ class _AsyncCursorIterator:
         # the decoder's batch length, which may describe different cardinality.
         self._position = 0
         self._retrieved = 0
-        self._source = source
+        self._source = None
+        self._source_owner = None
+        self._source_factory = source_factory
         self._response_reader = ResponseBatchReader(dialect=cursor._current_dialect())
         self._initial_response = True
 
     def __aiter__(self):
         return self
+
+    async def _open_source(self) -> None:
+        if self._source_factory is None:
+            return
+        await self._cursor._resolve_operation_collation()
+        self._source_owner = self._source_factory()
+        self._source_factory = None
+        self._source = aiter(self._source_owner)
+
+    async def _release_source(self) -> None:
+        """Close each owned object once, retaining failed resources for retry."""
+        try:
+            if self._source is not None:
+                await self._cursor._close_source(self._source)
+                if self._source_owner is self._source:
+                    self._source_owner = None
+                self._source = None
+            if self._source_owner is not None:
+                await self._cursor._close_source(self._source_owner)
+                self._source_owner = None
+        except BaseException:
+            self._retire_owned_source()
+            raise
+
+    def _retire_owned_source(self) -> None:
+        self._cursor._retire_source(self._source_owner)
+        self._cursor._retire_source(self._source)
+        self._source = self._source_owner = self._source_factory = None
 
     async def _close_after_failure(self) -> None:
         failure = sys.exception()
@@ -188,21 +218,23 @@ class _AsyncCursorIterator:
                 count = min(len(self._buffer), max_items - len(items))
                 items.extend(self._buffer.popleft() for _ in range(count))
                 continue
-            if self._source is not None:
+            if self._source is not None or self._source_factory is not None:
                 try:
-                    document = await self._response_reader.next_document(
-                        self._source.__anext__
-                    )
+                    await self._open_source()
+                    try:
+                        document = await self._response_reader.next_document(
+                            self._source.__anext__
+                        )
+                    except StopAsyncIteration:
+                        self._cursor._exhausted = True
+                        await finish_cleanup(self._release_source())
+                        if not items:
+                            await self.close()
+                        break
                     if self._cursor._apply_codec_options:
                         document = self._cursor._materialize_document(document)
                     items.append(document)
                     continue
-                except StopAsyncIteration:
-                    self._cursor._exhausted = True
-                    self._source = None
-                    if not items:
-                        await self.close()
-                    break
                 except BaseException as error:
                     self._cursor._exhausted = True
                     await self._close_after_failure()
@@ -228,13 +260,15 @@ class _AsyncCursorIterator:
         if maximum == 0:
             return []
         try:
-            if self._source is not None:
+            if self._source is not None or self._source_factory is not None:
+                await self._open_source()
 
                 async def pull(_remaining):
                     try:
                         return await self._source.__anext__()
                     except StopAsyncIteration:
                         self._cursor._exhausted = True
+                        await finish_cleanup(self._release_source())
                         raise
 
                 raw = await self._response_reader.read(pull, maximum, initial=initial)
@@ -315,10 +349,9 @@ class _AsyncCursorIterator:
         self._closed = True
 
     async def _close_source(self):
-        close = getattr(self._source, "aclose", None)
-        if callable(close):
-            await close()
-        self._source = None
+        self._source_factory = None
+        if self._source is not None or self._source_owner is not None:
+            await finish_cleanup(self._release_source())
         self._response_reader.clear()
         self._cursor._response_reader.clear()
         await self._cursor._close_batch_source()
@@ -329,8 +362,7 @@ class _AsyncCursorIterator:
     def retire(self) -> None:
         """Detach resources so synchronous rewind can close them on next I/O."""
         self._closed = True
-        self._cursor._retire_source(self._source)
-        self._source = None
+        self._retire_owned_source()
         self._response_reader.clear()
         if self._cursor._active_async_iterable is self:
             self._cursor._active_async_iterable = None
@@ -651,39 +683,18 @@ class AsyncCursor:
         )
         self._semantics_cache = None
 
-    def _scan(self, *, limit: int | None = None) -> AsyncIterable[Document]:
+    def _prepare_scan(self, *, limit: int | None = None):
         self._started = True
         engine = self._collection._engine
         record_runtime_opcounter = getattr(engine, "_record_runtime_opcounter", None)
         if callable(record_runtime_opcounter):
             record_runtime_opcounter("query")
-        if callable(getattr(self._collection, "_resolve_operation_context", None)):
-            return self._scan_with_effective_collation(limit=limit)
+        return lambda: self._scan(limit=limit)
+
+    def _scan(self, *, limit: int | None = None) -> AsyncIterable[Document]:
         return self._open_read_source(
             skip=self._skip, limit=self._limit if limit is None else limit
         )
-
-    async def _scan_with_effective_collation(self, *, limit) -> AsyncIterator[Document]:
-        await self._resolve_operation_collation()
-        source = self._open_read_source(
-            skip=self._skip,
-            limit=self._limit if limit is None else limit,
-        )
-        try:
-            async for document in source:
-                yield document
-        finally:
-            failure = sys.exception()
-            try:
-                await finish_cleanup(self._close_source(source))
-            except BaseException as cleanup_error:
-                self._retire_source(source)
-                if failure is None:
-                    raise
-                failure.add_note(
-                    f"cursor cleanup failed: {type(cleanup_error).__name__}: "
-                    f"{cleanup_error}"
-                )
 
     async def _fetch_batch(
         self, offset: int, batch_size: int | None, *, initial=None
@@ -750,7 +761,7 @@ class AsyncCursor:
                 self,
                 batch_size=None,
                 enforce_ownership=enforce_ownership,
-                source=self._scan(limit=limit),
+                source_factory=self._prepare_scan(limit=limit),
             )
         batch_size = self._batch_size if limit is None else limit
         return _AsyncCursorIterator(
@@ -973,7 +984,7 @@ class AsyncCursor:
             self,
             batch_size=1,
             enforce_ownership=False,
-            source=self._scan(limit=1),
+            source_factory=self._prepare_scan(limit=1),
         )
         try:
             document = await iterator.__anext__()
