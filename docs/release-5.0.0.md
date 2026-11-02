@@ -159,7 +159,7 @@ no demuestra la compatibilidad de la aplicación privada histórica no disponibl
 Registro estructurado: [validación](evidence/mongoeco-5.0.0/validation.json).
 [Logs completos de matriz](evidence/mongoeco-5.0.0/matrix-logs.tar.gz).
 
-## Incremento Q00–Q06: gates comprobados, integración pendiente
+## Incremento Q00–Q06 aceptado e integrado (3 de noviembre)
 
 El [plan de rendimiento](performance-5.0.0-plan.md) posee el alcance y cierre de
 este incremento. Los registros anteriores de esta página corresponden a la
@@ -181,5 +181,7 @@ regresiones ni mejora universal. [Datos y disposición](performance-5.0.0-plan.m
 
 Q05 se difiere sin cambio productivo porque la reutilización del cierre idle
 altera rewind; no se acredita ahorro de tránsitos. El incremento preserva los
-cierres históricos y no añade el resto de la parte II. Resta integrar y limpiar
-la rama propia; no hay tag, push ni publicación.
+cierres históricos y no añade el resto de la parte II. Integrado en main por
+fast-forward hasta 5c4e0767, con perf/q00-q06 retirada.
+Diff y documentación revisados; workset propio limpio, conservando
+`benchmarks/execution.json` preexistente sin cambios. No hay tag, push ni publicación.

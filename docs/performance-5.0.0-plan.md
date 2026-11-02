@@ -1,7 +1,7 @@
 # Optimización previa a 5.0.0: análisis y plan acotado
 
-Estado: implementación autorizada en curso, 2 de noviembre de 2026.
-La aceptación de entrega y los tiempos se reservan para Q06.
+Estado: entrega local aceptada e integrada en main, 3 de noviembre de 2026.
+Q06 conserva dos tradeoffs temporales autorizados y treinta inconcluyentes.
 Este documento posee las decisiones y criterios vigentes para este incremento; la
 [preparación de release](release-5.0.0.md) conserva sus resultados históricos.
 Normas vigentes: [testing y compatibilidad](architecture/testing-and-compatibility.md)
@@ -662,18 +662,19 @@ o incumplimiento obligatorio. El plan no autoriza tags ni publicación.
 
 ## Ejecución vigente
 
-Rama `perf/q00-q06`, base 79337a11 (sólo documentación posterior al runtime base).
+Rama de implementación `perf/q00-q06`, base 79337a11, integrada por fast-forward
+en main hasta 5c4e0767 y retirada después. No se crearon worktrees auxiliares.
 Se conserva `benchmarks/execution.json` preexistente, sin modificar.
 
 | Bloque | Estado | Evidencia / siguiente gate |
 | --- | --- | --- |
-| Q00 | Implementado y comprobado focalmente | 28 tests del harness; el nuevo test falla en la base y pasa tras mover el índice. Pip check y CLI conformes, 310 archivos del wheel y 26 tareas/motor verificados. [Registro](evidence/mongoeco-5.0.0/q00-preflight.json), logs comprimidos q00-* en el mismo directorio. Preflight del artefacto B reservado a Q06 |
-| Q01 | Implementado y comprobado focalmente | 366 passed (300 casos seleccionados de replays BSON/respuestas 7/8/9, más propiedades y fronteras); Ruff y formato conformes. [Conteos](evidence/mongoeco-5.0.0/q01-counts.json): seis raíces nativas conservan tamaños y evitan seis llamadas al alias numérico; ninguna medición temporal. Logs q01-* en el mismo directorio |
-| Q02 | Implementado y comprobado focalmente | 30 tests unit/contexto y 234 replays verdes; lint ratchet conforme. [Conteos productivos](evidence/mongoeco-5.0.0/q02-counts.json): dos operaciones por engine, dos preparaciones raíz y veinte decisiones MQL. Los tests conservan preparación vacía/error perezosos, bindings, collation y relojes separados. Diff revisado, sin formatter ajeno; logs q02-* en el mismo directorio |
-| Q03 | Implementado y comprobado focalmente | 67 tests + 12 subtests y 99 replays UUID 7/8/9 verdes; lint conforme. [Conteos](evidence/mongoeco-5.0.0/q03-counts.json): cinco modalidades × dos requests, cero nuevas construcciones tras importar y bytes/tamaños equivalentes al SDK. Ruta sin SDK, rechazo UNSPECIFIED y raw BSON conservados; logs q03-* |
-| Q04 | Implementado y comprobado focalmente | [Registro](evidence/mongoeco-5.0.0/q04-counts.json): 285 casos únicos comprobados en tandas focales y 16 comparaciones del constructor congelado. Cero retokenizaciones calientes sobre 1.000 documentos con mappings explicit/dynamic; cambios externos, valores mixtos, commit/rollback, índice, reopen/backup restore conformes. Los doce mocks retirados se corrigieron en el addendum Q02; los otros 144 casos de esa tanda se reutilizan. Logs q04-* |
-| Q05 | Diferido sin cambio productivo | [Decisión](evidence/mongoeco-5.0.0/q05-decision.json): hook idle de cursor no equivale a cerrar iterador EOF; reusarlo rompe rewind. Requiere otro predicado/estado de lifecycle y tratamiento de retries/contexto, no una reutilización suficiente |
-| Q06 | En validación integrada | [Preflight](evidence/mongoeco-5.0.0/q06-preflight.json): builds wheel/sdist reproducibles de 95fa38c5, runtime b5d9e803; wheel 5ac014b1… y 310 archivos idénticos en instalaciones físicas 3.13/3.14/3.15. [Globales/cobertura](evidence/mongoeco-5.0.0/q06-globals.json) comprobados; [matriz 12/12](evidence/mongoeco-5.0.0/q06-r4.json) aceptada; [R5 consumidores](evidence/mongoeco-5.0.0/q06-consumers.json) aceptado, deep 74 y PCRE2 339 replays por perfil verdes. Intento temporal completo (20 invocaciones), R3 aceptado por tradeoff explícito del usuario; R1 conforme, R6 pendiente de integración y limpieza |
+| Q00 | Aceptado en Q06 | 28 tests del harness; el nuevo test falla en la base y pasa tras mover el índice. Pip check y CLI conformes, 310 archivos del wheel y 26 tareas/motor verificados. [Registro](evidence/mongoeco-5.0.0/q00-preflight.json), logs comprimidos q00-* en el mismo directorio. Preflight del artefacto B completado en Q06 |
+| Q01 | Aceptado en Q06 | 366 passed (300 casos seleccionados de replays BSON/respuestas 7/8/9, más propiedades y fronteras); Ruff y formato conformes. [Conteos](evidence/mongoeco-5.0.0/q01-counts.json): seis raíces nativas conservan tamaños y evitan seis llamadas al alias numérico; ninguna medición temporal. Logs q01-* en el mismo directorio |
+| Q02 | Aceptado en Q06 | 30 tests unit/contexto y 234 replays verdes; lint ratchet conforme. [Conteos productivos](evidence/mongoeco-5.0.0/q02-counts.json): dos operaciones por engine, dos preparaciones raíz y veinte decisiones MQL. Los tests conservan preparación vacía/error perezosos, bindings, collation y relojes separados. Diff revisado, sin formatter ajeno; logs q02-* en el mismo directorio |
+| Q03 | Aceptado en Q06 | 67 tests + 12 subtests y 99 replays UUID 7/8/9 verdes; lint conforme. [Conteos](evidence/mongoeco-5.0.0/q03-counts.json): cinco modalidades × dos requests, cero nuevas construcciones tras importar y bytes/tamaños equivalentes al SDK. Ruta sin SDK, rechazo UNSPECIFIED y raw BSON conservados; logs q03-* |
+| Q04 | Aceptado en Q06 | [Registro](evidence/mongoeco-5.0.0/q04-counts.json): 285 casos únicos comprobados en tandas focales y 16 comparaciones del constructor congelado. Cero retokenizaciones calientes sobre 1.000 documentos con mappings explicit/dynamic; cambios externos, valores mixtos, commit/rollback, índice, reopen/backup restore conformes. Los doce mocks retirados se corrigieron en el addendum Q02; los otros 144 casos de esa tanda se reutilizan. Logs q04-* |
+| Q05 | Diferido sin cambio; disposición aceptada | [Decisión](evidence/mongoeco-5.0.0/q05-decision.json): hook idle de cursor no equivale a cerrar iterador EOF; reusarlo rompe rewind. Requiere otro predicado/estado de lifecycle y tratamiento de retries/contexto, no una reutilización suficiente |
+| Q06 | Aceptado e integrado con reservas | [Preflight](evidence/mongoeco-5.0.0/q06-preflight.json): builds wheel/sdist reproducibles de 95fa38c5, runtime b5d9e803; wheel 5ac014b1… y 310 archivos idénticos en instalaciones físicas 3.13/3.14/3.15. [Globales/cobertura](evidence/mongoeco-5.0.0/q06-globals.json) comprobados; [matriz 12/12](evidence/mongoeco-5.0.0/q06-r4.json) aceptada; [R5 consumidores](evidence/mongoeco-5.0.0/q06-consumers.json) aceptado, deep 74 y PCRE2 339 replays por perfil verdes. Intento temporal completo (20 invocaciones), R3 aceptado por tradeoff explícito del usuario; R1 y R6 conformes, integración y limpieza propias realizadas |
 
 Q01 conserva la ruta genérica de subclases/wrappers y la clasificación de enteros.
 El helper local de arrays evita duplicar la regla de framing entre lista nativa
@@ -718,9 +719,9 @@ concede una capacidad genérica de cierre: contexto, task factory y suspensión
 siguen siendo condiciones del owner. Se difiere esta optimización, sin otro
 estado/protocolo ni modificación productiva. No se acredita ahorro de tránsitos.
 
-Q00–Q04 están comprobados focalmente; Q05 tiene disposición explícita. Q06 es la
-única aceptación de entrega pendiente. Se congela el código productivo al iniciar
-sus builds y se reutiliza la evidencia anterior sólo donde siga siendo válida.
+Q00–Q04 están aceptados en la entrega y Q05 tiene su disposición de diferir
+aceptada. Q06 está cerrado con los límites documentados. El código productivo
+permanece congelado desde b5d9e803; la evidencia reutilizada conserva sus inputs.
 
 
 Q06, globales: 65.020 passed, 1.130 skips previstos y 14.946 subtests por
@@ -814,8 +815,33 @@ El test adicional de bytearray cambia sólo tests; no está empaquetado en el
 sdist ni invalida el runtime o la evidencia funcional restante.
 
 R6: diff productivo y documentación revisados; whitespace conforme, sin cambios
-de runtime posteriores al congelado ni nuevas autoridades semánticas. Resta
-integrar en main y retirar la rama auxiliar propia. Las referencias e4eb17cc,
+de runtime posteriores al congelado ni nuevas autoridades semánticas. Se integró
+en main mediante fast-forward hasta 5c4e0767 y se retiró perf/q00-q06 con `-d`.
+Las referencias e4eb17cc,
 b93681b7, b83789bc y perf/f11-context-startup se han comprobado intactas.
 `benchmarks/execution.json` conserva el SHA-256 del preflight Q00. No se borran
 worktrees o ramas ajenos ni se crean tags o publicaciones.
+
+
+### Cierre integrado de Q06
+
+| Gate | Disposición y evidencia |
+| --- | --- |
+| R1 | Narrativa y migración revisadas; nota de release alineada y sin nuevas promesas de rendimiento |
+| R2 | Dos builds idénticos; wheel 5ac014b1… / sdist 3ab93460…; 310 archivos contrastados también tras integrar. [Identidades completas](evidence/mongoeco-5.0.0/q06-preflight.json) |
+| R3 | Veinte invocaciones en 844,9 s; 72 mejoras, 30 inconcluyentes y dos empeoramientos aceptados expresamente por el usuario. Una sonda causal autorizada de 44 consultas, sin segundo intento de aceptación |
+| R4 | Pytest/unittest en 3.13/3.14/3.15, cobertura exacta 99,0009806 %, deep y matriz 12/12. [Globales](evidence/mongoeco-5.0.0/q06-globals.json) y [matriz](evidence/mongoeco-5.0.0/q06-r4.json) |
+| R5 | Typing/API/SPI/smokes en los tres Python; SDK/PCRE2, core sin SDK y canario autorizado conservados. [Consumidores](evidence/mongoeco-5.0.0/q06-consumers.json) |
+| R6 | Diff y docs revisados; integración fast-forward en main, rama propia eliminada, workset propio limpio y archivo preexistente preservado |
+
+Runtime final: `b5d9e8039bf685839c92dbd08f88ab9124f245b4`; fuente del artefacto
+`95fa38c549051398225c6c90ce90c28989594c94`. La integración documental
+no cambia sus bytes ni invalida los gates. No se han creado tags, hecho push
+ni publicado la versión.
+
+No queda una obligación exigida de Q00–Q06 sin disposición/comprobación. Las
+reservas son explícitas: no se conoce la causa de los dos empeoramientos,
+los treinta controles inconcluyentes no prueban ausencia de regresión y Q05 no
+aporta ahorro. El canario sustituto no acredita las aserciones privadas perdidas.
+La evidencia local es macOS arm64; CI alojado y Trusted Publisher siguen siendo
+pasos posteriores antes de un tag/publicación, fuera de esta entrega.
