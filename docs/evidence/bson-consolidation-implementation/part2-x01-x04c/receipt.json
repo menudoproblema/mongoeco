@@ -1146,5 +1146,27 @@
       "Resource result is absolute instrumented bounded work, Python allocation peak only; no universal latency or native-allocation bound",
       "Remaining Part II X01 expansion, X02/X03/X04a-b-d/X05/X06 excluded; no release, tag, push or main integration"
     ]
+  },
+  "integration": {
+    "date": "2026-11-02",
+    "authorization": "Integrate increment into main without version closure, tags or publication",
+    "method": "git switch main; git merge --ff-only feat/part2-regex-granularity",
+    "main_before": "6854f337f12788cbdf7f7c1c9b7721715ab83435",
+    "integrated_head": "a878d6edc55a27ff4fe0000524e7f93df33a8e22",
+    "product_tree": "b4f296dfe67e0cf04c019c840d0988373e3fed5d",
+    "product_tree_unchanged": true,
+    "version_unchanged": true,
+    "tags_unchanged": true,
+    "frozen_candidates_unchanged": {
+      "e4eb17cc": "e4eb17ccf75634f7ff365c6f43ed8387f16e72e7",
+      "b93681b7": "b93681b74a284ed09138ef3d647bedf6ff7f78da",
+      "b83789bc": "b83789bc36bc1bebe693d09b782e5e242be24db4",
+      "perf/f11-context-startup": "afcf39903e14fa7a9e7a41d21bf89d67ac98a7ec"
+    },
+    "accepted_gates_preserved": true,
+    "tests_repeated": false,
+    "reason": "Fast-forward preserves the exact accepted commit and product tree; subsequent changes are integration records in docs only",
+    "publication": "none; no push, tag or release",
+    "historical_state": "Earlier receipt entries describe acceptance before main integration; this entry records the separately authorized transition"
   }
 }

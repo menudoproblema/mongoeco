@@ -4169,3 +4169,18 @@ Límites: PCRE2 opcional comprobado en macOS arm64, con build desde fuente para
 completa. Memoria medida: asignaciones Python del workload acotado, no todas las
 asignaciones nativas. Search-v1/Regex.compile siguen Python. Resto de parte II
 fuera del corte. Evidencia y trazabilidad en part2-x01-x04c/receipt.json.
+
+### Integración local autorizada en main — 2026-11-02
+
+El owner autoriza integrar el incremento, sin cerrar versión, crear tags ni
+publicar. Main avanza por fast-forward de 6854f337 a
+a878d6edc55a27ff4fe0000524e7f93df33a8e22, conservando todos los commits semánticos
+y las 6/6 obligaciones aceptadas. Las menciones anteriores a main sin integrar
+describen el estado histórico previo a esta autorización.
+
+Se verifica identidad del árbol productivo antes/después, versión 4.11.0 y
+tags sin cambios, y conservación de e4eb17cc, b93681b7, b83789bc y
+perf/f11-context-startup. No hay conflictos ni cambios productivos posteriores;
+no se invalidan gates ni se repiten pruebas. La integración añade únicamente
+este registro, la nota del plan y el receipt existente. No hay push, release
+ni publicación. El resto de parte II continúa fuera del alcance.

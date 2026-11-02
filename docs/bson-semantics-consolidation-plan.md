@@ -3040,3 +3040,15 @@ Distribuciones reproducibles y perfiles SDK-free verificados. Sonda única:
 presupuesto satisfecho sin tocar F11. Artefacto productivo 28898b3a, wheels
 reproducibles ae9da5d6 y sdist 7bf6ecad; identidades completas en receipt.
 Sin release ni integración en main; resto de parte II permanece fuera del corte.
+
+
+##### Integración del incremento aceptado en main — 2026-11-02
+
+Autorización posterior del owner: integrar sin cerrar versión, tags o publicación.
+Fast-forward local 6854f337 → a878d6ed; se preservan commits, payload, evidencia
+y cierres aceptados (6/6 del incremento; parte I sin reapertura). Versión 4.11.0,
+tags y candidatos congelados sin cambios. No se repiten gates: se conserva el
+commit aceptado exacto y sólo se añaden registros de integración en docs. La
+integración sustituye la restricción histórica de mantener el incremento fuera
+de main; no amplía parte II ni autoriza release/push. Detalle y pruebas de identidad
+en el receipt de implementación y part2-x01-x04c/receipt.json.
