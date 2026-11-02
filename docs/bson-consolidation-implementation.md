@@ -3592,3 +3592,12 @@ promueven a gate. G1 reutiliza esa evidencia y los focales 335/157 por Python,
 replay 1.200/360 y revisión aceptada. Capturas y fixtures anteriores son oráculos,
 no ejecuciones nuevas del producto. Resultados del nuevo run en la estructura
 de evidencia existente; disposición final se añadirá sin editar historia.
+
+G2 aceptado: dos builds desde git archive b93681b7, epoch 1793596735,
+normalizados con el script vigente, binariamente reproducibles; checks de
+308 archivos/distribución y twine verdes. Instalación aislada, 287 módulos:
+wheel b36a7ec8186dba6056b123ca3d6cc51078f7be0aa72749e0c084c1bff079b0e9;
+sdist d669b72658259e900973b5e3d4d3663fb7b2613532730b72c837e13c0cbf7530.
+Preflight de coste sin lecturas: hashes de los dos workers inalterados,
+manifest completo de base/candidato, imports instalados y taskpolicy -a /
+Python 3.14.5 / HASHSEED=0 / GC activo comprobados. G1–G2: 2/6 cerradas.
