@@ -162,6 +162,7 @@ Registro estructurado: [validación](evidence/mongoeco-5.0.0/validation.json).
 ## Incremento de optimización propuesto
 
 El [plan de rendimiento](performance-5.0.0-plan.md) contrasta cuatro informes y
-propone Q00–Q06. Todavía no está implementado: no altera la aceptación del
-artefacto anterior ni acredita otro candidato. Preserva las garantías semánticas
+define Q00–Q06, ahora en implementación. Los cierres focales se registran allí;
+la aceptación de un artefacto nuevo queda reservada a Q06. No altera la aceptación
+del artefacto anterior ni acredita todavía otro candidato. Preserva las garantías semánticas
 y define qué gates deberán repetirse si cambian los bytes productivos.

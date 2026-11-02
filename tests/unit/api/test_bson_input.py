@@ -301,3 +301,26 @@ def test_portable_regex_decodes_valid_utf8_bytes(monkeypatch):
     assert BSON.encode(DocumentCodec.to_pymongo(actual)) == BSON.encode(
         {"v": re.compile(b"ab", re.IGNORECASE)}
     )
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_finite_sdk_configuration_reuses_options_and_keeps_encoded_bytes(
+    monkeypatch, mode
+):
+    request = {"v": UUID_VALUE}
+    if mode is UuidRepresentation.UNSPECIFIED:
+        request = {"v": Binary(UUID_VALUE.bytes, 4)}
+    expected = BSON.encode(
+        request, codec_options=DriverCodecOptions(uuid_representation=MODES[mode])
+    )
+
+    def unexpected_constructor(**_kwargs):
+        pytest.fail("request reconstructed immutable SDK options")
+
+    monkeypatch.setattr(bson_input, "DriverCodecOptions", unexpected_constructor)
+    for _ in range(2):
+        normalized, size = bson_input._encode_bson_document(
+            request, codec_options=CodecOptions(uuid_representation=mode)
+        )
+        assert size == len(expected)
+        assert BSON.encode(DocumentCodec.to_pymongo(normalized)) == expected

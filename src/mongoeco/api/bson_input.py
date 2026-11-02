@@ -45,6 +45,19 @@ if BSON is None:  # pragma: no cover - optional SDK profile
         """Portable counterpart of an operation exceeding its message frame."""
 
 
+if BSON is not None:
+    _DRIVER_CODEC_OPTIONS = {
+        mode: DriverCodecOptions(uuid_representation=representation)
+        for mode, representation in {
+            UuidRepresentation.UNSPECIFIED: DriverUuidRepresentation.UNSPECIFIED,
+            UuidRepresentation.STANDARD: DriverUuidRepresentation.STANDARD,
+            UuidRepresentation.PYTHON_LEGACY: DriverUuidRepresentation.PYTHON_LEGACY,
+            UuidRepresentation.JAVA_LEGACY: DriverUuidRepresentation.JAVA_LEGACY,
+            UuidRepresentation.CSHARP_LEGACY: DriverUuidRepresentation.CSHARP_LEGACY,
+        }.items()
+    }
+
+
 def _invalid(value):
     message = f"cannot encode object: {value!r}, of type: {type(value)!r}"
     return InvalidDocument(message)
@@ -151,16 +164,7 @@ def _encode_bson_document(document, *, codec_options: CodecOptions):
     if BSON is None:
         value = _portable_value(document, codec_options)
         return value, None
-    representations = {
-        UuidRepresentation.UNSPECIFIED: DriverUuidRepresentation.UNSPECIFIED,
-        UuidRepresentation.STANDARD: DriverUuidRepresentation.STANDARD,
-        UuidRepresentation.PYTHON_LEGACY: DriverUuidRepresentation.PYTHON_LEGACY,
-        UuidRepresentation.JAVA_LEGACY: DriverUuidRepresentation.JAVA_LEGACY,
-        UuidRepresentation.CSHARP_LEGACY: DriverUuidRepresentation.CSHARP_LEGACY,
-    }
-    options = DriverCodecOptions(
-        uuid_representation=representations[codec_options.uuid_representation]
-    )
+    options = _DRIVER_CODEC_OPTIONS[codec_options.uuid_representation]
     raw = BSON.encode(_driver_value(document), codec_options=options)
     # SDK document decoding would canonicalize DBRef-shaped literals. The raw
     # reader retains field order and defers that interpretation to its owner.

@@ -1,0 +1,12 @@
+{
+  "status": "focally_verified_not_delivery_accepted",
+  "modes": 5,
+  "requests_per_mode": 2,
+  "additional_driver_option_constructions_after_import": 0,
+  "independent_oracle": "BSON.encode with native DriverCodecOptions; normalized raw bytes and size must match",
+  "focal_passed": 67,
+  "focal_subtests": 12,
+  "native_replay_passed": 99,
+  "temporal_attempts": 0,
+  "selection_note": "semantic_bson_uuid_policy selected zero; corrected to actual corpus bson_uuid_policy before replay"
+}

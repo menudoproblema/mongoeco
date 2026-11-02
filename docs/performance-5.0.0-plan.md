@@ -617,7 +617,8 @@ Se conserva `benchmarks/execution.json` preexistente, sin modificar.
 | Q00 | Implementado y comprobado focalmente | 28 tests del harness; el nuevo test falla en la base y pasa tras mover el índice. Pip check y CLI conformes, 310 archivos del wheel y 26 tareas/motor verificados. [Registro](evidence/mongoeco-5.0.0/q00-preflight.json), logs comprimidos q00-* en el mismo directorio. Preflight del artefacto B reservado a Q06 |
 | Q01 | Implementado y comprobado focalmente | 366 passed (300 casos seleccionados de replays BSON/respuestas 7/8/9, más propiedades y fronteras); Ruff y formato conformes. [Conteos](evidence/mongoeco-5.0.0/q01-counts.json): seis raíces nativas conservan tamaños y evitan seis llamadas al alias numérico; ninguna medición temporal. Logs q01-* en el mismo directorio |
 | Q02 | Implementado y comprobado focalmente | 30 tests unit/contexto y 234 replays verdes; lint ratchet conforme. [Conteos productivos](evidence/mongoeco-5.0.0/q02-counts.json): dos operaciones por engine, dos preparaciones raíz y veinte decisiones MQL. Los tests conservan preparación vacía/error perezosos, bindings, collation y relojes separados. Diff revisado, sin formatter ajeno; logs q02-* en el mismo directorio |
-| Q03–Q04 | Pendientes | Implementación y pruebas focales por bloque |
+| Q03 | Implementado y comprobado focalmente | 67 tests + 12 subtests y 99 replays UUID 7/8/9 verdes; lint conforme. [Conteos](evidence/mongoeco-5.0.0/q03-counts.json): cinco modalidades × dos requests, cero nuevas construcciones tras importar y bytes/tamaños equivalentes al SDK. Ruta sin SDK, rechazo UNSPECIFIED y raw BSON conservados; logs q03-* |
+| Q04 | Pendiente | Constructor único y reutilización textual elegible |
 | Q05 | Pendiente de decisión | Implementación acotada o diferido motivado |
 | Q06 | Pendiente | Artefacto final, gates globales y único intento temporal; cero intentos iniciados |
 
