@@ -2,7 +2,7 @@
 
 Estado: implementación autorizada en curso, 2 de noviembre de 2026.
 La aceptación de entrega y los tiempos se reservan para Q06.
-Este documento posee las decisiones propuestas para este incremento; la
+Este documento posee las decisiones y criterios vigentes para este incremento; la
 [preparación de release](release-5.0.0.md) conserva sus resultados históricos.
 Normas vigentes: [testing y compatibilidad](architecture/testing-and-compatibility.md)
 y [checklist de release](release-checklist.md).
@@ -31,7 +31,7 @@ Referencias inmutables:
 - Referencia temporal histórica v4.11.0: `bb0597c1b42d4228b547a8eec87ce704489bcb7b`.
 - `e4eb17cc`, `b93681b7`, `b83789bc` y `perf/f11-context-startup` permanecen congelados.
 
-La implementación futura usa rama propia. La base de coste será el candidato
+La implementación usa rama propia. La base de coste será el candidato
 actual correcto, no 4.11.0: aquella versión omitía trabajo contractual. No se
 reinicia F11 ni se sobrescriben sus intentos o la evidencia de preparación.
 
@@ -416,6 +416,29 @@ Seleccionar primero con collect-only los nodos complejos del archivo de replay;
 registrar selectores, número de casos y skips, evitando falsos verdes vacíos.
 No se copian como comandos los nombres de tests inexistentes de los informes.
 
+### Revisión del plan antes de Q06
+
+Esta revisión documental conserva los cierres focales Q00–Q04 y la disposición
+Q05; no vuelve a implementar bloques ni inicia builds, suites o mediciones.
+El runtime actual es b5d9e803, registrado después en d1241e31 sin cambios
+productivos. La identidad completa del futuro artefacto se fijará en R2;
+ninguno de estos commits acredita todavía la entrega Q06.
+
+Se mantiene una sola unidad de entrega y un solo intento temporal. No se añaden
+subgates, runners ni documentos: la tabla de ejecución conserva el estado y el
+directorio de evidencia existente recibe los resultados. Los controles focales
+acreditan trabajo eliminado; el contraste conjunto sólo acredita tiempos del
+conjunto, sin exigir un benchmark por commit. Q05 diferido no bloquea Q06 ni
+cuenta como ahorro comprobado.
+
+La ejecución restante es secuencial: fijar artefacto reproducible, completar los
+gates funcionales/consumidores R1–R6 aplicables, comprobar el preflight temporal,
+ejecutar el único intento y registrar su disposición antes de integrar. R6
+termina después de interpretar los tiempos. La duración de los gates funcionales
+no consume los 1.800 s de campaña; no se ejecutan en paralelo con ella. No hay
+promesa de que veinte procesos quepan en ese presupuesto: prevalece el límite
+total y el resto se declara no ejecutado, sin ampliar automáticamente el intento.
+
 ### Trabajo durante bloques
 
 Sólo pruebas focales y conteos deterministas tras el diff coherente. Para resolver
@@ -570,9 +593,38 @@ coste cero ni un porcentaje de mejora.
 `compare_reports` debe devolver cero diferencias de configuración/oráculo/resultado
 para comparaciones A/A y B/A. Comprobar además las 26 tareas esperadas y cero skips:
 la validación permite skips simétricos, que aquí no satisfacen la cobertura fijada.
+Para evitar comparaciones redundantes, en cada motor A0 es la referencia fija:
+validar A0 y comparar A1, B1, B2 y A2 con A0 conforme llegan. La igualdad de
+configuración y de oráculos/resultados con esa referencia cubre A/A y B/A sin
+comparar todos los pares. Cada informe debe acreditar además el inventario Q00
+exacto por workload, 26 tareas y cero skips; no basta contar 26 nombres en total.
+
+`compare_reports` no compara toda la metadata: conserva explícitamente
+`outcome_oracle`/`outcome_sha256` y los campos de configuración enumerados en
+`benchmarks/contracts.py`. Los contratos de candidatos, exactitud, fases y
+recursos se acreditan con las pruebas focales/globales exigidas y la revisión de
+metadata física; un comparador verde no los sustituye. Conservar la metadata
+íntegra, sin borrarla ni normalizarla para lograr equivalencia. No se amplía el
+comparador genérico para este incremento.
+
 Los hashes ANN no se convierten en prueba de recall. Las diferencias físicas de
 plan admitidas por Q04 requieren el test específico, schema conservado y metadata
 veraz; no se ignoran diferencias semánticas bajo esa excepción.
+
+Informar también el rango A/A de A0–A1 como diferencia absoluta y cociente
+cuando sea resoluble, sin convertirlo en un filtro de muestras o un gate de
+calibración adicional. No se exige que A/A esté dentro de un porcentaje. La
+separación por extremos es una descripción conservadora de estas observaciones,
+no una prueba estadística de causalidad ni de ausencia de regresión poblacional.
+
+Una parada por timeout/presupuesto produce «evaluación temporal incompleta»;
+una parada por equivalencia rota produce además un fallo funcional obligatorio.
+En ambos casos el intento está consumido, pero sus efectos de cierre son
+distintos. Sólo cabe aceptación por mantenimiento con coste inconcluyente en
+las condiciones que siguen: gates obligatorios comprobados y ninguna
+discrepancia abierta. No se anuncia cobertura temporal completa de los cuatro
+motores si faltan muestras, ni se usan muestras parciales para clasificarlas
+como mejora o empeoramiento con la regla de cinco observaciones.
 
 Una diferencia semántica no se reclasifica como ruido: tiene prioridad como fallo
 obligatorio. Un empeoramiento temporal observado sigue abierto hasta resolver la
