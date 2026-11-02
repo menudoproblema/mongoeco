@@ -3887,3 +3887,28 @@ orden ABBA y registros completos verificados. Identidad BSON/contadores de los
 de lanzamiento precomprobados. La campaña termina: no tercer intento ni más
 sondas. Se conserva el inconcluyente, sin rebajar el +5% ni heredar verdes.
 G4/G5 independientes siguen autorizados; G6 depende de la aceptación G3.
+
+Checkpoint de pausa solicitado por el owner: «Detente en el próximo commit».
+Se recoge la ejecución global ya iniciada, sin lanzar deep, matriz ni consumidores.
+Los seis procesos completos unittest/pytest terminan 0 sobre el wheel 176a9857.
+Unittest: 3684 tests por Python, tres skips previstos. Pytest: 64281 pasan/764 skips
+en 3.13 y 3.15; 64292 pasan/753 skips en 3.14; 14944 subtests por perfil.
+No hace falta composición ni repetición correctiva de estas suites.
+Cobertura instalada: 48288/48770 líneas = 99,0116875128%, 482 sin cubrir,
+287 archivos de site-packages y procedencia de imports comprobados.
+
+G4 conserva pendiente deep: las suites y cobertura no se renombran como gate
+integral aceptado. G5 sólo preparado: dependencias reales de doce perfiles y
+selección de 3587 nodos comprobadas, sin ejecutar la matriz. Ledger de snapshots
+ampliado con hashes de exporter/inputs; strict/engine typing se volverán a probar
+por el cambio en el cierre de imports SQLite. No se ejecutan consumidores ni
+controles funcionales adicionales después de la orden de pausa.
+
+Estado: 2/6 obligaciones aceptadas (G1/G2). Pendientes: G3 aceptación de coste
+con un caso inconcluyente y dos intentos agotados; G4 deep; G5 matriz/consumidores;
+G6 aceptación final dependiente de los anteriores. Para retomar, reutilizar estas
+seis suites y cobertura sin cambios causales, continuar deep/G5 con los comandos
+preparados y conservar el bloqueo G3 sin medir automáticamente. Producto b83789bc,
+ambos candidatos/wheels históricos, registros de sus campañas, main y rama anterior
+intactos. Evidencia b837-eval-pause-checkpoint y logs/coverage archivados; procesos
+propios de validación terminales. Esta pausa no concede cierre F11 ni publicación.
