@@ -1,9 +1,20 @@
 from __future__ import annotations
 
+import inspect
 import random
+import sqlite3
 import unittest
 
+from unittest.mock import patch
+
+import pytest
+
+from benchmarks.data.generator import generate_users
+from benchmarks.runners.workloads import _augment_search_documents
+
 from mongoeco import AsyncMongoClient, MongoClient, SearchIndexModel
+from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
+from mongoeco.core import search
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 
@@ -405,3 +416,139 @@ class SyncSearchPlanningEquivalenceTests(unittest.TestCase):
                     search_plan,
                     explanation["engine_plan"]["details"]["pipelinePlan"],
                 )
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_sqlite_residual_materialization_reuses_exact_document_entries(  # noqa: PLR0915 - cache lifecycle matrix
+    tmp_path, dynamic
+):
+
+    path = str(tmp_path / "materialization.sqlite")
+    docs = generate_users(1000)
+    _augment_search_documents(docs)
+    pipeline = [
+        {
+            "$search": {
+                "index": "by_text",
+                "compound": {
+                    "must": [
+                        {"text": {"query": "report 0", "path": ["title", "body"]}}
+                    ],
+                    "should": [
+                        {"exists": {"path": "title"}},
+                        {"wildcard": {"query": "*vector*", "path": "body"}},
+                        {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                    ],
+                    "minimumShouldMatch": 1,
+                },
+            }
+        },
+        {"$limit": 10},
+    ]
+    model = SearchIndexModel(
+        {
+            "mappings": {
+                "dynamic": dynamic,
+                "fields": {
+                    "title": {"type": "string"},
+                    "body": {"type": "string"},
+                    "kind": {"type": "token"},
+                    "score": {"type": "number"},
+                    "publishedAt": {"type": "date"},
+                },
+            }
+        },
+        name="by_text",
+    )
+    engine = SQLiteEngine(path)
+    with MongoClient(engine) as client:
+        collection = client.materialized.rows
+        collection.insert_many(docs)
+        collection.create_search_index(model)
+        content_visits = []
+        original = search.tokenize_classic_text
+
+        def counted(text):
+            if (
+                inspect.currentframe().f_back.f_code.co_name
+                == "materialized_search_document_from_entries"
+            ):
+                content_visits.append(text)
+            return original(text)
+
+        with patch.object(search, "tokenize_classic_text", counted):
+            cold = list(collection.aggregate(pipeline))
+            assert content_visits
+            content_visits.clear()
+            warm = list(collection.aggregate(pipeline))
+            assert not content_visits
+        assert cold == warm == list(aggregate_for_search_oracle(collection, pipeline))
+
+        backup_path = str(tmp_path / "snapshot.sqlite")
+        with sqlite3.connect(path) as source, sqlite3.connect(backup_path) as target:
+            source.backup(target)
+
+        # A different engine's version counter cannot invalidate this engine's bucket.
+        with MongoClient(SQLiteEngine(path)) as writer:
+            other = writer.materialized.rows
+            other.update_one(
+                {"_id": 0}, {"$set": {"title": "changed", "body": "unrelated"}}
+            )
+            other.delete_one({"_id": 1})
+            other.insert_one(
+                {"_id": 1001, "title": "Ada algorithms", "body": "vector report 0"}
+            )
+        changed = list(collection.aggregate(pipeline))
+        assert changed == list(aggregate_for_search_oracle(collection, pipeline))
+        assert all(row["_id"] not in (0, 1) for row in changed)
+        with patch.object(search, "tokenize_classic_text", counted):
+            content_visits.clear()
+            assert list(collection.aggregate(pipeline)) == changed
+            assert not content_visits
+
+        for title in (None, [], {}, "", {"nested": "alg"}, ["alg", None]):
+            collection.update_one({"_id": 1001}, {"$set": {"title": title}})
+            assert list(collection.aggregate(pipeline)) == list(
+                aggregate_for_search_oracle(collection, pipeline)
+            )
+        with client.start_session() as session:
+            for commit in (False, True):
+                session.start_transaction()
+                collection.update_one(
+                    {"_id": 1001},
+                    {"$set": {"body": "report 0 transaction"}},
+                    session=session,
+                )
+                with patch.object(
+                    AsyncAggregationCursor, "_force_full_search_execution", new=True
+                ):
+                    expected = list(collection.aggregate(pipeline, session=session))
+                with patch(
+                    "mongoeco.engines._sqlite_search_runtime.materialize_search_document",
+                    wraps=search.materialize_search_document,
+                ) as fallback:
+                    assert (
+                        list(collection.aggregate(pipeline, session=session))
+                        == expected
+                    )
+                    assert fallback.call_count > 0
+                if commit:
+                    session.commit_transaction()
+                else:
+                    session.abort_transaction()
+                assert list(collection.aggregate(pipeline)) == list(
+                    aggregate_for_search_oracle(collection, pipeline)
+                )
+        collection.drop_search_index("by_text")
+        collection.create_search_index(model)
+        assert list(collection.aggregate(pipeline)) == list(
+            aggregate_for_search_oracle(collection, pipeline)
+        )
+    with MongoClient(SQLiteEngine(path)) as reopened:
+        collection = reopened.materialized.rows
+        assert list(collection.aggregate(pipeline)) == list(
+            aggregate_for_search_oracle(collection, pipeline)
+        )
+
+    with MongoClient(SQLiteEngine(backup_path)) as restored:
+        assert list(restored.materialized.rows.aggregate(pipeline)) == cold

@@ -298,8 +298,9 @@ commits sólo si la extracción es útil para revisar o revertir de forma indepe
 1. Una función pura en `core/search.py` construye `MaterializedSearchDocument`
    desde entradas. La materialización desde documento y el loader SQLite la
    reutilizan; retirar el constructor duplicado del engine.
-2. Usar el loader/caché existente también en el fallback textual **elegible**.
-   Comprobar que las entradas representan el mismo documento y definición bajo
+2. Reutilizar el bucket existente también en el fallback textual **elegible**.
+   El loader SQLite sigue usando el constructor común. Comprobar que las entradas
+   representan el mismo documento y definición bajo
    la misma vista. Validar nombre físico, versión del backend, cambios de
    definición/recreación del índice, sesión y snapshot. Si esa identidad no
    basta, conservar evaluación documental en ese dominio; no ampliar la caché
@@ -618,7 +619,7 @@ Se conserva `benchmarks/execution.json` preexistente, sin modificar.
 | Q01 | Implementado y comprobado focalmente | 366 passed (300 casos seleccionados de replays BSON/respuestas 7/8/9, más propiedades y fronteras); Ruff y formato conformes. [Conteos](evidence/mongoeco-5.0.0/q01-counts.json): seis raíces nativas conservan tamaños y evitan seis llamadas al alias numérico; ninguna medición temporal. Logs q01-* en el mismo directorio |
 | Q02 | Implementado y comprobado focalmente | 30 tests unit/contexto y 234 replays verdes; lint ratchet conforme. [Conteos productivos](evidence/mongoeco-5.0.0/q02-counts.json): dos operaciones por engine, dos preparaciones raíz y veinte decisiones MQL. Los tests conservan preparación vacía/error perezosos, bindings, collation y relojes separados. Diff revisado, sin formatter ajeno; logs q02-* en el mismo directorio |
 | Q03 | Implementado y comprobado focalmente | 67 tests + 12 subtests y 99 replays UUID 7/8/9 verdes; lint conforme. [Conteos](evidence/mongoeco-5.0.0/q03-counts.json): cinco modalidades × dos requests, cero nuevas construcciones tras importar y bytes/tamaños equivalentes al SDK. Ruta sin SDK, rechazo UNSPECIFIED y raw BSON conservados; logs q03-* |
-| Q04 | Pendiente | Constructor único y reutilización textual elegible |
+| Q04 | Implementado y comprobado focalmente | [Registro](evidence/mongoeco-5.0.0/q04-counts.json): 285 casos únicos comprobados en tandas focales y 16 comparaciones del constructor congelado. Cero retokenizaciones calientes sobre 1.000 documentos con mappings explicit/dynamic; cambios externos, valores mixtos, commit/rollback, índice, reopen/backup restore conformes. Los doce mocks retirados se corrigieron en el addendum Q02; los otros 144 casos de esa tanda se reutilizan. Logs q04-* |
 | Q05 | Pendiente de decisión | Implementación acotada o diferido motivado |
 | Q06 | Pendiente | Artefacto final, gates globales y único intento temporal; cero intentos iniciados |
 
@@ -635,3 +636,20 @@ observación a la autoridad compartida; siguen exigiendo una preparación raíz
 por residual, reutilización con fallback exacto y los IDs del golden nativo.
 Los doce casos pasan (q02-fallback.txt.gz). No hay alias de compatibilidad ni
 cambio productivo adicional por esta adaptación de test.
+
+Q04, simplificación aplicada: la versión local del backend no prueba ausencia de
+escritores externos. Sin añadir otra clave, caché ni observer, el bucket existente
+se consulta y sus entradas se comparan con la secuencia textual exacta extraída
+del documento actual y su definición. Sólo si coinciden se reutilizan sus hechos
+textuales; en caso contrario se reconstruyen con el constructor común. Se evita
+retokenización, no la extracción de paths ni la lectura necesaria de documentos.
+El loader FTS también usa ese constructor, sin cambiar sus otros dominios.
+
+La comparación incluye orden/contenido de entradas, por lo que protege cambios
+externos y de mappings sin confiar sólo en el contador local. No representa
+presencia ni usa igualdad BSON relajada. Sesiones, transacciones, vistas no
+acreditadas y backend ausente conservan el fallback. La función local no se
+construye en la rama vectorial. Lint ratchet conforme; diff revisado sin cambios
+funcionales de candidatos, scores, top-k o protocolos. No hay mediciones temporales.
+La sonda única Q04 (16 comparaciones de campos con el constructor congelado)
+usa GC activo y límite 60 s; fuente y resultado se conservan en q04-constructor-*.

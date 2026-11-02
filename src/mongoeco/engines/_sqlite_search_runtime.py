@@ -1784,6 +1784,7 @@ def execute_sqlite_search_query(
         definition,
         physical_name,
     )
+
     if isinstance(query, SearchVectorQuery):
         residuals = (
             predicate(query.filter_spec),
@@ -1949,6 +1950,31 @@ def execute_sqlite_search_query(
             for score, document in exact_hits[:effective_limit]
         ]
 
+    def prepare_text_document(storage_key, document):
+        # The bucket's local version alone cannot observe a different writer.
+        # Validate exact inputs against this document before reusing text facts.
+        if (
+            operation_context is None
+            or operation_context.session is not None
+            or conn.in_transaction
+            or resolved_physical_name is None
+        ):
+            return materialize_search_document(document, definition)
+        entries = tuple(iter_searchable_text_entries(document, definition))
+        bucket = _materialized_search_entry_cache_bucket(
+            engine,
+            db_name=db_name,
+            coll_name=coll_name,
+            physical_name=resolved_physical_name,
+        )
+        cached = bucket.get(storage_key)
+        if cached is not None and cached[0] == entries:
+            return cached[1]
+        prepared = _materialized_search_document_from_entries(entries)
+        bucket[storage_key] = (entries, prepared)
+        return prepared
+
+
     decision = decide_sqlite_search_backend(
         query,
         physical_name=resolved_physical_name,
@@ -2083,9 +2109,9 @@ def execute_sqlite_search_query(
                     (
                         document,
                         definition,
-                        materialize_search_document(document, definition),
+                        prepare_text_document(storage_key, document),
                     )
-                    for _storage_key, document in candidate_documents
+                    for storage_key, document in candidate_documents
                     if downstream_filter_spec is None or downstream_matches(document)
                 ]
                 sorted_documents = _sort_search_documents_for_query(
@@ -2107,9 +2133,9 @@ def execute_sqlite_search_query(
                 (
                     document,
                     definition,
-                    materialize_search_document(document, definition),
+                    prepare_text_document(storage_key, document),
                 )
-                for _storage_key, document in candidate_documents
+                for storage_key, document in candidate_documents
                 if downstream_filter_spec is None or downstream_matches(document)
             ]
             sorted_documents = _sort_search_documents_for_query(
@@ -2129,12 +2155,11 @@ def execute_sqlite_search_query(
         )
         filtered_documents = [
             (document, definition, materialized_search_document)
-            for _storage_key, document in candidate_documents
+            for storage_key, document in candidate_documents
             if downstream_filter_spec is None or downstream_matches(document)
             if (
-                materialized_search_document := materialize_search_document(
-                    document,
-                    definition,
+                materialized_search_document := prepare_text_document(
+                    storage_key, document
                 )
             )
             is not None

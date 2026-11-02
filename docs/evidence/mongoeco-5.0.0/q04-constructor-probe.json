@@ -1,0 +1,106 @@
+{
+  "wheel_sha256": "2ed1bd93385d759d7a7a61ebc7409ab74c544ba7d8cf58590f56405325974d2f",
+  "frozen_constructor_sha256": "452133cc92c8623b9ff6145a9bedf25f65a42e063ab32ae51cd9f7da4ba9e0c6",
+  "cases": [
+    {
+      "dynamic": false,
+      "case": 0,
+      "entry_count": 0,
+      "all_fields_equal": true
+    },
+    {
+      "dynamic": false,
+      "case": 1,
+      "entry_count": 0,
+      "all_fields_equal": true
+    },
+    {
+      "dynamic": false,
+      "case": 2,
+      "entry_count": 1,
+      "all_fields_equal": true
+    },
+    {
+      "dynamic": false,
+      "case": 3,
+      "entry_count": 2,
+      "all_fields_equal": true
+    },
+    {
+      "dynamic": false,
+      "case": 4,
+      "entry_count": 2,
+      "all_fields_equal": true
+    },
+    {
+      "dynamic": false,
+      "case": 5,
+      "entry_count": 0,
+      "all_fields_equal": true
+    },
+    {
+      "dynamic": false,
+      "case": 6,
+      "entry_count": 2,
+      "all_fields_equal": true
+    },
+    {
+      "dynamic": false,
+      "case": 7,
+      "entry_count": 1,
+      "all_fields_equal": true
+    },
+    {
+      "dynamic": true,
+      "case": 0,
+      "entry_count": 0,
+      "all_fields_equal": true
+    },
+    {
+      "dynamic": true,
+      "case": 1,
+      "entry_count": 0,
+      "all_fields_equal": true
+    },
+    {
+      "dynamic": true,
+      "case": 2,
+      "entry_count": 2,
+      "all_fields_equal": true
+    },
+    {
+      "dynamic": true,
+      "case": 3,
+      "entry_count": 4,
+      "all_fields_equal": true
+    },
+    {
+      "dynamic": true,
+      "case": 4,
+      "entry_count": 5,
+      "all_fields_equal": true
+    },
+    {
+      "dynamic": true,
+      "case": 5,
+      "entry_count": 2,
+      "all_fields_equal": true
+    },
+    {
+      "dynamic": true,
+      "case": 6,
+      "entry_count": 4,
+      "all_fields_equal": true
+    },
+    {
+      "dynamic": true,
+      "case": 7,
+      "entry_count": 3,
+      "all_fields_equal": true
+    }
+  ],
+  "gc_enabled": true,
+  "limit_seconds": 60,
+  "temporal_measurements": 0,
+  "method": "Original frozen constructor body executed unchanged with unchanged value/parser dependencies; compares every dataclass field"
+}

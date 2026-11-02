@@ -2,6 +2,8 @@ import datetime
 import unittest
 import uuid
 
+from collections import Counter
+
 from dataclasses import dataclass
 from unittest.mock import patch
 
@@ -8208,3 +8210,21 @@ class SearchCoreTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_materialized_entry_constructor_retains_literal_text_facts():
+    entries = (("title", "A a"), ("body", "B"))
+    expected = search_module.MaterializedSearchDocument(
+        entries=entries,
+        searchable_paths=frozenset({"title", "body"}),
+        lowered_values=("a a", "b"),
+        lowered_values_by_path={"title": ("a a",), "body": ("b",)},
+        token_counter_by_path={"title": Counter({"a": 2}), "body": Counter({"b": 1})},
+        token_counter=Counter({"a": 2, "b": 1}),
+        token_sets_by_path={"title": frozenset({"a"}), "body": frozenset({"b"})},
+        token_set=frozenset({"a", "b"}),
+    )
+    actual = search_module.materialized_search_document_from_entries(entries)
+    from_list = search_module.materialized_search_document_from_entries(list(entries))
+    assert actual == expected
+    assert from_list == expected

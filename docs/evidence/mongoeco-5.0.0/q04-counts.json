@@ -1,0 +1,35 @@
+{
+  "status": "focally_verified_not_delivery_accepted",
+  "unique_focal_cases": 285,
+  "evidence_groups": {
+    "initial_unit_passed": 127,
+    "expanded_passed": 144,
+    "expanded_old_mock_failures": 12,
+    "old_mock_followup_passed": 12,
+    "cache_lifecycle_cases": 2,
+    "final_cache_and_literal_passed": 3
+  },
+  "source_comparison_cases": 16,
+  "cache_document_count": 1000,
+  "mappings": [
+    "explicit",
+    "dynamic"
+  ],
+  "hot_content_tokenizations": 0,
+  "external_writer_changes": [
+    "update",
+    "delete",
+    "insert"
+  ],
+  "lifecycle": [
+    "local mixed/null/empty updates",
+    "session commit",
+    "session rollback",
+    "index recreation",
+    "reopen",
+    "backup restore"
+  ],
+  "excluded_domains": "no context / session / transaction / no physical backend: document fallback",
+  "identity_proof": "existing versioned bucket plus exact ordered textual entries re-extracted from the current decoded document; no added key or state",
+  "temporal_attempts": 0
+}

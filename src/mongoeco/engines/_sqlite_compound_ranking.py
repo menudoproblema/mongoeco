@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from collections import Counter
-from copy import deepcopy
 import heapq
 import sqlite3
+
+from collections import Counter
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -16,10 +17,10 @@ from mongoeco.core.search import (
     SearchNearQuery,
     SearchQuery,
     SearchRangeQuery,
+    materialized_search_document_from_entries,
     search_clause_ranking,
     search_compound_ranking,
     search_near_distance,
-    tokenize_classic_text,
 )
 from mongoeco.engines._sqlite_compound_prefilter import compound_entry_ranking_supported
 from mongoeco.types import Document, SearchIndexDefinition
@@ -551,39 +552,6 @@ def materialized_search_entry_cache_bucket(
 ) -> dict[str, tuple[tuple[tuple[str, str], ...], MaterializedSearchDocument]]:
     cache_key = (db_name, coll_name, physical_name, engine._search_backend_version(db_name, coll_name))
     return engine._materialized_search_entry_cache.setdefault(cache_key, {})
-
-
-def materialized_search_document_from_entries(
-    entries: list[tuple[str, str]] | tuple[tuple[str, str], ...],
-) -> MaterializedSearchDocument:
-    searchable_paths: set[str] = set()
-    lowered_values: list[str] = []
-    lowered_values_by_path: dict[str, list[str]] = {}
-    token_counter_by_path: dict[str, Counter[str]] = {}
-    token_counter: Counter[str] = Counter()
-    token_sets_by_path: dict[str, set[str]] = {}
-    token_set: set[str] = set()
-    for field_path, value in entries:
-        searchable_paths.add(field_path)
-        lowered = value.lower()
-        lowered_values.append(lowered)
-        lowered_values_by_path.setdefault(field_path, []).append(lowered)
-        tokens_counter = Counter(tokenize_classic_text(value))
-        tokens = set(tokens_counter)
-        token_counter.update(tokens_counter)
-        token_counter_by_path.setdefault(field_path, Counter()).update(tokens_counter)
-        token_set.update(tokens)
-        token_sets_by_path.setdefault(field_path, set()).update(tokens)
-    return MaterializedSearchDocument(
-        entries=tuple(entries),
-        searchable_paths=frozenset(searchable_paths),
-        lowered_values=tuple(lowered_values),
-        lowered_values_by_path={field_path: tuple(values) for field_path, values in lowered_values_by_path.items()},
-        token_counter_by_path=token_counter_by_path,
-        token_counter=token_counter,
-        token_sets_by_path={field_path: frozenset(values) for field_path, values in token_sets_by_path.items()},
-        token_set=frozenset(token_set),
-    )
 
 
 def _document_tie_break_key(document: Document) -> str:

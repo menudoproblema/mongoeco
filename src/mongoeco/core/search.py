@@ -2137,7 +2137,16 @@ def materialize_search_document(
     document: Document,
     definition: SearchIndexDefinition,
 ) -> MaterializedSearchDocument:
-    entries = tuple(iter_searchable_text_entries(document, definition))
+    return materialized_search_document_from_entries(
+        tuple(iter_searchable_text_entries(document, definition))
+    )
+
+
+def materialized_search_document_from_entries(
+    entries: list[tuple[str, str]] | tuple[tuple[str, str], ...],
+) -> MaterializedSearchDocument:
+    """Derive textual facts once from an exact ordered sequence of entries."""
+    entries = tuple(entries)
     searchable_paths: set[str] = set()
     lowered_values: list[str] = []
     lowered_values_by_path: dict[str, list[str]] = {}
