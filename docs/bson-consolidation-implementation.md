@@ -3635,3 +3635,28 @@ Preflight de integración completado: tres Python, doce perfiles pytest/SDK,
 selección de 3.587 nodos y perfil realmente sin bson/pymongo. Un assert del
 preflight inicial situaba la ruta antes de -q; se corrigió la selección antes
 de lanzar pruebas, sin ejecuciones costosas fallidas ni cambios de producto.
+
+G4 aceptado por ejecución integral y corrección focal del observador, sin
+cambiar payload b93681b7 ni artefactos/coste. Unittest termina 0 en los tres
+Python. Las tres suites pytest completas conservan un único rojo idéntico:
+test_cancelled_snapshot_releases_lazy_source_frame leía iterator._source antes
+de la apertura diferida aprobada. El fallo es AttributeError sobre None, no
+una fuga ni una nueva regresión productiva. No se ocultan esas salidas.
+
+Se sustituye esa observación privada obsoleta por dos fases explícitas: resolver
+suspendido antes de abrir (inyectado, ya que Memory resuelve metadata sin await)
+y fuente física abierta bloqueada por el lock real. Barreras deterministas,
+sin depender de sleep(0), comprueban cero aperturas antes de resolver y ag_frame
+liberado después de cancelar, snapshot cerrado/sin tarea pendiente, owner y
+cola vacíos, cero snapshots activos. Las primeras dos expectativas del test
+nuevo se corrigen: metadata Memory no espera el lock y una tarea de cierre ya
+terminada es válida; no se cambian contratos productivos para satisfacerlas.
+
+La corrección focal del archivo completo pasa 21 pruebas por Python 3.13/3.14/
+3.15. La cobertura 3.14 se compone con --cov-append sobre el mismo artefacto:
+48.269/48.751 líneas, 99,0113023323%, 482 ausentes, 287 módulos. El perfil deep
+pasa. Se acepta la composición explícita de la suite completa con el único
+observador reemplazado; no se presenta ningún proceso global originalmente
+rojo como terminal 0. Las otras 64.255/64.266/64.255 pruebas aprobadas y sus
+skips/subtests mantienen inputs idénticos y se reutilizan; no hay rerun global
+por una edición limitada a tests. G1/G2/G4: 3/6 cerradas; G3 sigue inconcluyente.

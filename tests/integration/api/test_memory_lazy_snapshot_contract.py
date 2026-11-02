@@ -176,23 +176,59 @@ def test_snapshot_diagnostics_account_for_retained_versions_until_close():
     asyncio.run(exercise())
 
 
-def test_cancelled_snapshot_releases_lazy_source_frame():
+@pytest.mark.parametrize("phase", ["before_open", "after_open"])
+def test_cancelled_snapshot_releases_lazy_source_frame(phase):
     async def exercise():
         engine = MemoryEngine()
         async with AsyncMongoClient(engine) as client:
             collection = client.test.records
             await collection.insert_one({"_id": 1})
-            lock = engine._get_lock("test", "records")
-            async with lock:
-                cursor = collection.find({})
-                iterator = aiter(cursor)
-                source = iterator._source
-                task = asyncio.create_task(anext(iterator))
-                await asyncio.sleep(0)
-                task.cancel()
-                with pytest.raises(asyncio.CancelledError):
-                    await task
-            assert source.ag_frame is None
+            cursor = collection.find({})
+            resolving, opened = asyncio.Event(), asyncio.Event()
+            snapshots = []
+            resolve = cursor._resolve_operation_collation
+            open_source = cursor._open_read_source
+
+            async def observe_resolution():
+                resolving.set()
+                if phase == "before_open":
+                    # Memory metadata is immediate; model a suspended resolver.
+                    await asyncio.Future()
+                await resolve()
+
+            def observe_open(**options):
+                snapshot = open_source(**options)
+                snapshots.append(snapshot)
+                opened.set()
+                return snapshot
+
+            with (
+                patch.object(
+                    cursor, "_resolve_operation_collation", observe_resolution
+                ),
+                patch.object(cursor, "_open_read_source", observe_open),
+            ):
+                lock = engine._get_lock("test", "records")
+                async with lock:
+                    iterator = aiter(cursor)
+                    assert iterator._source is None
+                    task = asyncio.create_task(anext(iterator))
+                    barrier = resolving if phase == "before_open" else opened
+                    await asyncio.wait_for(barrier.wait(), 1)
+                    task.cancel()
+                    with pytest.raises(asyncio.CancelledError):
+                        await task
+            if phase == "before_open":
+                assert snapshots == []
+            else:
+                assert len(snapshots) == 1
+                assert snapshots[0]._source.ag_frame is None
+                assert snapshots[0].closed
+                close_task = snapshots[0]._close_task
+                assert close_task is None or close_task.done()
+            assert iterator._source is None
+            assert iterator._source_owner is None
+            assert not cursor._retired_sources
             assert (
                 engine._runtime_diagnostics_info()["mvcc"]["activeReadSnapshots"] == 0
             )
