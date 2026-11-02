@@ -3912,3 +3912,46 @@ preparados y conservar el bloqueo G3 sin medir automáticamente. Producto b83789
 ambos candidatos/wheels históricos, registros de sus campañas, main y rama anterior
 intactos. Evidencia b837-eval-pause-checkpoint y logs/coverage archivados; procesos
 propios de validación terminales. Esta pausa no concede cierre F11 ni publicación.
+
+### Revisión independiente de las propuestas de salida F11
+
+Se contrastan los tres informes adjuntos contra ef578283, datos crudos, código,
+artefactos y fuentes primarias. Plan refinado en «Revisión de los tres informes»;
+no se reanuda la implementación pausada ni se ejecuta coste, builds o globales.
+Los 88 intervalos/clasificaciones se reproducen; 43/0/1 se conserva. Dispersión
+mediana 0,02659 frente a 0,01632/0,01478 históricas. Correlación del pendiente
+con los otros 39 controles 0,92671 y sd residual 0,01273: descripción, no corrección
+ni prueba de mecanismo causal. No se declara inexistencia de sobrecoste por medias
+ni se identifica una carga externa concreta a partir de covariación/mtime.
+
+Se cubre el hueco de atribución del control exacto base→candidato: una sonda
+pública aggregate-sort/to_list(1)/close con codec standard, 200 lecturas totales,
+12,698536 s, GC activo y artefactos instalados 2fa637f6/b83789bc. Cada lado:
+99 lecturas perfiladas, 5049 fetch calls, 9999 materializaciones públicas
+(101 por lectura), 19800 decodificaciones JSON de filas (200 por lectura),
+396 llamadas/reanudaciones prepare_pipeline y 31185 iteraciones event loop.
+Mismo BSON; cero recolecciones cíclicas en este recorrido aislado. No tiene los
+warmups de los 35 controles anteriores del worker normativo ni prueba la causa
+histórica del jitter. La CPU perfilada 5703,225/5696,999 ms no acepta coste.
+Ambas revisiones instaladas (287 módulos cada una) coinciden con Git/manifests.
+Workers normativos, registros de las tres campañas y artefactos congelados intactos.
+
+Se rechaza un nuevo test al 97,5% sin pagar miradas previas y el pooling con
+crítico arbitrario. Bajo normalidad iid del protocolo, integración analítica con
+sumas inferiores prueba P(E3 intersección E6)>0,0053; por tanto la unión antigua
+<0,0447 deja alfa 0,005 para una sola prueba nueva independiente. Simulación
+independiente de cuatro millones de réplicas: unión de tres oportunidades 0,04944;
+no sustituye la cota. Propuesta seleccionada: seis ABBA nuevos con worker de
+consumo intacto, crítico 4,033, sólo datos nuevos para el pendiente, 43 verdes
+conservados, una decisión final y máximo 40 min (total máximo 87,8 min). Requiere
+autorización de la enmienda antes de medir; no reinicia el contador 2/2. No promete
+normalidad ni potencia en la máquina; escenarios simulados de aceptación 0,15/0,59
+para sigma 0,034/0,018 muestran el límite de esta alternativa conservadora.
+
+Evidencia b837-report-review.* y b837-exact-attribution-* archivada en la carpeta
+existente. Producto y tests sin cambios, no se crean runners ni documentos nuevos.
+G1/G2 siguen aceptados (2/6); G3 inconcluyente; suites/cobertura G4 conservadas y
+deep pendiente; G5 preparado, G6 pendiente. No se cierran obligaciones sin prueba.
+La tabla histórica aportada también se corrige: e4eb tenía 9 consumo SQLite,
+2 vectoriales y 1 Memory inconcluyentes; los 14 inconcluyentes de b936 están
+aceptados en b837, cuyo único pendiente procede de un caso antes aceptado.

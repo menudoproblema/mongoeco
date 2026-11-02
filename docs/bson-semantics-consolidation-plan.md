@@ -2534,6 +2534,151 @@ Estado inicial: 0/6 obligaciones de evaluación aceptadas para este artefacto;
 preparación del plan y sondas/focales sí comprobadas. Siguiente gate al autorizar
 la ejecución: G1, seguido de G2; ningún gate se presenta como ya ejecutado aquí.
 
+#### Revisión de los tres informes: salida acotada del inconcluyente b83789bc
+
+Disposición: análisis y preparación solicitados por el owner tras ef578283.
+Se selecciona la continuación confirmatoria con datos nuevos descrita abajo,
+como enmienda propuesta para ejecutar después de su autorización. No se inicia
+otra campaña aquí, no se reanuda automáticamente la implementación pausada ni
+se reinterpretan como verdes los resultados anteriores. Presupuesto productivo
++5%, payload b83789bc/wheel 176a9857, base 2fa637f6, cierres previos y exclusión
+de parte II permanecen intactos. Los dos intentos originales siguen agotados.
+
+**Contraste y decisión sobre las ideas de los informes**
+
+| Idea agrupada | Resultado del contraste | Decisión |
+| --- | --- | --- |
+| Fallo aritmético del gate o de identidad | Los 88 intervalos/clasificaciones se reproducen; 287 módulos por lado coinciden con Git/instalación. El pendiente conserva razón 1,01834, cota 1,05521. | No corregir workers ni artefactos. Mantener G3 inconcluyente. |
+| «No hay sobrecoste real», por media <5% o menor CPU entre campañas | No se deduce de esas observaciones; cambian las sesiones y la base medida. | No declarar ausencia de coste ni introducir una optimización especulativa. |
+| Ruido compartido y carga externa | La dispersión mediana pasa de 0,0163/0,0148 a 0,0266; correlación del pendiente con los otros 39 controles 0,9267. Explica covariación, no identifica temperatura, frecuencia, scheduler o carga causante. | Conservar datos crudos; no sustraer modo común ni descartar bloques. Tratar mecanismo externo como hipótesis. |
+| Prefetch, codec y GC | Hay 101 documentos públicos por lectura, no uno; ambos lados leen 200 filas. Ninguna recolección cíclica en la sonda exacta. | No convertir volumen lógico de strings en bytes de basura cíclica ni atribuir la varianza histórica al GC. No modificar batching. |
+| Sonda exacta base→candidato | Ejecutada: 200 lecturas/12,698536 s, GC activo, artefactos instalados, mismo BSON y contadores seleccionados. | Reutilizarla; no repetir atribución antes de continuar. No descubre un defecto productivo removible. |
+| Otro test nuevo al 97,5% basta gracias a intersección-unión | Confunde la intersección de controles con repetir decisiones sobre el mismo control. Simulación en frontera eleva falsa aceptación a ≈0,069. | Rechazar esta regla y sus promesas de estabilización/potencia. |
+| Pooling 6+6 con t elegido entre 2,49 y 2,85 | 2,49 puede superar 0,05 incluso bajo normalidad iid; 2,85 tiene apoyo por simulación, no una cota demostrada para todos los escenarios reclamados. Mezclar sesiones exige justificar varianza común. | No adoptar pooling ni un calibrador permanente. Reservarlo como alternativa con decisión y prueba propias, fuera de esta salida. |
+| Datos nuevos con alfa residual acotado | Se demuestra una reserva conservadora de 0,005 bajo el modelo del protocolo, sin igualar la varianza de la sesión vieja y la nueva. | Adoptar esta alternativa, con seis bloques nuevos y una sola decisión final. |
+| Repetir todo o medir en otro hardware | No se autoriza como retry automático; tampoco conserva automáticamente los 43 verdes ni el presupuesto de error al ofrecer más oportunidades. | No usar ahora. Sólo nueva disposición si esta salida no se autoriza o no decide. |
+
+También se corrige la tabla histórica del primer informe: los doce inconcluyentes
+de e4eb17cc eran nueve de consumo SQLite, dos vectoriales y uno Memory, no doce
+de SQLite. Los catorce inconcluyentes de b93681b7 están aceptados en b83789bc;
+el único pendiente actual estaba aceptado en b93681b7. No son «13 de 14 resueltos».
+Esto es historia descriptiva, nunca transferencia de aceptación entre payloads.
+
+Los informes fueron escritos antes del checkpoint ef578283: sus referencias a
+G4 todavía ejecutándose son históricas. Hoy hay seis procesos completos verdes
+y cobertura instalada 48288/48770 = 99,0116875128%; sólo deep falta en G4.
+G5 tiene perfiles/selección prevalidados, no matriz/consumidores ejecutados.
+Ni la resolución de coste ni esta revisión aceptan esos gates pendientes.
+
+**Garantía estadística de la alternativa elegida**
+
+La intersección-unión no exige dividir alfa entre 44 para aceptar que todos
+cumplen, pero sí exige controlar el procedimiento completo de cada control,
+incluidas miradas adicionales. Se conserva un error de falsa aceptación <=0,05
+por procedimiento, condicional al modelo ya usado por F11; no se promete
+cobertura simultánea de 44 intervalos ni normalidad/independencia demostradas
+por seis observaciones. Referencia: Berger y Hsu, Statistical Science 1996,
+[registro de los autores](https://asu.elsevierpure.com/en/publications/bioequivalence-trials-intersectiounion-tests-and-equivalence-conf/).
+Cambiar un diseño después de observar datos exige controlar su error, no sólo
+preinscribir el cambio antes de la siguiente medición; véase
+[Müller y Schäfer 2004](https://doi.org/10.1002/sim.1852).
+
+Sea E3/E6 el evento de falsa aceptación en las miradas de tres/seis bloques,
+con críticos 4,303/2,571, para un control en la frontera log(1,05).
+Bajo bloques normales iid de la campaña original, cada marginal <=0,025.
+Su intersección tiene probabilidad >0,0053: por tanto
+P(E3 unión E6) <0,0447. Esta envolvente también cubre el stop global del runner.
+No se estima el alfa a partir de la varianza observada del control pendiente.
+
+Derivación reproducible de la cota: separar los seis normales estandarizados
+en dos triples. Sus medias escaladas Z1/Z2 son normales estándar independientes;
+sus sumas residuales U/V son chi-cuadrado(2) independientes. En coordenadas
+Z1=r cos(theta), Z2=r sin(theta), definir a=4,303, b=2,571,
+phi=theta-pi/4, h=5 cos(phi)^2/b^2-sin(phi)^2,
+q=2 cos(theta)^2/a^2 y m=min(q,h). Para h>0, integrar U/V y r da
+
+P(E3 intersección E6) = integral [m/(1+m)-m/(1+h)^2] dtheta/(2 pi),
+
+en theta=pi/4 +/- atan(sqrt(5)/b). El integrando crece con m y h cuando
+0<=m<=h. Acotar q por el extremo derecho de cada subintervalo y h por el
+extremo más distante de pi/4 produce sumas inferiores: 0,0053693 con 1000
+subintervalos, 0,0053810 con 10000. Se resta margen numérico en cada cota;
+se usa sólo la cota holgada >0,0053, no un cuantil ajustado por Monte Carlo.
+Código/resultados conservados en b837-report-review.py/json.gz. Simulación
+independiente de cuatro millones de réplicas respalda el cálculo, pero no es
+la justificación de nivel ni una prueba del comportamiento de la máquina.
+
+Una única prueba nueva con alfa <=0,005 da, por unión de eventos,
+P(falsa aceptación antigua o nueva) <0,0447+0,005 <0,05.
+La prueba futura debe ser de nivel 0,005 condicional a la información antigua:
+bloques nuevos independientes de ella, mismo parámetro objetivo y tamaño/regla
+fijos antes de medir. Puede tener otra varianza que la campaña antigua, sin
+mezclar ambas varianzas. Dentro de cada etapa rigen normalidad iid/independencia;
+no se afirma validez uniforme con dependencia, deriva o colas arbitrarias.
+La selección del único pendiente no elimina este requisito ni añade alfa;
+los otros 43 no reciben oportunidades nuevas de aceptación.
+
+**Ejecución propuesta: una etapa final de G3, no un reinicio**
+
+- Primero, al reanudar la ejecución, completar deep y G5 con el artefacto actual.
+  Reutilizar las seis suites/cobertura ya aceptadas y las preselecciones válidas;
+  no lanzar globales nuevos ni recapturar oráculos por esta revisión documental.
+  Ninguna enmienda de coste dispensa G4/G5/G6. Si aparece una regresión, resolver
+  su causa e identificar invalidaciones antes de medir otro payload.
+- Sólo después de autorización explícita de esta enmienda: congelar antes del
+  lanzamiento hashes A/B, intérprete/dependencias, worker y reglas que siguen.
+  G1/G2 y los 43 controles aceptados de look6 siguen válidos para el mismo payload,
+  hardware y configuración; otro hardware o cambio material requiere otra decisión.
+- Un único intento adicional explícito, seis bloques ABBA nuevos (24 invocaciones)
+  del worker de consumo existente, sin tocar sus bytes, orden, calentamientos,
+  500 repeticiones, relojes ni GC. Se ejecutan y archivan sus 40 controles;
+  sólo se decide SQLiteEngine-standard-aggregate-first-page. Los otros 39 son
+  diagnóstico/fidelidad, no nuevas decisiones; los cuatro vectoriales ya aceptados
+  no requieren ejecutar otra vez el worker de búsqueda. Fallos de equivalencia
+  en cualquier salida ejecutada son fallos duros, no se ignoran por ser diagnóstica.
+- Python 3.14.5, GC activo (2000,10,10), PYTHONHASHSEED=0 y taskpolicy -a;
+  mismos wheels instalados, codecs/datos y APIs. Sin cargas propias concurrentes.
+  Evitar carga intensa ajena conocida al iniciar, sin exigir una reserva de
+  60–90 minutos ni prometer fijación de núcleos. Si se observa interferencia que
+  invalida supuestos, conservar todos los bloques y no aceptar; nunca filtrarlos.
+- Tope de 40 minutos de pared desde el primer lanzamiento; preparación y checks
+  sin ejecutar lecturas de benchmark antes del reloj. Estimación histórica:
+  2024 s (33,7 min). Sumado a 2866 s ya gastados, el máximo es 5266 s (87,8 min),
+  dentro del techo acumulado original de 90 min. Cambia sólo el máximo de intentos
+  mediante esta excepción explícita, no se ponen a cero sus dos intentos agotados.
+  Ocho bloques completos con el mismo worker estiman 2698 s (45,0 min) y 2833 s
+  usando el brazo más lento: no caben con margen en este presupuesto, se descartan.
+- Sin análisis intermedio ni cambio adaptativo de n. Tras seis bloques nuevos
+  completos, computar exclusivamente sus seis log-razones con la fórmula ABBA
+  vigente. Límites exp(media +/- 4,033*s/sqrt(6)); 4,033 es conservador para
+  t(0,995;5), límite unilateral de 99,5%, según [NIST](https://itl.nist.gov/div898/handbook/eda/section3/eda3672.htm).
+  No agrupar con los seis antiguos ni retirar muestras. Superior <=1,05 acepta
+  el pendiente; inferior >1,05 señala regresión; en otro caso, inconcluyente.
+- Comprobar hash BSON/count/repeticiones de todas las salidas contra referencia,
+  procedencia del artefacto, valores finitos/positivos, varianza no nula y bloques
+  completos. Un fallo técnico se conserva como fallo; timeout/incompletitud o
+  supuestos no defendibles impiden aceptación. No reemplazar ni repetir bloques.
+- Una única decisión final; sin cuarto look ni continuación automática. Si no
+  acepta, F11 continúa pendiente para b83789bc. Registrar las tres disposiciones
+  de etapa sin sobrescribir look3/look6 ni la campaña agotada. Sólo si acepta se
+  compone G3 con los 43 aceptados de look6, con procedencia distinta explícita.
+  G6 exige además G4/G5 verdes, revisión, commits semánticos y árbol limpio.
+
+Esta alternativa conserva garantías, pero sacrifica potencia frente al pooling:
+con seis bloques nuevos y crítico 4,033, simulaciones al efecto puntual observado
+estiman aceptación 0,15 si sigma=0,034 y 0,59 si sigma=0,018. Son escenarios
+normales hipotéticos, no probabilidades de éxito verificadas del equipo. No se
+adoptan las promesas 80–95% de los informes. Si no se autoriza este coste para
+esa capacidad de decisión, la salida vigente es mantener G3 inconcluyente;
+no cambiar umbral, alfa o producto para fabricar el cierre.
+
+No se añade runner, monitor permanente, selector de casos ni capa de validación.
+La futura orquestación adapta la existente; sólo debe fijar antes de lanzar
+esta única etapa, sus paths separados, límites y composición. Evidencia de esta
+revisión y sonda en la carpeta existente; decisiones aquí, ejecuciones/estado
+en el receipt. Implementación sigue pausada: G1/G2 aceptados, G3 inconcluyente,
+G4 deep y G5 pendientes, G6 dependiente. Esta sección no declara F11 cerrado.
+
 ### 9.3. Parte II — Capacidades o cambios de contrato con decisión propia
 
 No es una segunda tanda implícitamente autorizada. Cada bloque requiere una
