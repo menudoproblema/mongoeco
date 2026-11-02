@@ -3983,3 +3983,54 @@ tope 2400 s y sin miradas intermedias. Se conservan las dos campañas agotadas,
 los 43 verdes y los registros originales. Preflight de Python, SDK, GC y política
 comprobado sin lecturas de benchmark. La medición empieza sólo al terminar los
 procesos de pruebas propios. G6 permanece pendiente de aceptación final G3.
+
+### Aceptación final F11 del candidato b83789bc
+
+Etapa confirmatoria única terminada sin fallo técnico: 24 registros nuevos,
+seis ABBA completos, GC activo y worker de consumo intacto. Identidad/resultado
+BSON, cantidad de filas y CPU finita/positiva verificadas en los 40 controles
+por registro (960 comprobaciones de metadata). Sólo se decide el pendiente;
+no se modifican las clasificaciones de los otros 43 ni los looks originales.
+Recálculo independiente: razón 0,996011177012, límites
+0,948980607228–1,045372536780, desviación de log-razones 0,029378155948,
+crítico 4,033 y alfa 0,005. Cota superior <=1,05: G3 aceptado por composición
+explícita, 44/44 aceptados, cero regresiones y cero inconcluyentes pendientes.
+La regla procede del plan autorizado antes de medir; no de seleccionar el
+resultado favorable. No hay análisis intermedio ni más intentos autorizados.
+
+Pared de la etapa: 2027,880412 s (33,80 min), dentro de 2400 s. Acumulado con
+la campaña original: 4893,895488 s (81,56 min), dentro de 5400 s. Los intentos
+originales continúan 2/2 agotados y la excepción final 1/1 consumida. Las muestras
+antiguas permanecen inconcluyentes donde lo eran: se archiva composición nueva,
+no un look6 reescrito. No se promete inferencia sin supuestos: bloques normales
+independientes dentro de las etapas, etapa nueva independiente de la antigua y
+mismo parámetro objetivo. No hay garantía universal fuera de los 44 controles.
+
+| Gate | Evidencia de aceptación del candidato |
+| --- | --- |
+| G1 | Ledger, producto y entradas/identidades comprobadas. Oráculos y snapshots reutilizados sólo por entradas conservadas. |
+| G2 | Dos distribuciones reproducibles; 308 archivos/287 módulos fuente-wheel-instalación; procedencia comprobada. |
+| G3 | 43 controles de look6 y un control de la única confirmación nueva; recálculo y equivalencia preservados. |
+| G4 | Unittest/pytest completos en tres Python, cobertura instalada 99,0116875128% y deep verde; sin repetir suites válidas. |
+| G5 | Doce perfiles: ocho completos y cuatro compuestos con 38 nodos focales verdes; rojos de socket conservados. Catorce gates actuales, un snapshot reutilizado, 92 outcomes funcionales idénticos. |
+| G6 | Diff final/documentación revisados, identidades históricas intactas, evidencia archivada y procesos propios terminales. Se completa con el commit semántico de este registro y verificación posterior del árbol limpio. |
+
+Artefacto aceptado: producto b83789bc36bc1bebe693d09b782e5e242be24db4;
+wheel 176a98576dafa433137fca4e16467a66707a8904b7c8c54a6a90d1d19cb30e60;
+sdist eab99f0def7ed591541c061fb975b5c9b0377a0b74a273e0a90d7f813f9e5bd9.
+Los commits posteriores al payload son documentales/evidencia; no cambian src.
+Los 308 archivos y ambas distribuciones reproducibles se verifican de nuevo por
+hash; e4eb17cc/b93681b7, sus wheels, registros, main y rama anterior intactos.
+La evidencia nativa es replay de capturas aceptadas, no una recaptura ni otra
+campaña física. Parte II, O1–O8/D05/P2 históricos, publicación y tag no se reabren.
+
+Errata documental de la sonda aislada de esta revisión: el control exacto tiene
+29 controles previos en el worker normativo, no 35 como decía el párrafo anterior.
+La sonda no ejecutaba ninguno de ellos; no cambia su salida ni acredita coste.
+Esa limitación motivaba precisamente mantenerla sólo como atribución diagnóstica.
+
+Evidencia final en f11-b837-confirmatory-* y b837-eval-confirmatory-acceptance,
+b837-eval-final-review/all-import-proofs/evaluation, dentro de la carpeta existente.
+No hay nuevas capas de validación ni cambios de producto para forzar el gate.
+F11 queda aceptado para este candidato al completar el commit y árbol limpio;
+no quedan obligaciones técnicas de la parte I por comprobar.

@@ -2679,6 +2679,23 @@ revisión y sonda en la carpeta existente; decisiones aquí, ejecuciones/estado
 en el receipt. La implementación se reanuda desde ese checkpoint, conservando
 las evidencias y pendientes allí registrados. Esta sección no declara F11 cerrado.
 
+#### Disposición final de la evaluación b83789bc
+
+Evaluación ejecutada según la enmienda autorizada, con payload/wheel intactos.
+G1/G2/G4/G5 aceptados y G3 resuelto: 43 controles conservados de look6 más el
+pendiente aceptado por la única etapa nueva. Sus seis ABBA completos dan razón
+0,9960111770, cota superior 1,0453725368 con crítico 4,033 y alfa 0,005.
+No se agrupan con bloques antiguos ni se ofrecen más oportunidades de decisión.
+Etapa 2027,880412 s; acumulado 4893,895488 s, inferior a 90 min. Se conserva
+la evidencia histórica inconcluyente y la procedencia de cada aceptación.
+
+El receipt registra todos los gates, identidades y límites; G6 se materializa
+con su commit semántico y la comprobación final del árbol limpio. No hay otro
+gate técnico pendiente de parte I. La aceptación de F11 corresponde al producto
+b83789bc/wheel 176a9857; no cambia retrospectivamente la disposición de e4eb17cc
+ni b93681b7, no publica una release ni autoriza parte II. La inferencia de coste
+conserva los supuestos del protocolo y sólo alcanza sus 44 controles.
+
 ### 9.3. Parte II — Capacidades o cambios de contrato con decisión propia
 
 No es una segunda tanda implícitamente autorizada. Cada bloque requiere una
