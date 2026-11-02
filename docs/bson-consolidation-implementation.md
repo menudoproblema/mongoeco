@@ -2938,7 +2938,7 @@ Pruebas focales por bloque; suites globales reservadas a F11.
 | F08 | Implementado y comprobado focalmente | Claves contextuales/natural, inicializadores y acumulación, materialización/spill real; aceptación integrada en F11. |
 | F09 | Implementado y comprobado focalmente | Tres unidades y perfiles nativos; aceptación integrada y conservación CXP en F11. |
 | F10 | Implementado y comprobado focalmente | Fachadas/metadata nativas y rechazos sin efectos; aceptación integrada en F11. |
-| F11 | En ejecución: coste reformulado | Gates funcionales y matriz comprobados; tres calibraciones A/A inválidas, sin ABBA ni aceptación de entrega. |
+| F11 | En ejecución: candidato corregido | Coste ABBA del wheel 417f8625 rechazado; corrección causal de EOF comprobada focalmente. Gates integrados y coste del nuevo artefacto pendientes. |
 
 F00: se reutiliza el runner y se registran 135 testigos focales de familias
 F02–F10 más el caso de límites en semantic_response_frontier. Capturas físicas
@@ -3279,3 +3279,32 @@ la aceptación de runtime del wheel anterior, no las capturas nativas/SDK cuyos
 inputs no cambiaron ni los cierres O1–O8/P2. Se construirá otro wheel y se
 repetirán los gates integrados causalmente afectados y el coste acotado; no se
 reutilizan las razones A/B del candidato anterior para aceptar el nuevo.
+
+
+F11, coste terminal del candidato 13bae057 / wheel 417f8625: seis ABBA y 24
+mediciones completas, identidad BSON conservada en los 44 controles. Primera
+evaluación: 3 aceptados, 0 regresiones, 41 inconcluyentes; segunda acumulada:
+24 aceptados, 1 regresión, 19 inconcluyentes. SQLite/default/find-limit-one tiene
+razón 1,082127 y límites [1,056298; 1,108588], incumpliendo el presupuesto 1,05.
+Se conservan config, muestras, ambas evaluaciones y summary íntegros bajo
+f11-cost-fixed-bounded-*. No se ejecuta un tercer intento del mismo candidato.
+
+El perfil causal conserva la lectura obligatoria de collation efectiva y su
+frontera de executor. Detecta además una respuesta vacía redundante del cursor
+síncrono cuando el cursor async ya conoce EOF. Se evita únicamente ese cruce
+si no quedan buffers ni fuentes retiradas; el propietario sigue cerrándose y
+los errores/reintentos de cleanup conservan su recorrido. Los cruces del runner
+bajan de 15.000 a 10.000 por 5.000 lecturas SQLite. Los tiempos instrumentados
+son diagnóstico, no aceptación de rendimiento. Una variante SQL CASE apenas
+mejoró el diagnóstico y se descartó; no hay caché nueva ni cambio de contexto.
+
+Pasan 178 controles focales y cuatro subtests en cada Python 3.13/3.14/3.15,
+incluidos testigos nativos 7/8/9 de consumidores F08, buffers y límites de
+respuesta. Los nuevos controles verifican un único cruce de cierre en EOF y
+la propagación/reintento de limpieza retirada tras EOF natural. La primera
+versión del segundo test confundía la fase de EOF con limit y se corrigió;
+se retienen sus rojos. Una selección diferencial demasiado amplia se interrumpe
+y conserva como parcial, sin acreditarla como gate global. Ratchet verde para
+426 archivos; diff y whitespace revisados. Este cambio material permite medir
+un nuevo candidato con el mismo contrato acotado, sin mezclar tiempos previos.
+F11 sigue abierto; O1–O8/D05/P2 y parte II conservan su disposición anterior.

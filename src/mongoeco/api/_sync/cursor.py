@@ -267,6 +267,10 @@ class Cursor:
             return True
         read_response = getattr(active, "_read_driver_response", None)
         if callable(read_response):
+            # Known EOF needs no empty response round trip. Cleanup still runs
+            # through the iterator owner, and retired sources retain retries.
+            if not self._async_cursor.alive and not self._async_cursor._retired_sources:
+                return False
             self._sync_buffer = self._client._run(read_response())
             self._sync_buffer_index = 0
             return bool(self._sync_buffer)

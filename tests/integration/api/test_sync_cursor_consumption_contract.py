@@ -50,6 +50,53 @@ def test_bounded_list_consumption_crosses_runner_by_batch(engine_factory):
 
 
 @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+def test_known_find_eof_crosses_runner_only_for_owned_cleanup(engine_factory):
+    with MongoClient(engine_factory()) as client:
+        collection = client.test.records
+        collection.insert_one({"_id": 1})
+        cursor = collection.find({}, sort=[("_id", 1)], limit=1)
+        iterator = iter(cursor)
+        try:
+            assert next(iterator) == {"_id": 1}
+            with patch.object(client, "_run", wraps=client._run) as runner:
+                assert list(iterator) == []
+            assert runner.call_count == 1
+            assert cursor._active_async_iterable is None
+            assert cursor._async_cursor._active_async_iterable is None
+        finally:
+            cursor.close()
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+def test_known_find_eof_still_surfaces_retired_cleanup_failure(engine_factory):
+    expected_closes = 2
+
+    class Source:
+        closes = 0
+
+        async def aclose(self):
+            self.closes += 1
+            if self.closes == 1:
+                message = "retired cleanup"
+                raise ValueError(message)
+
+    with MongoClient(engine_factory()) as client:
+        collection = client.test.records
+        collection.insert_one({"_id": 1})
+        cursor = collection.find({})
+        source = Source()
+        try:
+            iterator = iter(cursor)
+            assert next(iterator) == {"_id": 1}
+            cursor._async_cursor._retired_sources.append(source)
+            with pytest.raises(ValueError, match="retired cleanup"):
+                next(iterator)
+        finally:
+            cursor.close()
+        assert source.closes == expected_closes
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
 @pytest.mark.parametrize("kind", ["find", "aggregate"])
 def test_temporary_iteration_keeps_snapshot_and_allows_followup_writes(
     engine_factory, kind
