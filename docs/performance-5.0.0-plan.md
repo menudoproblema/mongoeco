@@ -673,7 +673,7 @@ Se conserva `benchmarks/execution.json` preexistente, sin modificar.
 | Q03 | Implementado y comprobado focalmente | 67 tests + 12 subtests y 99 replays UUID 7/8/9 verdes; lint conforme. [Conteos](evidence/mongoeco-5.0.0/q03-counts.json): cinco modalidades × dos requests, cero nuevas construcciones tras importar y bytes/tamaños equivalentes al SDK. Ruta sin SDK, rechazo UNSPECIFIED y raw BSON conservados; logs q03-* |
 | Q04 | Implementado y comprobado focalmente | [Registro](evidence/mongoeco-5.0.0/q04-counts.json): 285 casos únicos comprobados en tandas focales y 16 comparaciones del constructor congelado. Cero retokenizaciones calientes sobre 1.000 documentos con mappings explicit/dynamic; cambios externos, valores mixtos, commit/rollback, índice, reopen/backup restore conformes. Los doce mocks retirados se corrigieron en el addendum Q02; los otros 144 casos de esa tanda se reutilizan. Logs q04-* |
 | Q05 | Diferido sin cambio productivo | [Decisión](evidence/mongoeco-5.0.0/q05-decision.json): hook idle de cursor no equivale a cerrar iterador EOF; reusarlo rompe rewind. Requiere otro predicado/estado de lifecycle y tratamiento de retries/contexto, no una reutilización suficiente |
-| Q06 | En validación integrada | [Preflight](evidence/mongoeco-5.0.0/q06-preflight.json): builds wheel/sdist reproducibles de 95fa38c5, runtime b5d9e803; wheel 5ac014b1… y 310 archivos idénticos en instalaciones físicas 3.13/3.14/3.15. [Globales/cobertura](evidence/mongoeco-5.0.0/q06-globals.json) comprobados; [matriz 12/12](evidence/mongoeco-5.0.0/q06-r4.json) aceptada; [R5 consumidores](evidence/mongoeco-5.0.0/q06-consumers.json) aceptado, deep 74 y PCRE2 339 replays por perfil verdes. Intento temporal completo (20 invocaciones), dos empeoramientos observados pendientes de resolver; aceptación final abierta |
+| Q06 | En validación integrada | [Preflight](evidence/mongoeco-5.0.0/q06-preflight.json): builds wheel/sdist reproducibles de 95fa38c5, runtime b5d9e803; wheel 5ac014b1… y 310 archivos idénticos en instalaciones físicas 3.13/3.14/3.15. [Globales/cobertura](evidence/mongoeco-5.0.0/q06-globals.json) comprobados; [matriz 12/12](evidence/mongoeco-5.0.0/q06-r4.json) aceptada; [R5 consumidores](evidence/mongoeco-5.0.0/q06-consumers.json) aceptado, deep 74 y PCRE2 339 replays por perfil verdes. Intento temporal completo (20 invocaciones), R3 aceptado por tradeoff explícito del usuario; R1 conforme, R6 pendiente de integración y limpieza |
 
 Q01 conserva la ruta genérica de subclases/wrappers y la clasificación de enteros.
 El helper local de arrays evita duplicar la regla de framing entre lista nativa
@@ -735,7 +735,7 @@ umbral ni denominador. Deep conserva sus 74 casos aceptados; los tres controles
 adicionales se registran aparte. La matriz terminal añade doce celdas verdes de 3.587 casos; R4 queda aceptado.
 
 
-### Q06 — Resultado temporal y diagnóstico acotado pendiente (3 de noviembre)
+### Q06 — Resultado temporal y diagnóstico (historia del 3 de noviembre)
 
 El único intento completó veinte invocaciones en 844,9208 s, dentro del límite
 de 1.800 s y de 180 s por proceso. Cero skips y cero diferencias de equivalencia
@@ -757,7 +757,8 @@ metadata completa coinciden entre los cinco informes. También crece CPU, por
 lo que no se atribuyen sólo a esperas externas. No hay causa productiva o de
 entorno demostrada; CPU no distingue por sí sola dispatch, GC o frecuencia del
 host. Los controles sync equivalentes no presentan separación de empeoramiento.
-Las 72 mejoras no compensan ni cierran esos dos pendientes. R3 sigue abierto.
+Las 72 mejoras no compensan ni cierran por sí solas esos dos pendientes. En este
+punto R3 seguía abierto; su disposición posterior figura al final.
 
 El usuario autoriza una única sonda causal adicional, máximo 60 s y 44 consultas
 con GC activo, sin reiniciar la campaña de aceptación ni modificar A/B. Se
@@ -792,5 +793,29 @@ no hay evidencia de que ese trabajo explique los empeoramientos observados.
 las cien salidas retenidas ni el historial completo de workloads del intento
 original. El perfil no corrige sus dos clasificaciones ni es otro gate de coste.
 No se modifica el producto por una atribución especulativa y no se inicia otra
-sonda con el saldo del límite anterior. R3 sigue pendiente de resolución o de
-aceptación explícita del tradeoff; R6 no integra mientras falte esa disposición.
+sonda con el saldo del límite anterior. En este punto R3 seguía pendiente de
+resolución o aceptación explícita; no se integró antes de recibir esa disposición.
+
+
+### Q06 — Aceptación expresa del coste y gate de integración
+
+El 3 de noviembre el usuario autorizó: «Aceptar expresamente el tradeoff y
+completar los gates restantes (recomendado)». La autorización alcanza los dos
+casos Memory async descritos (+5,82 % y +6,26 % de mediana), manteniendo los 30
+inconcluyentes. **R3 queda aceptado con esas reservas**, sin cambiar muestras,
+umbrales, clasificaciones ni afirmar causa conocida, significación estadística
+o ausencia de regresiones. No hubo otro intento de aceptación.
+
+R1 conforme: no cambian contratos públicos, migración ni alcance de la versión;
+la nota de release distingue la preparación anterior del incremento y conserva
+los límites de los datos. R2 conserva la pareja reproducible de 95fa38c5, runtime
+b5d9e803 y 310 archivos empaquetados. R4 y R5 están aceptados por sus registros.
+El test adicional de bytearray cambia sólo tests; no está empaquetado en el
+sdist ni invalida el runtime o la evidencia funcional restante.
+
+R6: diff productivo y documentación revisados; whitespace conforme, sin cambios
+de runtime posteriores al congelado ni nuevas autoridades semánticas. Resta
+integrar en main y retirar la rama auxiliar propia. Las referencias e4eb17cc,
+b93681b7, b83789bc y perf/f11-context-startup se han comprobado intactas.
+`benchmarks/execution.json` conserva el SHA-256 del preflight Q00. No se borran
+worktrees o ramas ajenos ni se crean tags o publicaciones.

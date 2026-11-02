@@ -159,10 +159,27 @@ no demuestra la compatibilidad de la aplicación privada histórica no disponibl
 Registro estructurado: [validación](evidence/mongoeco-5.0.0/validation.json).
 [Logs completos de matriz](evidence/mongoeco-5.0.0/matrix-logs.tar.gz).
 
-## Incremento de optimización propuesto
+## Incremento Q00–Q06: gates comprobados, integración pendiente
 
-El [plan de rendimiento](performance-5.0.0-plan.md) contrasta cuatro informes y
-define Q00–Q06, ahora en implementación. Los cierres focales se registran allí;
-la aceptación de un artefacto nuevo queda reservada a Q06. No altera la aceptación
-del artefacto anterior ni acredita todavía otro candidato. Preserva las garantías semánticas
-y define qué gates deberán repetirse si cambian los bytes productivos.
+El [plan de rendimiento](performance-5.0.0-plan.md) posee el alcance y cierre de
+este incremento. Los registros anteriores de esta página corresponden a la
+preparación histórica del artefacto previo; conservan sus identidades y resultados.
+El nuevo runtime b5d9e803, empaquetado desde 95fa38c5, tiene wheel SHA-256
+`5ac014b1643e5230d1e894828859f372b8e8870a4337dbe91c5c92044d45bb76` y sdist
+`3ab93460dde32dc770e5f93b1ea0435762edf4bbf0f49e73a11fea270c78157d`.
+Los dos builds son idénticos byte a byte. Los tres Python pasan pytest/unittest,
+typing/API/SPI y smokes; la cobertura exacta es 99,0009806 %, con matriz 12/12,
+deep y consumidores comprobados. Se conserva el canario sustitutivo autorizado,
+que no acredita la aplicación privada histórica no disponible.
+
+El único intento temporal completó veinte invocaciones en 844,9 s: 72 mejoras
+observadas, 30 inconcluyentes y dos empeoramientos Memory async (+5,82 % y
++6,26 % de mediana en los dos shapes compound documentados). El usuario acepta
+expresamente estos dos tradeoffs; la sonda causal de 44 consultas no identificó
+su causa y no es una nueva aceptación temporal. No se promete ausencia de
+regresiones ni mejora universal. [Datos y disposición](performance-5.0.0-plan.md#q06--aceptación-expresa-del-coste-y-gate-de-integración).
+
+Q05 se difiere sin cambio productivo porque la reutilización del cierre idle
+altera rewind; no se acredita ahorro de tránsitos. El incremento preserva los
+cierres históricos y no añade el resto de la parte II. Resta integrar y limpiar
+la rama propia; no hay tag, push ni publicación.
