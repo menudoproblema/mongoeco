@@ -158,3 +158,10 @@ no demuestra la compatibilidad de la aplicación privada histórica no disponibl
 
 Registro estructurado: [validación](evidence/mongoeco-5.0.0/validation.json).
 [Logs completos de matriz](evidence/mongoeco-5.0.0/matrix-logs.tar.gz).
+
+## Incremento de optimización propuesto
+
+El [plan de rendimiento](performance-5.0.0-plan.md) contrasta cuatro informes y
+propone Q00–Q06. Todavía no está implementado: no altera la aceptación del
+artefacto anterior ni acredita otro candidato. Preserva las garantías semánticas
+y define qué gates deberán repetirse si cambian los bytes productivos.

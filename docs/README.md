@@ -55,6 +55,9 @@ Python/PyMongo versions.
 
 ## Advanced tooling and development
 
+- [Pre-release performance plan](performance-5.0.0-plan.md): verified attribution,
+  bounded optimizations, semantic guarantees and a finite evaluation budget.
+
 - [Semantic parity correction and refactoring plan](plan-semantic-parity-refactor.md):
   prioritized blocks, finding coverage, dependencies and real MongoDB acceptance.
 - [Query, validation and prefilter analysis and plan](predicate-authorities-analysis-and-plan.md):

@@ -1,0 +1,1539 @@
+{
+  "baseline_head": "cc2d07d7836a567617d5601b2ef74190d55a3203",
+  "runtime_revision": "7dcb9df2087c4e8d0cad091bfdce1ad9d45c3699",
+  "wheel_sha256": "2ed1bd93385d759d7a7a61ebc7409ab74c544ba7d8cf58590f56405325974d2f",
+  "comparison_count": 104,
+  "summary": [
+    {
+      "engine": "memory-sync",
+      "median_ratio": 1.350138910370498,
+      "blocks": [
+        {
+          "block": "secondary_lookup_indexed",
+          "delta_seconds": 0.09159999999999999,
+          "ratio_min": 1.6018396846254928,
+          "ratio_max": 1.6018396846254928
+        },
+        {
+          "block": "cursor_consumption",
+          "delta_seconds": 0.36789999999999995,
+          "ratio_min": 1.450354609929078,
+          "ratio_max": 2.2772384034519955
+        },
+        {
+          "block": "simple_aggregation",
+          "delta_seconds": 0.0002000000000000001,
+          "ratio_min": 1.0606060606060606,
+          "ratio_max": 1.0606060606060606
+        },
+        {
+          "block": "sort_limit",
+          "delta_seconds": 0.08410000000000001,
+          "ratio_min": 1.1928166351606806,
+          "ratio_max": 1.2054079696394688
+        },
+        {
+          "block": "search_diagnostics",
+          "delta_seconds": 0.8345000000000002,
+          "ratio_min": 1.037144235407622,
+          "ratio_max": 1.485672453461619
+        },
+        {
+          "block": "vector_search_diagnostics",
+          "delta_seconds": 0.30539999999999995,
+          "ratio_min": 1.4757281553398058,
+          "ratio_max": 1.510233918128655
+        }
+      ],
+      "a2_available": true
+    },
+    {
+      "engine": "memory-async",
+      "median_ratio": 1.285611805697889,
+      "blocks": [
+        {
+          "block": "secondary_lookup_indexed",
+          "delta_seconds": 0.0552,
+          "ratio_min": 1.4356748224151539,
+          "ratio_max": 1.4356748224151539
+        },
+        {
+          "block": "cursor_consumption",
+          "delta_seconds": 0.3884,
+          "ratio_min": 1.5210084033613445,
+          "ratio_max": 2.5353205389955082
+        },
+        {
+          "block": "simple_aggregation",
+          "delta_seconds": 0.0016000000000000003,
+          "ratio_min": 1.4705882352941178,
+          "ratio_max": 1.4705882352941178
+        },
+        {
+          "block": "sort_limit",
+          "delta_seconds": 0.089,
+          "ratio_min": 1.1968302658486707,
+          "ratio_max": 1.2690463505594032
+        },
+        {
+          "block": "search_diagnostics",
+          "delta_seconds": 0.6031,
+          "ratio_min": 0.9951181102362204,
+          "ratio_max": 1.454583683767872
+        },
+        {
+          "block": "vector_search_diagnostics",
+          "delta_seconds": 0.1739,
+          "ratio_min": 1.2855093256814922,
+          "ratio_max": 1.2966360856269112
+        }
+      ],
+      "a2_available": true
+    },
+    {
+      "engine": "sqlite-sync",
+      "median_ratio": 1.4614611624117329,
+      "blocks": [
+        {
+          "block": "secondary_lookup_indexed",
+          "delta_seconds": 0.16879999999999995,
+          "ratio_min": 1.470325996099192,
+          "ratio_max": 1.470325996099192
+        },
+        {
+          "block": "cursor_consumption",
+          "delta_seconds": 0.3613,
+          "ratio_min": 1.507163323782235,
+          "ratio_max": 1.7272930149520196
+        },
+        {
+          "block": "simple_aggregation",
+          "delta_seconds": 0.0002999999999999999,
+          "ratio_min": 1.1071428571428572,
+          "ratio_max": 1.1071428571428572
+        },
+        {
+          "block": "sort_limit",
+          "delta_seconds": 0.009499999999999953,
+          "ratio_min": 0.8802157252341754,
+          "ratio_max": 1.1628859483301826
+        },
+        {
+          "block": "search_diagnostics",
+          "delta_seconds": 12.366400000000002,
+          "ratio_min": 0.996437336711266,
+          "ratio_max": 11.638011152416357
+        },
+        {
+          "block": "vector_search_diagnostics",
+          "delta_seconds": 0.49570000000000003,
+          "ratio_min": 1.351293103448276,
+          "ratio_max": 1.5217391304347825
+        }
+      ],
+      "a2_available": true
+    },
+    {
+      "engine": "sqlite-async",
+      "median_ratio": 1.3357287399565227,
+      "blocks": [
+        {
+          "block": "secondary_lookup_indexed",
+          "delta_seconds": 0.14389999999999997,
+          "ratio_min": 1.4408700980392155,
+          "ratio_max": 1.4408700980392155
+        },
+        {
+          "block": "cursor_consumption",
+          "delta_seconds": 0.3869,
+          "ratio_min": 1.6169871794871795,
+          "ratio_max": 1.8289317154413516
+        },
+        {
+          "block": "simple_aggregation",
+          "delta_seconds": 0.0002999999999999999,
+          "ratio_min": 1.1071428571428572,
+          "ratio_max": 1.1071428571428572
+        },
+        {
+          "block": "sort_limit",
+          "delta_seconds": 0.06,
+          "ratio_min": 0.947517284726587,
+          "ratio_max": 1.2673405367723944
+        },
+        {
+          "block": "search_diagnostics",
+          "delta_seconds": 11.849200000000002,
+          "ratio_min": 0.9687925102024486,
+          "ratio_max": 11.677986226549514
+        },
+        {
+          "block": "vector_search_diagnostics",
+          "delta_seconds": 0.3557,
+          "ratio_min": 1.2416984213391398,
+          "ratio_max": 1.4564619615032082
+        }
+      ],
+      "a2_available": false
+    }
+  ],
+  "tasks": [
+    {
+      "engine": "memory-sync",
+      "block": "secondary_lookup_indexed",
+      "task": "secondary_lookup_indexed_1k",
+      "base": 0.1522,
+      "candidate": 0.2438,
+      "ratio": 1.6018396846254928,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "cursor_consumption",
+      "task": "cursor_consumption_first_200",
+      "base": 0.0282,
+      "candidate": 0.0409,
+      "ratio": 1.450354609929078,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "cursor_consumption",
+      "task": "cursor_consumption_materialized_200",
+      "base": 0.2781,
+      "candidate": 0.6333,
+      "ratio": 2.2772384034519955,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "simple_aggregation",
+      "task": "simple_aggregation_topk",
+      "base": 0.0033,
+      "candidate": 0.0035,
+      "ratio": 1.0606060606060606,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "sort_limit",
+      "task": "sort_limit_indexed_200",
+      "base": 0.2108,
+      "candidate": 0.2541,
+      "ratio": 1.2054079696394688,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "sort_limit",
+      "task": "sort_limit_unindexed_200",
+      "base": 0.2116,
+      "candidate": 0.2524,
+      "ratio": 1.1928166351606806,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "search_diagnostics",
+      "task": "search_text_topk_100",
+      "base": 0.3696,
+      "candidate": 0.4066,
+      "ratio": 1.1001082251082253,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "search_diagnostics",
+      "task": "search_autocomplete_topk_100",
+      "base": 0.3333,
+      "candidate": 0.3664,
+      "ratio": 1.0993099309930994,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "search_diagnostics",
+      "task": "search_wildcard_topk_100",
+      "base": 0.2074,
+      "candidate": 0.2394,
+      "ratio": 1.154291224686596,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "search_diagnostics",
+      "task": "search_regex_topk_100",
+      "base": 0.1902,
+      "candidate": 0.2245,
+      "ratio": 1.1803364879074658,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "search_diagnostics",
+      "task": "search_compound_hybrid_topk_100",
+      "base": 0.4282,
+      "candidate": 0.4603,
+      "ratio": 1.074964969640355,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "search_diagnostics",
+      "task": "search_compound_should_near_topk_100",
+      "base": 0.4019,
+      "candidate": 0.4592,
+      "ratio": 1.142572779298333,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_topk_100",
+      "base": 1.2438,
+      "candidate": 1.29,
+      "ratio": 1.037144235407622,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_matched_topk_100",
+      "base": 0.9767,
+      "candidate": 1.2208,
+      "ratio": 1.2499232108119178,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_title_topk_100",
+      "base": 0.4781,
+      "candidate": 0.7103,
+      "ratio": 1.485672453461619,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_msm2_topk_100",
+      "base": 0.9612,
+      "candidate": 1.0098,
+      "ratio": 1.050561797752809,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_tie_heavy_topk_100",
+      "base": 0.3529,
+      "candidate": 0.3905,
+      "ratio": 1.1065457636724285,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_ann_topk_100",
+      "base": 0.0692,
+      "candidate": 0.1023,
+      "ratio": 1.4783236994219655,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_cosine_low_candidates_topk_100",
+      "base": 0.0682,
+      "candidate": 0.1013,
+      "ratio": 1.4853372434017595,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_cosine_high_candidates_topk_100",
+      "base": 0.0679,
+      "candidate": 0.1013,
+      "ratio": 1.491899852724595,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_dot_product_topk_100",
+      "base": 0.0685,
+      "candidate": 0.1025,
+      "ratio": 1.4963503649635035,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_euclidean_topk_100",
+      "base": 0.0684,
+      "candidate": 0.1033,
+      "ratio": 1.510233918128655,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_topk_100",
+      "base": 0.0686,
+      "candidate": 0.103,
+      "ratio": 1.501457725947522,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_boolean_topk_100",
+      "base": 0.0721,
+      "candidate": 0.1064,
+      "ratio": 1.4757281553398058,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_underflow_topk_100",
+      "base": 0.0714,
+      "candidate": 0.106,
+      "ratio": 1.4845938375350138,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_min_score_topk_100",
+      "base": 0.0706,
+      "candidate": 0.1042,
+      "ratio": 1.4759206798866857,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "secondary_lookup_indexed",
+      "task": "secondary_lookup_indexed_1k",
+      "base": 0.1267,
+      "candidate": 0.1819,
+      "ratio": 1.4356748224151539,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "cursor_consumption",
+      "task": "cursor_consumption_first_200",
+      "base": 0.0238,
+      "candidate": 0.0362,
+      "ratio": 1.5210084033613445,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "cursor_consumption",
+      "task": "cursor_consumption_materialized_200",
+      "base": 0.2449,
+      "candidate": 0.6209,
+      "ratio": 2.5353205389955082,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "simple_aggregation",
+      "task": "simple_aggregation_topk",
+      "base": 0.0034,
+      "candidate": 0.005,
+      "ratio": 1.4705882352941178,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "sort_limit",
+      "task": "sort_limit_indexed_200",
+      "base": 0.1877,
+      "candidate": 0.2382,
+      "ratio": 1.2690463505594032,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "sort_limit",
+      "task": "sort_limit_unindexed_200",
+      "base": 0.1956,
+      "candidate": 0.2341,
+      "ratio": 1.1968302658486707,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "search_diagnostics",
+      "task": "search_text_topk_100",
+      "base": 0.3656,
+      "candidate": 0.3843,
+      "ratio": 1.051148796498906,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "search_diagnostics",
+      "task": "search_autocomplete_topk_100",
+      "base": 0.3333,
+      "candidate": 0.3487,
+      "ratio": 1.0462046204620463,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "search_diagnostics",
+      "task": "search_wildcard_topk_100",
+      "base": 0.205,
+      "candidate": 0.2239,
+      "ratio": 1.0921951219512196,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "search_diagnostics",
+      "task": "search_regex_topk_100",
+      "base": 0.1876,
+      "candidate": 0.2083,
+      "ratio": 1.1103411513859276,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "search_diagnostics",
+      "task": "search_compound_hybrid_topk_100",
+      "base": 0.4351,
+      "candidate": 0.4615,
+      "ratio": 1.0606757067340842,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "search_diagnostics",
+      "task": "search_compound_should_near_topk_100",
+      "base": 0.412,
+      "candidate": 0.4437,
+      "ratio": 1.0769417475728156,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_topk_100",
+      "base": 1.27,
+      "candidate": 1.2638,
+      "ratio": 0.9951181102362204,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_matched_topk_100",
+      "base": 0.9764,
+      "candidate": 1.1998,
+      "ratio": 1.2287996722654648,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_title_topk_100",
+      "base": 0.4756,
+      "candidate": 0.6918,
+      "ratio": 1.454583683767872,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_msm2_topk_100",
+      "base": 0.9595,
+      "candidate": 0.9728,
+      "ratio": 1.0138613861386139,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_tie_heavy_topk_100",
+      "base": 0.3513,
+      "candidate": 0.3759,
+      "ratio": 1.0700256191289497,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_ann_topk_100",
+      "base": 0.0658,
+      "candidate": 0.0846,
+      "ratio": 1.2857142857142856,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_cosine_low_candidates_topk_100",
+      "base": 0.0651,
+      "candidate": 0.0841,
+      "ratio": 1.291858678955453,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_cosine_high_candidates_topk_100",
+      "base": 0.065,
+      "candidate": 0.0841,
+      "ratio": 1.2938461538461536,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_dot_product_topk_100",
+      "base": 0.0654,
+      "candidate": 0.0848,
+      "ratio": 1.2966360856269112,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_euclidean_topk_100",
+      "base": 0.0647,
+      "candidate": 0.0834,
+      "ratio": 1.2890262751159198,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_topk_100",
+      "base": 0.0659,
+      "candidate": 0.0851,
+      "ratio": 1.291350531107739,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_boolean_topk_100",
+      "base": 0.0697,
+      "candidate": 0.0896,
+      "ratio": 1.2855093256814922,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_underflow_topk_100",
+      "base": 0.0688,
+      "candidate": 0.0887,
+      "ratio": 1.2892441860465116,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "memory-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_min_score_topk_100",
+      "base": 0.0678,
+      "candidate": 0.0877,
+      "ratio": 1.2935103244837758,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "secondary_lookup_indexed",
+      "task": "secondary_lookup_indexed_1k",
+      "base": 0.3589,
+      "candidate": 0.5277,
+      "ratio": 1.470325996099192,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "cursor_consumption",
+      "task": "cursor_consumption_first_200",
+      "base": 0.0698,
+      "candidate": 0.1052,
+      "ratio": 1.507163323782235,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "cursor_consumption",
+      "task": "cursor_consumption_materialized_200",
+      "base": 0.4481,
+      "candidate": 0.774,
+      "ratio": 1.7272930149520196,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "simple_aggregation",
+      "task": "simple_aggregation_topk",
+      "base": 0.0028,
+      "candidate": 0.0031,
+      "ratio": 1.1071428571428572,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "sort_limit",
+      "task": "sort_limit_indexed_200",
+      "base": 0.3523,
+      "candidate": 0.3101,
+      "ratio": 0.8802157252341754,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "sort_limit",
+      "task": "sort_limit_unindexed_200",
+      "base": 0.3174,
+      "candidate": 0.3691,
+      "ratio": 1.1628859483301826,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "search_diagnostics",
+      "task": "search_text_topk_100",
+      "base": 0.9485,
+      "candidate": 1.0438,
+      "ratio": 1.100474433315762,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "search_diagnostics",
+      "task": "search_autocomplete_topk_100",
+      "base": 0.9493,
+      "candidate": 1.0267,
+      "ratio": 1.0815337617191614,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "search_diagnostics",
+      "task": "search_wildcard_topk_100",
+      "base": 0.9437,
+      "candidate": 1.0075,
+      "ratio": 1.0676062307936844,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "search_diagnostics",
+      "task": "search_regex_topk_100",
+      "base": 3.722,
+      "candidate": 3.8039,
+      "ratio": 1.0220042987641054,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "search_diagnostics",
+      "task": "search_compound_hybrid_topk_100",
+      "base": 1.2277,
+      "candidate": 1.2944,
+      "ratio": 1.0543292335261056,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "search_diagnostics",
+      "task": "search_compound_should_near_topk_100",
+      "base": 1.2631,
+      "candidate": 1.2586,
+      "ratio": 0.996437336711266,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_topk_100",
+      "base": 0.4304,
+      "candidate": 5.009,
+      "ratio": 11.638011152416357,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_matched_topk_100",
+      "base": 0.5251,
+      "candidate": 3.768,
+      "ratio": 7.175776042658541,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_title_topk_100",
+      "base": 0.5183,
+      "candidate": 1.6655,
+      "ratio": 3.2133899286127727,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_msm2_topk_100",
+      "base": 0.4413,
+      "candidate": 2.6401,
+      "ratio": 5.982551552232041,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_tie_heavy_topk_100",
+      "base": 0.3968,
+      "candidate": 1.2151,
+      "ratio": 3.062247983870968,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_ann_topk_100",
+      "base": 0.1116,
+      "candidate": 0.1653,
+      "ratio": 1.4811827956989247,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_cosine_low_candidates_topk_100",
+      "base": 0.0929,
+      "candidate": 0.1407,
+      "ratio": 1.5145317545748116,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_cosine_high_candidates_topk_100",
+      "base": 0.1426,
+      "candidate": 0.217,
+      "ratio": 1.5217391304347825,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_dot_product_topk_100",
+      "base": 0.1113,
+      "candidate": 0.162,
+      "ratio": 1.4555256064690028,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_euclidean_topk_100",
+      "base": 0.1116,
+      "candidate": 0.1641,
+      "ratio": 1.4704301075268815,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_topk_100",
+      "base": 0.1052,
+      "candidate": 0.1542,
+      "ratio": 1.4657794676806084,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_boolean_topk_100",
+      "base": 0.1129,
+      "candidate": 0.1641,
+      "ratio": 1.453498671390611,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_underflow_topk_100",
+      "base": 0.1856,
+      "candidate": 0.2508,
+      "ratio": 1.351293103448276,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-sync",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_min_score_topk_100",
+      "base": 0.112,
+      "candidate": 0.1632,
+      "ratio": 1.4571428571428573,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "secondary_lookup_indexed",
+      "task": "secondary_lookup_indexed_1k",
+      "base": 0.3264,
+      "candidate": 0.4703,
+      "ratio": 1.4408700980392155,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "cursor_consumption",
+      "task": "cursor_consumption_first_200",
+      "base": 0.0624,
+      "candidate": 0.1009,
+      "ratio": 1.6169871794871795,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "cursor_consumption",
+      "task": "cursor_consumption_materialized_200",
+      "base": 0.4203,
+      "candidate": 0.7687,
+      "ratio": 1.8289317154413516,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "simple_aggregation",
+      "task": "simple_aggregation_topk",
+      "base": 0.0028,
+      "candidate": 0.0031,
+      "ratio": 1.1071428571428572,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "sort_limit",
+      "task": "sort_limit_indexed_200",
+      "base": 0.3182,
+      "candidate": 0.3015,
+      "ratio": 0.947517284726587,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "sort_limit",
+      "task": "sort_limit_unindexed_200",
+      "base": 0.2869,
+      "candidate": 0.3636,
+      "ratio": 1.2673405367723944,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "search_diagnostics",
+      "task": "search_text_topk_100",
+      "base": 0.9448,
+      "candidate": 0.9799,
+      "ratio": 1.0371507197290433,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "search_diagnostics",
+      "task": "search_autocomplete_topk_100",
+      "base": 0.949,
+      "candidate": 0.9858,
+      "ratio": 1.038777660695469,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "search_diagnostics",
+      "task": "search_wildcard_topk_100",
+      "base": 0.9368,
+      "candidate": 0.9768,
+      "ratio": 1.0426985482493596,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "search_diagnostics",
+      "task": "search_regex_topk_100",
+      "base": 3.699,
+      "candidate": 3.7642,
+      "ratio": 1.0176263855095973,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "search_diagnostics",
+      "task": "search_compound_hybrid_topk_100",
+      "base": 1.2101,
+      "candidate": 1.2497,
+      "ratio": 1.0327245682175028,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "search_diagnostics",
+      "task": "search_compound_should_near_topk_100",
+      "base": 1.2497,
+      "candidate": 1.2107,
+      "ratio": 0.9687925102024486,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_topk_100",
+      "base": 0.4211,
+      "candidate": 4.9176,
+      "ratio": 11.677986226549514,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_matched_topk_100",
+      "base": 0.513,
+      "candidate": 3.6647,
+      "ratio": 7.143664717348927,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_title_topk_100",
+      "base": 0.5019,
+      "candidate": 1.6124,
+      "ratio": 3.212592149830644,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_msm2_topk_100",
+      "base": 0.4368,
+      "candidate": 2.5694,
+      "ratio": 5.882326007326006,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "search_diagnostics",
+      "task": "search_compound_candidateable_should_tie_heavy_topk_100",
+      "base": 0.3887,
+      "candidate": 1.1689,
+      "ratio": 3.007203498842295,
+      "oracle": "exact-output"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_ann_topk_100",
+      "base": 0.1091,
+      "candidate": 0.1589,
+      "ratio": 1.4564619615032082,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_cosine_low_candidates_topk_100",
+      "base": 0.0898,
+      "candidate": 0.1227,
+      "ratio": 1.366369710467706,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_cosine_high_candidates_topk_100",
+      "base": 0.1406,
+      "candidate": 0.1875,
+      "ratio": 1.333570412517781,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_dot_product_topk_100",
+      "base": 0.1086,
+      "candidate": 0.1442,
+      "ratio": 1.3278084714548801,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_euclidean_topk_100",
+      "base": 0.1078,
+      "candidate": 0.1458,
+      "ratio": 1.3525046382189239,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_topk_100",
+      "base": 0.1033,
+      "candidate": 0.1366,
+      "ratio": 1.3223620522749273,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_boolean_topk_100",
+      "base": 0.1098,
+      "candidate": 0.1469,
+      "ratio": 1.3378870673952643,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_underflow_topk_100",
+      "base": 0.1837,
+      "candidate": 0.2281,
+      "ratio": 1.2416984213391398,
+      "oracle": "ann-result-shape"
+    },
+    {
+      "engine": "sqlite-async",
+      "block": "vector_search_diagnostics",
+      "task": "vector_search_filtered_min_score_topk_100",
+      "base": 0.1093,
+      "candidate": 0.147,
+      "ratio": 1.344922232387923,
+      "oracle": "ann-result-shape"
+    }
+  ],
+  "madrid_documents": 187,
+  "profiles": [
+    {
+      "group": "p1",
+      "task": "secondary_lookup_indexed_1k",
+      "sha256": "d9e75ac67c00b42cb31b122814aa9698f65f82eebe1f2ddb6e10704a184dbaba",
+      "operations": 1000,
+      "counts": [
+        {
+          "file": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/cursor.py",
+          "line": 529,
+          "name": "_open_read_source",
+          "primitive": 1000,
+          "total": 1000,
+          "per_operation": 1.0
+        },
+        {
+          "file": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_size.py",
+          "line": 75,
+          "name": "bson_document_size",
+          "primitive": 2000,
+          "total": 3000,
+          "per_operation": 3.0
+        },
+        {
+          "file": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/memory.py",
+          "line": 5646,
+          "name": "collection_options",
+          "primitive": 1000,
+          "total": 1000,
+          "per_operation": 1.0
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py",
+          "line": 87,
+          "name": "run",
+          "primitive": 2000,
+          "total": 2000,
+          "per_operation": 2.0
+        },
+        {
+          "file": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_size.py",
+          "line": 32,
+          "name": "bson_value_size",
+          "primitive": 9000,
+          "total": 12438,
+          "per_operation": 12.438
+        }
+      ]
+    },
+    {
+      "group": "p1",
+      "task": "cursor_consumption_materialized_200",
+      "sha256": "064be7d3ea5cea5ecb883c41eb96877eca447c1a5aada921aa44e5a503b6988a",
+      "operations": 200,
+      "counts": [
+        {
+          "file": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/cursor.py",
+          "line": 529,
+          "name": "_open_read_source",
+          "primitive": 200,
+          "total": 200,
+          "per_operation": 1.0
+        },
+        {
+          "file": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_size.py",
+          "line": 75,
+          "name": "bson_document_size",
+          "primitive": 37800,
+          "total": 38200,
+          "per_operation": 191.0
+        },
+        {
+          "file": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/memory.py",
+          "line": 5646,
+          "name": "collection_options",
+          "primitive": 200,
+          "total": 200,
+          "per_operation": 1.0
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py",
+          "line": 87,
+          "name": "run",
+          "primitive": 600,
+          "total": 600,
+          "per_operation": 3.0
+        },
+        {
+          "file": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_size.py",
+          "line": 32,
+          "name": "bson_value_size",
+          "primitive": 299600,
+          "total": 391400,
+          "per_operation": 1957.0
+        }
+      ]
+    },
+    {
+      "group": "p3",
+      "task": "secondary_lookup_indexed_1k",
+      "sha256": "5758d15ea94d67fb554332965e67a2202f36c4e468f05891d58058c19d7dfeb1",
+      "operations": 1000,
+      "counts": [
+        {
+          "file": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_size.py",
+          "line": 75,
+          "name": "bson_document_size",
+          "primitive": 2000,
+          "total": 3000,
+          "per_operation": 3.0
+        },
+        {
+          "file": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_namespace_admin.py",
+          "line": 21,
+          "name": "collection_options",
+          "primitive": 1000,
+          "total": 1000,
+          "per_operation": 1.0
+        },
+        {
+          "file": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/sqlite.py",
+          "line": 5113,
+          "name": "_collection_options_sync",
+          "primitive": 1000,
+          "total": 1000,
+          "per_operation": 1.0
+        },
+        {
+          "file": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/sqlite.py",
+          "line": 8264,
+          "name": "collection_options",
+          "primitive": 2000,
+          "total": 2000,
+          "per_operation": 2.0
+        },
+        {
+          "file": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_admin_runtime.py",
+          "line": 86,
+          "name": "collection_options",
+          "primitive": 1000,
+          "total": 1000,
+          "per_operation": 1.0
+        },
+        {
+          "file": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/cursor.py",
+          "line": 529,
+          "name": "_open_read_source",
+          "primitive": 1000,
+          "total": 1000,
+          "per_operation": 1.0
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py",
+          "line": 87,
+          "name": "run",
+          "primitive": 2000,
+          "total": 2000,
+          "per_operation": 2.0
+        },
+        {
+          "file": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_size.py",
+          "line": 32,
+          "name": "bson_value_size",
+          "primitive": 9000,
+          "total": 12438,
+          "per_operation": 12.438
+        }
+      ]
+    }
+  ],
+  "should_counterexamples": [
+    {
+      "minimum": 1,
+      "exists_only_matches": true,
+      "actual_candidates": null,
+      "exact": false
+    },
+    {
+      "minimum": 2,
+      "exists_only_matches": false,
+      "actual_candidates": [
+        "text-hit"
+      ],
+      "exact": false
+    }
+  ],
+  "trace": {
+    "wheel_sha256": "2ed1bd93385d759d7a7a61ebc7409ab74c544ba7d8cf58590f56405325974d2f",
+    "module": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/env314/lib/python3.14/site-packages/mongoeco/__init__.py",
+    "package_files": 310,
+    "gc_enabled": true,
+    "records": [
+      {
+        "engine": "memory",
+        "mode": "list-limit1",
+        "runner": [
+          "_AsyncCursorIterator._read_driver_response",
+          "_AsyncCursorIterator.aclose"
+        ],
+        "options": [
+          [
+            "cursor.py:_read_driver_response",
+            "cursor.py:_read_response",
+            "cursor.py:_fetch_response",
+            "cursor.py:_open_source",
+            "cursor.py:_resolve_operation_collation",
+            "collection.py:_resolve_operation_context",
+            "mongoeco-5-perf-review-trace.py:opts"
+          ]
+        ],
+        "source_opens": 1,
+        "sql": [],
+        "results": [
+          {
+            "_id": 1,
+            "v": 1,
+            "active": true
+          }
+        ]
+      },
+      {
+        "engine": "memory",
+        "mode": "to-list-limit1",
+        "runner": [
+          "AsyncCursor.to_list"
+        ],
+        "options": [
+          [
+            "cursor.py:_fill_buffer",
+            "cursor.py:_read_driver_response",
+            "cursor.py:_read_response",
+            "cursor.py:_fetch_response",
+            "cursor.py:_open_source",
+            "cursor.py:_resolve_operation_collation",
+            "collection.py:_resolve_operation_context",
+            "mongoeco-5-perf-review-trace.py:opts"
+          ]
+        ],
+        "source_opens": 1,
+        "sql": [],
+        "results": [
+          {
+            "_id": 1,
+            "v": 1,
+            "active": true
+          }
+        ]
+      },
+      {
+        "engine": "memory",
+        "mode": "aggregate-list",
+        "runner": [
+          "AsyncAggregationCursor._initialize",
+          "AsyncAggregationCursor._read_driver_response",
+          "AsyncAggregationCursor._read_driver_response",
+          "AsyncAggregationCursor.close"
+        ],
+        "options": [
+          [
+            "aggregation_cursor.py:pull",
+            "error_documents.py:invoke",
+            "aggregation_cursor.py:_next_source_document",
+            "aggregation_cursor.py:__anext__",
+            "aggregation_cursor.py:_open_batch_stream",
+            "aggregation_cursor.py:_resolve_operation_collation",
+            "collection.py:_resolve_operation_context",
+            "mongoeco-5-perf-review-trace.py:opts"
+          ]
+        ],
+        "source_opens": 1,
+        "sql": [],
+        "results": [
+          {
+            "_id": 0,
+            "v": 0
+          },
+          {
+            "_id": 1,
+            "v": 1
+          }
+        ]
+      },
+      {
+        "engine": "sqlite-file",
+        "mode": "list-limit1",
+        "runner": [
+          "_AsyncCursorIterator._read_driver_response",
+          "_AsyncCursorIterator.aclose"
+        ],
+        "options": [
+          [
+            "cursor.py:_read_driver_response",
+            "cursor.py:_read_response",
+            "cursor.py:_fetch_response",
+            "cursor.py:_open_source",
+            "cursor.py:_resolve_operation_collation",
+            "collection.py:_resolve_operation_context",
+            "mongoeco-5-perf-review-trace.py:opts"
+          ]
+        ],
+        "source_opens": 1,
+        "sql": [
+          "\n        SELECT options_json\n        FROM collections\n        WHERE db_name = 'db' AND coll_name = 'rows'\n        ",
+          "PRAGMA main.data_version",
+          "SAVEPOINT mongoeco_catalog_read",
+          "SELECT 1 FROM sqlite_schema LIMIT 1",
+          "PRAGMA main.data_version",
+          "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'db' AND coll_name = 'rows' AND (((json_type(document, '$.v') IN ('integer', 'real') AND json_extract(document, '$.v') = 1) OR (json_type(document, '$.v') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.v') WHERE json_each.type IN ('integer', 'real') AND json_each.value = 1))))\n            \n         LIMIT 1",
+          "RELEASE SAVEPOINT mongoeco_catalog_read"
+        ],
+        "results": [
+          {
+            "_id": 1,
+            "v": 1,
+            "active": true
+          }
+        ]
+      },
+      {
+        "engine": "sqlite-file",
+        "mode": "to-list-limit1",
+        "runner": [
+          "AsyncCursor.to_list"
+        ],
+        "options": [
+          [
+            "cursor.py:_fill_buffer",
+            "cursor.py:_read_driver_response",
+            "cursor.py:_read_response",
+            "cursor.py:_fetch_response",
+            "cursor.py:_open_source",
+            "cursor.py:_resolve_operation_collation",
+            "collection.py:_resolve_operation_context",
+            "mongoeco-5-perf-review-trace.py:opts"
+          ]
+        ],
+        "source_opens": 1,
+        "sql": [
+          "\n        SELECT options_json\n        FROM collections\n        WHERE db_name = 'db' AND coll_name = 'rows'\n        ",
+          "PRAGMA main.data_version",
+          "SAVEPOINT mongoeco_catalog_read",
+          "SELECT 1 FROM sqlite_schema LIMIT 1",
+          "PRAGMA main.data_version",
+          "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'db' AND coll_name = 'rows' AND (((json_type(document, '$.v') IN ('integer', 'real') AND json_extract(document, '$.v') = 1) OR (json_type(document, '$.v') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.v') WHERE json_each.type IN ('integer', 'real') AND json_each.value = 1))))\n            \n         LIMIT 1",
+          "RELEASE SAVEPOINT mongoeco_catalog_read"
+        ],
+        "results": [
+          {
+            "_id": 1,
+            "v": 1,
+            "active": true
+          }
+        ]
+      },
+      {
+        "engine": "sqlite-file",
+        "mode": "aggregate-list",
+        "runner": [
+          "AsyncAggregationCursor._initialize",
+          "AsyncAggregationCursor._read_driver_response",
+          "AsyncAggregationCursor._read_driver_response",
+          "AsyncAggregationCursor.close"
+        ],
+        "options": [
+          [
+            "aggregation_cursor.py:pull",
+            "error_documents.py:invoke",
+            "aggregation_cursor.py:_next_source_document",
+            "aggregation_cursor.py:__anext__",
+            "aggregation_cursor.py:_open_batch_stream",
+            "aggregation_cursor.py:_resolve_operation_collation",
+            "collection.py:_resolve_operation_context",
+            "mongoeco-5-perf-review-trace.py:opts"
+          ]
+        ],
+        "source_opens": 1,
+        "sql": [
+          "\n        SELECT options_json\n        FROM collections\n        WHERE db_name = 'db' AND coll_name = 'rows'\n        ",
+          "PRAGMA main.data_version"
+        ],
+        "results": [
+          {
+            "_id": 0,
+            "v": 0
+          },
+          {
+            "_id": 1,
+            "v": 1
+          }
+        ]
+      }
+    ]
+  },
+  "limits": [
+    "Historical profiles are call-count evidence, not uninstrumented timing attribution",
+    "Async profiler function resumes are not executor jobs or new loops",
+    "ANN hashes are shape contracts, not complete result identity or recall",
+    "No timing gate or new implementation executed"
+  ],
+  "trace_script": "performance-study-profiles.tar.gz/trace.py.txt",
+  "analysis_script": "performance-study-profiles.tar.gz/analysis.py.txt",
+  "inputs": [
+    {
+      "report": "I1",
+      "sha256": "3350263b213d9d7fe0f14747038975f889a019c23095bb8446297c0dd1dfd84e"
+    },
+    {
+      "report": "I2",
+      "sha256": "543a67d82c2291b40ccd8bbd9924b22b62286739832a3d1e8dbd333fe84a7aa8"
+    },
+    {
+      "report": "I3",
+      "sha256": "f22dbb8188e8b0970fc9569b3f71ca7fd4198a91af893f09dbb9a195c971f8a4"
+    },
+    {
+      "report": "I4",
+      "sha256": "fbeeb4be292d1a2e66f0b31ba7ec0406ee18b563e9508150a01af452d575d558"
+    }
+  ],
+  "preexisting_untracked_execution_sha256": "d4d1c913dd06c80552222a8123a1a86a0320413d6ebbfd99a764b715825b2c8d"
+}
