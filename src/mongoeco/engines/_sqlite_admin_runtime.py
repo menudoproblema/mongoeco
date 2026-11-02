@@ -22,6 +22,17 @@ class SQLiteAdminRuntime:
     def __init__(self, engine):
         self._engine = engine
 
+    def _can_observe_empty_options(self, db_name, coll_name) -> bool:
+        # SQLite binds string contents, not Python equality hooks. Unsupported
+        # string subclasses must retain SQL namespace and storage identity.
+        return (
+            type(self._engine._path) is str
+            and self._engine._path == ":memory:"
+            and type(db_name) is str
+            and type(coll_name) is str
+            and not self.is_profile_namespace(coll_name)
+        )
+
     def has_current_empty_options(self, db_name, coll_name, *, context=None) -> bool:
         """Reuse only an unchanged, nontransactional in-memory observation.
 
@@ -33,8 +44,7 @@ class SQLiteAdminRuntime:
         if (
             type(connection) is not SQLiteConnection
             or connection.empty_options_observation is None
-            or engine._path != ":memory:"
-            or self.is_profile_namespace(coll_name)
+            or not self._can_observe_empty_options(db_name, coll_name)
             or not engine._lock.acquire(blocking=False)
         ):
             return False
@@ -85,11 +95,10 @@ class SQLiteAdminRuntime:
             conn=conn,
         )
         if (
-            self._engine._path == ":memory:"
-            and type(conn) is SQLiteConnection
+            type(conn) is SQLiteConnection
+            and self._can_observe_empty_options(db_name, coll_name)
             and conn is self._engine._connection
             and not conn.in_transaction
-            and not self.is_profile_namespace(coll_name)
             and options == {}
         ):
             # total_changes is monotonic, including rolled-back writes. It

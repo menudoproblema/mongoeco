@@ -3772,3 +3772,53 @@ anterior no se mueven. Ninguna medición de coste, perfil, build o suite global
 F11 se ha ejecutado en esta corrección. El presupuesto del +5% queda sin
 verificar para el nuevo producto; no se transfiere aceptación de runtime de
 b93681b7 ni se resetean sus dos intentos agotados. F11 sigue pendiente.
+
+### Revisión de ce2ca71c: identidad de namespace y almacenamiento
+
+Workset fijado: afcf3990 → ce2ca71c779d35316ed3b534e8412621534dbe8d en
+perf/sqlite-empty-options, con contrato S1–S3 y censo de los tres módulos
+productivos y sus consumidores. Se revisan generación total_changes, locks,
+lectura/publicación de la observación, sesión/thread-bound connection,
+commit/rollback, rutas de archivo/virtuales y cierre/reconexión. El diff revisado
+queda ligado por SHA-256 a los dos paths corregidos en el proof. No se abre una
+auditoría general ni se reabren aceptaciones históricas.
+
+Dos findings P2 observados y corregidos, con tres reproducciones rojas:
+
+- La comparación de la tupla de observación usa igualdad Python. Un nombre str
+  con igualdad casefold hace que records y RECORDS, distintos en SQL y con
+  opciones diferentes, compartan {}. Se reproduce por AsyncCollection.options
+  tanto al publicar la observación como al consultarla. Desaparece la collation
+  real del segundo namespace, aunque no se haya escrito nada entre lecturas.
+- La prueba _path == :memory: también admite igualdad sobrescrita. Una subclase
+  str que señala un archivo real y compara igual a :memory: permite reutilizar
+  {} después de que otro engine cambie sus opciones. El contador local no cambia
+  con una escritura externa, y la API devuelve opciones obsoletas. La prueba usa
+  dos engines y un archivo compartido, sin simular el resultado SQL.
+
+Una única elegibilidad _can_observe_empty_options gobierna publicación y lectura:
+str nativos para ruta/base/colección y ruta literal :memory:, además de excluir
+system.profile. Las subclases conservan el camino SQL anterior; no se convierten
+ni reinterpretan sus nombres. No se introduce otro estado, caché o invalidador.
+El resto de las condiciones de conexión, contador, transacción y lock se conserva.
+Se añaden también dos controles de nombre de base con __eq__ que lanza: la
+identidad SQL no debe introducir llamadas a ese hook al consultar o publicar.
+
+Verificación de la corrección: selección prevalidada de 306 pruebas aprobadas
+por cada Python 3.13/3.14/3.15, incluyendo las cinco nuevas combinaciones y los
+contratos de jobs/sesión/archivo/lifecycle anteriores. Replay prevalidado de 840
+casos contra capturas MongoDB 7/8/9: materialized_context, find_projection y
+command_let, ambos motores y superficies registradas. Se reutiliza el resto del
+replay de consumo ya aceptado: no se toca el lector, sus buffers ni el cierre.
+Ratchet verde sobre los dos archivos Python modificados; diff revisado y
+whitespace check verde. Los tres avisos iniciales de lint sólo exigían __slots__
+en las clases str de los tests y quedan corregidos. No se hacen builds, perfiles,
+suites globales F11 ni nuevas mediciones de coste.
+
+No aparecen otros findings accionables en el diff y callers revisados. El workset
+está identificado, pero esta revisión acotada no acredita ausencia de defectos
+fuera de sus consumidores/garantías comprobadas. Ambos wheels congelados y sus
+manifests de módulos, diez registros de las dos campañas, main y la rama de
+evaluación anterior permanecen intactos. Las dos correcciones locales quedan
+comprobadas focalmente y commiteadas; F11 y el presupuesto del nuevo código
+siguen sin aceptación. No se reinicia ningún intento ni se modifica el contrato.

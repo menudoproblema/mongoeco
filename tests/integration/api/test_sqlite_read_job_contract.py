@@ -636,3 +636,91 @@ def test_hot_options_with_a_contended_lock_yield_to_the_executor():
             await engine.disconnect()
 
     asyncio.run(exercise())
+
+
+@pytest.mark.parametrize("phase", ["populate", "lookup"])
+def test_empty_options_use_sql_namespace_identity_not_python_name_equality(phase):
+    class FoldedName(str):
+        __slots__ = ()
+
+        def __eq__(self, other):
+            return isinstance(other, str) and self.casefold() == other.casefold()
+
+        def __hash__(self):
+            return hash(self.casefold())
+
+    async def exercise():
+        engine = SQLiteEngine()
+        async with AsyncMongoClient(engine) as client:
+            await engine.create_collection("test", "records")
+            expected = {"collation": {"locale": "en", "strength": 2}}
+            await engine.create_collection("test", "RECORDS", options=expected)
+            assert await client.test["RECORDS"].options() == expected
+            empty_name = FoldedName("records") if phase == "populate" else "records"
+            assert await client.test[empty_name].options() == {}
+            name = FoldedName("RECORDS") if phase == "lookup" else "RECORDS"
+            assert await client.test[name].options() == expected
+
+    asyncio.run(exercise())
+
+
+def test_string_path_equality_cannot_enable_memory_options_for_a_file(tmp_path):
+    class MemoryEqualPath(str):
+        __slots__ = ()
+
+        def __eq__(self, other):
+            return other == ":memory:" or str.__eq__(self, other)
+
+        def __ne__(self, other):
+            return not self.__eq__(other)
+
+        __hash__ = str.__hash__
+
+    async def exercise():
+        path = str(tmp_path / "actual-file.sqlite")
+        first = SQLiteEngine(MemoryEqualPath(path))
+        second = SQLiteEngine(path)
+        await first.connect()
+        await second.connect()
+        try:
+            await first.create_collection("test", "records")
+            assert await first.collection_options("test", "records") == {}
+            changes = first._connection.total_changes
+            expected = {"required": ["v"]}
+            await second._modify_collection_options(
+                "test", "records", options={"validator": expected}
+            )
+            assert first._connection.total_changes == changes
+            options = await first.collection_options("test", "records")
+            assert options["validator"] == expected
+        finally:
+            await second.disconnect()
+            await first.disconnect()
+
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize("phase", ["populate", "lookup"])
+def test_database_string_hooks_cannot_participate_in_empty_options_identity(phase):
+    class SqlName(str):
+        __slots__ = ()
+
+        def __eq__(self, other):
+            message = "SQL namespace identity must not invoke Python equality"
+            raise AssertionError(message)
+
+        __hash__ = str.__hash__
+
+    async def exercise():
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_collection("test", "records")
+            first = SqlName("test") if phase == "populate" else "test"
+            assert await engine.collection_options(first, "records") == {}
+            second = SqlName("test") if phase == "lookup" else "test"
+            assert await engine.collection_options(second, "records") == {}
+        finally:
+            await engine.disconnect()
+
+    asyncio.run(exercise())
