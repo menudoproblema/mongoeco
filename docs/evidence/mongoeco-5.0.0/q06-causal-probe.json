@@ -1,0 +1,317 @@
+{
+  "status": "probe_complete_cause_not_identified_R3_pending",
+  "terminal": {
+    "terminal": "complete",
+    "seconds": 3.371665499988012,
+    "queries": 44,
+    "maximum_queries": 44,
+    "maximum_seconds": 60,
+    "rows": [
+      {
+        "shape": "msm2",
+        "label": "A",
+        "exit": 0,
+        "command": [
+          "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/env314/bin/python",
+          "/tmp/mongoeco-q06-causal-worker.py",
+          "--subject-root",
+          "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/subjects/A",
+          "--shape",
+          "msm2",
+          "--output",
+          "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/causal-probe/A-msm2.json"
+        ]
+      },
+      {
+        "shape": "msm2",
+        "label": "B",
+        "exit": 0,
+        "command": [
+          "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/env314/bin/python",
+          "/tmp/mongoeco-q06-causal-worker.py",
+          "--subject-root",
+          "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/subjects/B",
+          "--shape",
+          "msm2",
+          "--output",
+          "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/causal-probe/B-msm2.json"
+        ]
+      },
+      {
+        "shape": "tie",
+        "label": "A",
+        "exit": 0,
+        "command": [
+          "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/env314/bin/python",
+          "/tmp/mongoeco-q06-causal-worker.py",
+          "--subject-root",
+          "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/subjects/A",
+          "--shape",
+          "tie",
+          "--output",
+          "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/causal-probe/A-tie.json"
+        ]
+      },
+      {
+        "shape": "tie",
+        "label": "B",
+        "exit": 0,
+        "command": [
+          "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/env314/bin/python",
+          "/tmp/mongoeco-q06-causal-worker.py",
+          "--subject-root",
+          "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/subjects/B",
+          "--shape",
+          "tie",
+          "--output",
+          "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/causal-probe/B-tie.json"
+        ]
+      }
+    ],
+    "cost_attempts_started": 1,
+    "cost_acceptance": false
+  },
+  "items": [
+    {
+      "shape": "msm2",
+      "queries_per_subject": 11,
+      "output_rows": 10,
+      "benchmark_output_equivalent": true,
+      "gc_active": true,
+      "first_query_gc": {
+        "A": [
+          {
+            "collections": 13,
+            "collected": 18,
+            "uncollectable": 0
+          },
+          {
+            "collections": 1,
+            "collected": 0,
+            "uncollectable": 0
+          },
+          {
+            "collections": 0,
+            "collected": 0,
+            "uncollectable": 0
+          }
+        ],
+        "B": [
+          {
+            "collections": 13,
+            "collected": 18,
+            "uncollectable": 0
+          },
+          {
+            "collections": 1,
+            "collected": 0,
+            "uncollectable": 0
+          },
+          {
+            "collections": 0,
+            "collected": 0,
+            "uncollectable": 0
+          }
+        ]
+      },
+      "hot_gc": {
+        "A": [
+          {
+            "collections": 1,
+            "collected": 15,
+            "uncollectable": 0
+          },
+          {
+            "collections": 0,
+            "collected": 0,
+            "uncollectable": 0
+          },
+          {
+            "collections": 0,
+            "collected": 0,
+            "uncollectable": 0
+          }
+        ],
+        "B": [
+          {
+            "collections": 1,
+            "collected": 15,
+            "uncollectable": 0
+          },
+          {
+            "collections": 0,
+            "collected": 0,
+            "uncollectable": 0
+          },
+          {
+            "collections": 0,
+            "collected": 0,
+            "uncollectable": 0
+          }
+        ]
+      },
+      "hot_function_calls": {
+        "matches_search_query": {
+          "A": 50000,
+          "B": 50000
+        },
+        "search_compound_ranking": {
+          "A": 5000,
+          "B": 5000
+        },
+        "bson_value_size": {
+          "A": 1860,
+          "B": 1860
+        },
+        "bson_numeric_alias": {
+          "A": 2060,
+          "B": 500
+        },
+        "_lazy_filter_predicate": {
+          "A": 0,
+          "B": 20
+        },
+        "compile_filter": {
+          "A": 0,
+          "B": 0
+        },
+        "materialize_search_document": {
+          "A": 0,
+          "B": 0
+        },
+        "materialized_search_document_from_entries": {
+          "A": 0,
+          "B": 0
+        }
+      }
+    },
+    {
+      "shape": "tie",
+      "queries_per_subject": 11,
+      "output_rows": 10,
+      "benchmark_output_equivalent": true,
+      "gc_active": true,
+      "first_query_gc": {
+        "A": [
+          {
+            "collections": 12,
+            "collected": 18,
+            "uncollectable": 0
+          },
+          {
+            "collections": 1,
+            "collected": 0,
+            "uncollectable": 0
+          },
+          {
+            "collections": 0,
+            "collected": 0,
+            "uncollectable": 0
+          }
+        ],
+        "B": [
+          {
+            "collections": 12,
+            "collected": 18,
+            "uncollectable": 0
+          },
+          {
+            "collections": 1,
+            "collected": 0,
+            "uncollectable": 0
+          },
+          {
+            "collections": 0,
+            "collected": 0,
+            "uncollectable": 0
+          }
+        ]
+      },
+      "hot_gc": {
+        "A": [
+          {
+            "collections": 0,
+            "collected": 0,
+            "uncollectable": 0
+          },
+          {
+            "collections": 0,
+            "collected": 0,
+            "uncollectable": 0
+          },
+          {
+            "collections": 0,
+            "collected": 0,
+            "uncollectable": 0
+          }
+        ],
+        "B": [
+          {
+            "collections": 0,
+            "collected": 0,
+            "uncollectable": 0
+          },
+          {
+            "collections": 0,
+            "collected": 0,
+            "uncollectable": 0
+          },
+          {
+            "collections": 0,
+            "collected": 0,
+            "uncollectable": 0
+          }
+        ]
+      },
+      "hot_function_calls": {
+        "matches_search_query": {
+          "A": 27500,
+          "B": 27500
+        },
+        "search_compound_ranking": {
+          "A": 2500,
+          "B": 2500
+        },
+        "bson_value_size": {
+          "A": 1880,
+          "B": 1880
+        },
+        "bson_numeric_alias": {
+          "A": 2080,
+          "B": 500
+        },
+        "_lazy_filter_predicate": {
+          "A": 0,
+          "B": 20
+        },
+        "compile_filter": {
+          "A": 0,
+          "B": 0
+        },
+        "materialize_search_document": {
+          "A": 0,
+          "B": 0
+        },
+        "materialized_search_document_from_entries": {
+          "A": 0,
+          "B": 0
+        }
+      }
+    }
+  ],
+  "conclusions": [
+    "Same result hashes, matching/ranking call counts and GC collection deltas in this probe",
+    "No hot document materialization in either subject; fewer generic BSON classifier calls in B",
+    "Two no-filter predicate factory calls per query are added, but no causal attribution to the observed +5.82%/+6.26% follows",
+    "No productive correction is justified from these data alone"
+  ],
+  "limits": [
+    "cProfile changes timing and observation conditions; its timings are not acceptance samples",
+    "Ten hot queries retain fewer outputs and do not reproduce the full prior workload order of the 100-query benchmark callbacks",
+    "No CPU-frequency, scheduling, hash-seed or GC-pause trace exists for the original twenty uninstrumented invocations",
+    "The original two observed worsenings remain open; no thresholds, samples or classifications changed"
+  ],
+  "cost_attempts_started": 1,
+  "product_changed": false,
+  "next_gate": "Explicit tradeoff authorization or a separately approved causal investigation; no automatic further measurements"
+}

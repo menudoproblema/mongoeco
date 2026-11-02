@@ -773,3 +773,24 @@ de residuales sin filtro y materialización fría/caliente; GC queda como contex
 instrumentado, con sólo diez consultas calientes por proceso. Si no decide la
 causa, se declara expresamente. Cualquier nueva campaña de aceptación requiere
 propuesta y autorización adicionales; esta sonda no repone los intentos.
+
+
+Resultado de la sonda causal autorizada: 44 consultas en 3,3717 s, GC activo,
+cuatro procesos terminados sin errores y hashes equivalentes al benchmark.
+[Registro](evidence/mongoeco-5.0.0/q06-causal-probe.json) y
+[fuente, perfiles y logs](evidence/mongoeco-5.0.0/q06-causal-probe-logs.tar.gz).
+
+En diez consultas calientes, A/B ejecutan las mismas 50.000 decisiones de
+matching y 5.000 rankings para msm2; 27.500 y 2.500 para tie-heavy. Cero
+materializaciones calientes en ambos; GC tiene los mismos deltas por generación
+en consulta inicial y fase caliente. Las llamadas al alias numérico bajan de
+2.060/2.080 a 500; la preparación raíz MQL es cero en estos shapes sin filtro.
+B añade veinte llamadas a la fábrica de predicados (dos por consulta), pero
+no hay evidencia de que ese trabajo explique los empeoramientos observados.
+
+**No se ha identificado la causa.** Diez consultas instrumentadas no reproducen
+las cien salidas retenidas ni el historial completo de workloads del intento
+original. El perfil no corrige sus dos clasificaciones ni es otro gate de coste.
+No se modifica el producto por una atribución especulativa y no se inicia otra
+sonda con el saldo del límite anterior. R3 sigue pendiente de resolución o de
+aceptación explícita del tradeoff; R6 no integra mientras falte esa disposición.
