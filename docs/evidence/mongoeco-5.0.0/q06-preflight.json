@@ -1,0 +1,43 @@
+{
+  "status": "reproducible_artifact_and_installed_preflight_verified_not_delivery_accepted",
+  "artifact": {
+    "revision": "95fa38c549051398225c6c90ce90c28989594c94",
+    "epoch": "1793658789",
+    "wheel": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/distributions-a/mongoeco-5.0.0-py3-none-any.whl",
+    "site_packages": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/site-packages",
+    "distributions": {
+      "mongoeco-5.0.0.tar.gz": "3ab93460dde32dc770e5f93b1ea0435762edf4bbf0f49e73a11fea270c78157d",
+      "mongoeco-5.0.0-py3-none-any.whl": "5ac014b1643e5230d1e894828859f372b8e8870a4337dbe91c5c92044d45bb76"
+    },
+    "modules": 289,
+    "package_files": 310
+  },
+  "runtime_commit": "b5d9e803",
+  "profiles": [
+    {
+      "profile": "313",
+      "package_files": 310,
+      "python": "3.13.15",
+      "gc": true
+    },
+    {
+      "profile": "314",
+      "package_files": 310,
+      "python": "3.14.5",
+      "gc": true
+    },
+    {
+      "profile": "315",
+      "package_files": 310,
+      "python": "3.15.0",
+      "gc": true
+    }
+  ],
+  "timing_attempts_started": 0,
+  "pending": [
+    "global suites and coverage",
+    "consumer and compatibility gates",
+    "one bounded temporal attempt",
+    "final review and integration"
+  ]
+}
