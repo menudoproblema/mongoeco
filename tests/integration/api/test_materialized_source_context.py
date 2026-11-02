@@ -18,6 +18,36 @@ from tests.differential.semantic_materialized_context_cases import (
 from tests.integration.api.test_semantic_group_regressions import _AsyncView, _capture
 
 
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+def test_new_operation_resolves_recreated_namespace_collation(engine_factory):
+    async def exercise():
+        async with AsyncMongoClient(engine_factory()) as client:
+            db = client.context_refresh
+            collection = db.rows
+            cases = (
+                ({"locale": "en", "strength": 2}, [{"_id": 1}, {"_id": 2}]),
+                ({"locale": "simple"}, [{"_id": 1}]),
+            )
+            for collation, expected in cases:
+                await db.create_collection("rows", collation=collation)
+                await collection.insert_many(
+                    [{"_id": 1, "v": "A"}, {"_id": 2, "v": "a"}]
+                )
+                assert await collection.find(
+                    {"v": "A"}, {"_id": 1}, sort=[("_id", 1)]
+                ).to_list() == expected
+                assert await collection.aggregate(
+                    [
+                        {"$match": {"v": "A"}},
+                        {"$sort": {"_id": 1}},
+                        {"$project": {"_id": 1}},
+                    ]
+                ).to_list() == expected
+                await collection.drop()
+
+    asyncio.run(exercise())
+
+
 @pytest.mark.parametrize("target", ["7.0", "8.0", "9.0"])
 @pytest.mark.parametrize("factory", [MemoryEngine, SQLiteEngine])
 @pytest.mark.parametrize("threshold", [None, 1])

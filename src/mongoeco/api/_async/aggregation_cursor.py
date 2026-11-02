@@ -5,7 +5,7 @@ import time
 from collections import deque
 from collections.abc import AsyncIterator, Iterable, Sized
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from itertools import islice
 
 from mongoeco.api._async._active_operations import track_active_operation
@@ -514,7 +514,14 @@ class AsyncAggregationCursor:
         if not callable(resolver) or self._operation_context.collation_resolved:
             return
         context = await resolver(self._operation_context)
-        self._operation = self._operation.with_overrides(context=None).bind(context)
+        operation = self._operation
+        self._operation = (
+            replace(operation, context=context)
+            if context.dialect is operation.dialect
+            and context.collation == self._operation_context.collation
+            and context.expressions is self._operation_context.expressions
+            else operation.with_overrides(context=None).bind(context)
+        )
         self._operation_context = context
         self._execution_context = context.expressions
         self._collation = context.collation

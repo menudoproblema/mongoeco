@@ -3,6 +3,7 @@ import datetime
 import tempfile
 import unittest
 
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
@@ -20,8 +21,9 @@ from mongoeco.api._sync.aggregation_cursor import (
     AggregationCursor,
     _AggregationCursorIterator,
 )
+from mongoeco.api import operations as operations_module
 from mongoeco.api.operations import compile_aggregate_operation
-from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.core.aggregation import (
     _CURRENT_COLLECTION_RESOLVER_KEY,
     AggregationCostPolicy,
@@ -336,6 +338,82 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertIs(cursor._operation_context, context)
         self.assertIs(cursor._execution_context, context.expressions)
+
+    async def test_resolving_unchanged_context_preserves_prepared_program(self):
+        context = OperationContext.create(
+            dialect=MONGODB_DIALECT_70,
+            session=ClientSession(),
+            bindings={"tenant": "first"},
+        )
+        operation = compile_aggregate_operation(
+            [{"$project": {"tenant": "$$tenant"}}], let=context.expressions
+        ).bind(context)
+        collection = _FakeCollection([])
+        resolved = context.derive(collation=None)
+        collection._resolve_operation_context = AsyncMock(return_value=resolved)
+        cursor = AsyncAggregationCursor(collection, operation)
+
+        with patch.object(
+            type(operation), "bind", side_effect=AssertionError("rebind")
+        ):
+            await cursor._resolve_operation_collation()
+            await cursor._resolve_operation_collation()
+
+        collection._resolve_operation_context.assert_awaited_once_with(context)
+        self.assertIs(cursor._operation_context, resolved)
+        self.assertIs(cursor._operation.context, resolved)
+        self.assertIs(cursor._pipeline, operation.pipeline)
+        self.assertIs(cursor._operation.let, operation.let)
+        self.assertIs(cursor._execution_context, context.expressions)
+        self.assertIs(cursor._session, context.session)
+        self.assertEqual(resolved.operation_id, context.operation_id)
+
+    async def test_resolving_changed_context_recompiles_from_authority(self):
+        context = OperationContext.create(
+            dialect=MONGODB_DIALECT_70, bindings={"tenant": "first"}
+        )
+        resolved = context.derive(collation=None)
+        variants = (
+            context.derive(collation={"locale": "en", "strength": 2}),
+            replace(resolved, dialect=MONGODB_DIALECT_80),
+            replace(
+                resolved,
+                expressions=context.expressions.with_bindings({"tenant": "next"}),
+            ),
+        )
+        for authority in variants:
+            with self.subTest(context=authority):
+                operation = compile_aggregate_operation(
+                    [{"$project": {"tenant": "$$tenant"}}], let=context.expressions
+                ).bind(context)
+                collection = _FakeCollection([])
+                collection._resolve_operation_context = AsyncMock(
+                    return_value=authority
+                )
+                cursor = AsyncAggregationCursor(collection, operation)
+                with patch.object(
+                    operations_module,
+                    "compile_aggregate_operation",
+                    wraps=operations_module.compile_aggregate_operation,
+                ) as compile_operation:
+                    await cursor._resolve_operation_collation()
+                compile_operation.assert_called_once()
+                self.assertIs(cursor._operation.context, authority)
+                self.assertIs(cursor._operation.dialect, authority.dialect)
+                self.assertIs(cursor._execution_context, authority.expressions)
+                self.assertIs(cursor._pipeline, cursor._operation.pipeline)
+
+    async def test_failed_context_resolution_does_not_replace_prepared_operation(self):
+        cursor = AsyncAggregationCursor(_FakeCollection([]), [])
+        operation = cursor._operation
+        context = cursor._operation_context
+        cursor._collection._resolve_operation_context = AsyncMock(
+            side_effect=OperationFailure("resolution failed")
+        )
+        with self.assertRaisesRegex(OperationFailure, "resolution failed"):
+            await cursor._resolve_operation_collation()
+        self.assertIs(cursor._operation, operation)
+        self.assertIs(cursor._operation_context, context)
 
     async def test_search_optimization_plan_rejects_incoherent_states(self):
         invalid_plans = (

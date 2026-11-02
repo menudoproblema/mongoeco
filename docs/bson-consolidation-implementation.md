@@ -3425,3 +3425,35 @@ finales son sólo receipt y evidencia; no invalidan los gates del payload.
 F00–F10 quedan comprobados focal/integralmente (11/12 bloques); F11 y la
 aceptación de entrega permanecen pendientes exclusivamente del coste. No se
 publica ni etiqueta, ni se declara finalizado F11.
+
+
+## Correcciones B→A de arranque de lectura — alcance focal separado
+
+Autorización: implementar el plan B→A acordado en conversación, en rama
+separada desde fb7c4a9a. Referencia productiva e4eb17cc y wheel a10cd637
+congelados; este incremento no sustituye su aceptación ni reinicia el coste
+F11. O1–O8/D05/P2 y parte II conservan su disposición. El repositorio no
+exige transición RFC adicional para este arreglo.
+
+Se reutilizan OperationContext, la vinculación validada, el propietario
+_AsyncCursorIterator, finish_cleanup y el capturador/replay existentes; no se
+crean coordinadores, cachés ni runners. El censo de callers identifica _iter,
+first y pull_chunk además de _fetch_response. La frontera de inicialización
+debe conservar las modalidades streaming/batch, AsyncIterable SPI v2, fases,
+buffers, identidad contextual y limpieza con cancelación repetida.
+
+| Bloque | Estado | Cierre exigido |
+| --- | --- | --- |
+| B | Comprobado focalmente | Vinculación directa guardada cuando no cambia la semántica; programa preparado conservado y recompilación legítima intacta. |
+| A | En implementación, después de B | Apertura diferida única sin wrapper por fila; modos, fases, contadores y propiedad/limpieza conservados. |
+| Verificación compartida | Pendiente | Selección focal prevalidada, tres Python/ambos motores/superficies afectadas, diffs revisados y commits semánticos. No acredita entrega ni coste F11. |
+
+B: se reproduce el rebind redundante con un test que conserva el programa
+preparado. La vinculación directa exige mismo dialecto, collation efectiva y
+objeto de expresiones; los cambios semánticos conservan bind/recompilación.
+Pasan 163 pruebas focales/1.054 subtests: identidad/sesión/reloj/bindings,
+resolución idempotente, variantes de dialecto/collation/bindings, error sin
+reemplazo parcial, namespace recreado en ambos motores y consumidores
+materializados/wire. Ratchet sobre tres archivos Python verde; diff revisado.
+Se conservan el rojo inicial, la selección y los logs de lint. La verificación
+compartida en tres Python sigue pendiente, igual que toda aceptación F11.
