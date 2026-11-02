@@ -1451,6 +1451,35 @@ evitando que errores de shape atraviesen varias capas antes de materializarse.
 * acepta silenciosamente majors nuevas de `pymongo`
 * mezcla dialecto de servidor y perfil de driver en una sola opción
 
+## Backend regex opcional
+
+Por defecto, las consultas, las expresiones regex y JSON Schema pattern usan
+Python `re`. Para el subset PCRE2 comprobado, instala `mongoeco[pcre2]` y define
+`MONGOECO_REGEX_BACKEND=pcre2` **antes de importar mongoeco**. La selección queda
+fijada durante el proceso; cambiarla exige reiniciarlo. Un backend desconocido o
+la dependencia solicitada ausente produce RuntimeError al usar regex, sin fallback
+por patrón. El extra fija pcre2 0.7.1 (libpcre2 10.47).
+
+Se comparten ejecución y caché, conservando validadores y errores propios de
+consulta/agregación/schema. Las clases word/digit son ASCII por defecto; (*UCP)
+y las propiedades Unicode conservan su significado PCRE2. Los diferenciales
+7/8/9 cubren keep-reset, branch-reset, capturas, offsets Unicode, opciones, match
+vacío y límites de ejecución. No se promete equivalencia PCRE2 universal.
+Search-v1 y `mongoeco.types.Regex.compile()` mantienen su contrato Python.
+
+Distribución comprobada: macOS arm64, CPython 3.13/3.14 con wheel del binding y
+3.15 con wheel construido desde fuente. La disponibilidad de PCRE2 en otros
+sistemas depende del extra; el backend por defecto no requiere ese paquete.
+
+## Subset de bucketAuto.granularity
+
+`$bucketAuto` admite R5/R10/R20/R40/R80, 1-2-5, E6/E12/E24/E48/E96/E192 y
+POWERSOF2. Las fronteras preferidas pueden absorber valores y reducir el número
+de buckets; los acumuladores se calculan sobre esa partición. Se conservan
+los tipos BSON y las cohortes Decimal128 observadas contra MongoDB 7/8/9, sin
+depender del contexto decimal ambiente. Los dominios negativos, no numéricos,
+NaN y las opciones inválidas se rechazan. El camino sin granularity no cambia.
+
 ## Subset de validación de documentos
 
 JSON Schema distingue `type` de `bsonType`; soporta enum, required, properties,

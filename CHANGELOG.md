@@ -8,6 +8,13 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Add an explicit optional PCRE2 backend for query, aggregation and schema regex
+  execution; keep Python regex as the default and preserve contextual validation.
+- Support the thirteen preferred-number series for `$bucketAuto.granularity`,
+  preserving BSON boundary types, decimal context and shared work checkpoints.
+
 ### Fixed
 
 - Avoid redundant SQLite metadata reads when empty collection options remain valid;
