@@ -3660,3 +3660,57 @@ observador reemplazado; no se presenta ningún proceso global originalmente
 rojo como terminal 0. Las otras 64.255/64.266/64.255 pruebas aprobadas y sus
 skips/subtests mantienen inputs idénticos y se reutilizan; no hay rerun global
 por una edición limitada a tests. G1/G2/G4: 3/6 cerradas; G3 sigue inconcluyente.
+
+G5 aceptado por evidencia explícita: nueve celdas completas terminal 0; tres
+celdas 3.13 conservan 50 fallos EADDRNOTAVAIL al abrir sockets, antes de comparar
+resultados (48 read-reply, uno y uno unack async). Son errores de disponibilidad
+de dirección local; el agotamiento transitorio de puertos por densidad de
+conexiones es la explicación operativa compatible, no una regresión semántica
+confirmada. Se reduce la concurrencia para la repetición, sin modificar producto,
+expectativas ni timeouts. Selección exacta de 48+1+1 nodos prevalidada y repetida
+secuencialmente: todos verdes. Se conserva la matriz original y la repetición;
+no se afirma que sus tres procesos originales fueran verdes. Las doce celdas
+quedan cubiertas por 3.587 nodos cada una mediante esa composición, sin repetir
+las otras nueve ni los nodos ya aprobados de las tres afectadas.
+
+Consumidores: doce gates actuales terminal 0 y tres controles estáticos
+reutilizados (mypy estricto, mypy engine y snapshots). El ledger prueba targets,
+scripts/datos del catálogo y fixtures sin cambios; interfaz importada conservada
+por review y tipado actual sobre el wheel. Tipado público, manifest, ratchet
+contra v4.11.0, SPI, deep 66, smokes wheel/sdist/pytest-kit, conformance de ambos
+motores/externo y perfil sin SDK (14 tests, ausencia real de bson/pymongo)
+comprobados. Los smokes limpios eliminan PYTHONPATH para que su venv instalado
+sea realmente el importado. Se verifican 92/92 outcome_sha256 en los once
+workloads funcionales existentes por motor: base inmutable reutilizada y salida
+actual comparada. Los tiempos incidentales no generan otra decisión de coste.
+Compatibilidad de archivos SQLite anteriores/reapertura se acredita por los
+archivos de tests incluidos en la ejecución integral, con fixtures históricas
+intactas; no se crea una base antigua nueva para probar compatibilidad.
+
+Revisión final de la evaluación: producto exacto b93681b7, dos distribuciones
+reproducibles y sus bytes instalados conservados; 42 pruebas de procedencia
+registran imports del nuevo site-packages, incluidos originales rojos y
+repeticiones, sin ocultar sus exit codes. Los 287 archivos de cobertura son
+del paquete instalado. Main sigue fb7c4a9a; e4eb17cc, wheel a10cd637, manifest
+y cinco registros de coste históricos sin cambios. El prefijo histórico del
+receipt es idéntico. Después de congelar producto sólo cambian observador de
+test, plan/receipt y evidencia. Ningún nuevo mongod o contenedor nativo se ha
+arrancado; gates y workers propios terminados. No hay nueva implementación,
+publicación, tag ni ampliación a parte II.
+
+| Obligación del nuevo candidato | Disposición final |
+| --- | --- |
+| G1 identidad/reutilización | Aceptada. Ledger y hashes registrados. |
+| G2 artefactos | Aceptada. Wheel b36a7ec8 / sdist d669b726, reproducibles. |
+| G3 coste | Pendiente de aceptación: 30 aceptados, 0 regresiones confirmadas, 14 inconcluyentes; dos intentos agotados. |
+| G4 integración final | Aceptada por ejecución completa + observador corregido; cobertura instalada 99,0113023323%; composición íntegra trazada. |
+| G5 compatibilidad/consumidores | Aceptada por nueve celdas completas + tres compuestas; consumidores verdes y reutilización justificada. |
+| G6 entrega final | Pendiente por G3. Receipt/revisión/commits completados; no se concede aceptación de entrega. |
+
+Resultado: 4/6 obligaciones aceptadas, evaluación autorizada ejecutada y sin
+pruebas funcionales pendientes. El único bloqueo material es acreditar el coste
+de los 14 controles enumerados; G6 depende de ello. No se repite automáticamente
+ninguna medición, se cambia el umbral ni se concede cierre por ausencia de
+regresión confirmada. Para avanzar hace falta disposición explícita del owner
+sobre entorno/evaluación, conservando el contrato vigente. F11 no está cerrado,
+ni para el candidato histórico ni por asociación al nuevo artefacto.
