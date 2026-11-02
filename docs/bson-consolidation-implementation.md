@@ -3446,7 +3446,7 @@ buffers, identidad contextual y limpieza con cancelación repetida.
 | --- | --- | --- |
 | B | Comprobado focalmente | Vinculación directa guardada cuando no cambia la semántica; programa preparado conservado y recompilación legítima intacta. |
 | A | Comprobado focalmente | Apertura diferida única sin wrapper por fila; modos, fases, contadores y propiedad/limpieza conservados. |
-| Verificación compartida | Pendiente | Selección focal prevalidada, tres Python/ambos motores/superficies afectadas, diffs revisados y commits semánticos. No acredita entrega ni coste F11. |
+| Verificación compartida | Comprobada focalmente | Selección focal prevalidada, tres Python/ambos motores/superficies afectadas, diffs revisados y commits semánticos. No acredita entrega ni coste F11. |
 
 B: se reproduce el rebind redundante con un test que conserva el programa
 preparado. La vinculación directa exige mismo dialecto, collation efectiva y
@@ -3477,3 +3477,37 @@ exigir que ni siquiera se abra la fuente antes del primer I/O. Se conservan
 los fallos intermedios: dos eran la extensión del test de cancelación usando
 __anext__ en AsyncCursor en vez del iterador; corregida la prueba, la limpieza
 pasa. Verificación compartida y replay nativo pendientes; no aceptación F11.
+
+Cierre focal B→A: producto 71aa410f015fd422cee7a67af4e4f0310c0cac88 en rama
+perf/f11-context-startup (B: 4181b18dad8cecc61a35eb9f3ec7b0e62e7000d5;
+A: 71aa410f015fd422cee7a67af4e4f0310c0cac88). Comprobados los dos bloques
+y la verificación compartida; no quedan criterios focales pendientes.
+
+- La selección prevalidada de 335 pruebas pasa en Python 3.13, 3.14 y 3.15,
+  con 1.094 subtests por versión. Incluye Memory/SQLite y las fronteras
+  async/sync/wire afectadas. No se repite el focal B separado: la selección
+  compartida ya contiene sus cinco archivos.
+- Replay diferencial prevalidado: 1.200 pruebas aprobadas en Python 3.14
+  contra las capturas nativas existentes de MongoDB 7.0/8.0/9.0, para
+  cursor_consumption, response_frontier, find_projection, materialized_context
+  y command_let, ambos motores y superficies sync/async/wire-sync/wire-async.
+  Se reutiliza ese oráculo aceptado; no se arrancan servidores nativos nuevos.
+- Ratchet de lint verde sobre los seis archivos Python cambiados desde
+  fb7c4a9a. Contratos de typing público y SPI verdes, incluidos los 20 y 25
+  errores negativos esperados. Diff productivo y pruebas revisados,
+  git diff --check verde. El último cambio posterior sólo registra evidencia.
+- La prueba de congelación verifica main aún en
+  fb7c4a9aad755fad54a70ce857e2af03ff8d82f5, candidato histórico
+  e4eb17ccf75634f7ff365c6f43ed8387f16e72e7 y wheel SHA-256
+  a10cd6375fded32d42905e2fee214309f5884c9b92c334e39184324edae4c046.
+  Configuración, muestras, looks 3/6 y resumen del coste conservan los mismos
+  bytes que su evidencia aceptada. El receipt histórico sigue siendo prefijo
+  inalterado; O1–O8/D05/P2 permanecen cerradas y parte II excluida.
+
+Límite de este cierre: implementación B→A y garantías focales. No se han
+realizado builds, suites globales, perfiles ni mediciones de coste nuevas.
+No se infiere una mejora porcentual ni se acredita el umbral de CPU. El nuevo
+producto queda separado del artefacto congelado; los gates globales de F11
+aceptados para e4eb17cc no se atribuyen a esta rama. F11 permanece pendiente
+exclusivamente de aceptación del coste (32 aceptados, cero regresiones
+confirmadas, 12 inconcluyentes, intentos agotados). No se publica ni etiqueta.
