@@ -155,19 +155,8 @@ class _AsyncCursorIterator:
         self._source = aiter(self._source_owner)
 
     async def _release_source(self) -> None:
-        """Close each owned object once, retaining failed resources for retry."""
-        try:
-            if self._source is not None:
-                await self._cursor._close_source(self._source)
-                if self._source_owner is self._source:
-                    self._source_owner = None
-                self._source = None
-            if self._source_owner is not None:
-                await self._cursor._close_source(self._source_owner)
-                self._source_owner = None
-        except BaseException:
-            self._retire_owned_source()
-            raise
+        self._retire_owned_source()
+        await self._cursor._close_retired_sources()
 
     def _retire_owned_source(self) -> None:
         self._cursor._retire_source(self._source_owner)
@@ -185,6 +174,8 @@ class _AsyncCursorIterator:
                 f"cursor cleanup failed: {type(cleanup_error).__name__}: "
                 f"{cleanup_error}"
             )
+            for note in getattr(cleanup_error, "__notes__", ()):
+                failure.add_note(note)
 
     async def __anext__(self) -> Document:
         if self._closed:
@@ -227,7 +218,7 @@ class _AsyncCursorIterator:
                         )
                     except StopAsyncIteration:
                         self._cursor._exhausted = True
-                        await finish_cleanup(self._release_source())
+                        await self._release_source()
                         if not items:
                             await self.close()
                         break
@@ -268,7 +259,7 @@ class _AsyncCursorIterator:
                         return await self._source.__anext__()
                     except StopAsyncIteration:
                         self._cursor._exhausted = True
-                        await finish_cleanup(self._release_source())
+                        await self._release_source()
                         raise
 
                 raw = await self._response_reader.read(pull, maximum, initial=initial)
@@ -351,7 +342,7 @@ class _AsyncCursorIterator:
     async def _close_source(self):
         self._source_factory = None
         if self._source is not None or self._source_owner is not None:
-            await finish_cleanup(self._release_source())
+            await self._release_source()
         self._response_reader.clear()
         self._cursor._response_reader.clear()
         await self._cursor._close_batch_source()
@@ -485,9 +476,34 @@ class AsyncCursor:
         self._batch_source = None
 
     async def _close_retired_sources(self) -> None:
-        while self._retired_sources:
-            await self._close_source(self._retired_sources[-1])
-            self._retired_sources.pop()
+        if not self._retired_sources:
+            return
+
+        async def close_all():
+            first_error: BaseException | None = None
+            failed = []
+            try:
+                while self._retired_sources:
+                    source = self._retired_sources.pop()
+                    try:
+                        await self._close_source(source)
+                    except BaseException as error:
+                        failed.append(source)
+                        if first_error is None:
+                            first_error = error
+                        else:
+                            first_error.add_note(
+                                f"cursor cleanup failed: {type(error).__name__}: "
+                                f"{error}"
+                            )
+            finally:
+                # A failed owner must not prevent closing the remaining owners.
+                for source in reversed(failed):
+                    self._retire_source(source)
+            if first_error is not None:
+                raise first_error
+
+        await finish_cleanup(close_all())
 
     def _current_dialect(self):
         return getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)

@@ -649,7 +649,7 @@ def test_find_distinct_source_retains_failed_cleanup_without_reopening(failure):
             expected = {
                 "iterate": ["source"],
                 "pull": ["iterator", "source"],
-                "close": ["iterator", "iterator", "source"],
+                "close": ["iterator", "source", "iterator"],
             }
             assert closes == expected[failure]
             assert not cursor._retired_sources
@@ -674,5 +674,136 @@ def test_find_lazy_open_preserves_query_counter_and_started_phase(monkeypatch):
             assert counters == ["query"]
             await cursor.close()
             assert counters == ["query"]
+
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize("entrypoint", ["close", "rewind", "eof", "error"])
+@pytest.mark.parametrize("failures", [(True, False), (False, True), (True, True)])
+def test_find_cleanup_attempts_all_distinct_resources_and_retries_only_failed(
+    entrypoint, failures
+):
+    async def exercise():
+        attempts = [0, 0]
+
+        class Iterator:
+            pulls = 0
+
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self):
+                self.pulls += 1
+                if self.pulls == 1:
+                    return {"_id": 1}
+                if entrypoint == "error":
+                    message = "read failed"
+                    raise RuntimeError(message)
+                raise StopAsyncIteration
+
+            async def aclose(self):
+                attempts[0] += 1
+                if failures[0] and attempts[0] == 1:
+                    message = "iterator cleanup failed"
+                    raise ValueError(message)
+
+        iterator = Iterator()
+
+        class Source:
+            def __aiter__(self):
+                return iterator
+
+            async def aclose(self):
+                attempts[1] += 1
+                if failures[1] and attempts[1] == 1:
+                    message = "source cleanup failed"
+                    raise TypeError(message)
+
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            cursor = client.responses.rows.find({})
+            cursor._open_read_source = lambda **_options: Source()
+            owner = cursor.__aiter__()
+            assert await owner._read_response(1) == [{"_id": 1}]
+            error_type = (
+                RuntimeError if entrypoint == "error"
+                else (ValueError if failures[0] else TypeError)
+            )
+            async def finish():
+                if entrypoint == "rewind":
+                    cursor.rewind()
+                    await cursor._close_retired_sources()
+                elif entrypoint in {"eof", "error"}:
+                    await owner._read_response(1)
+                else:
+                    await cursor.close()
+
+            with pytest.raises(error_type) as error:
+                await finish()
+            assert attempts == [1, 1]
+            if all(failures):
+                assert any(
+                    "source cleanup failed" in note
+                    for note in error.value.__notes__
+                )
+            await cursor.close()
+            assert attempts == [1 + int(failures[0]), 1 + int(failures[1])]
+            assert not cursor._retired_sources
+
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize("entrypoint", ["close", "rewind"])
+@pytest.mark.parametrize("blocked_resource", [0, 1])
+def test_find_distinct_resources_finish_cleanup_after_repeated_cancellation(
+    entrypoint, blocked_resource
+):
+    async def exercise():
+        closing = asyncio.Event()
+        release = asyncio.Event()
+        attempts = [0, 0]
+
+        async def close_resource(index):
+            attempts[index] += 1
+            if index == blocked_resource:
+                closing.set()
+                await release.wait()
+
+        class Iterator:
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self):
+                return {"_id": 1}
+
+            async def aclose(self):
+                await close_resource(0)
+
+        iterator = Iterator()
+
+        class Source:
+            def __aiter__(self):
+                return iterator
+
+            async def aclose(self):
+                await close_resource(1)
+
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            cursor = client.responses.rows.find({})
+            cursor._open_read_source = lambda **_options: Source()
+            assert await cursor.__aiter__().pull_chunk(1) == [{"_id": 1}]
+            if entrypoint == "rewind":
+                cursor.rewind()
+            task = asyncio.create_task(cursor.close())
+            await asyncio.wait_for(closing.wait(), 1)
+            task.cancel()
+            await asyncio.sleep(0)
+            task.cancel()
+            release.set()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+            assert attempts == [1, 1]
+            assert not cursor._retired_sources
+            await cursor.close()
+            assert attempts == [1, 1]
 
     asyncio.run(exercise())

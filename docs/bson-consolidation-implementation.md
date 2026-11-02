@@ -3511,3 +3511,60 @@ producto queda separado del artefacto congelado; los gates globales de F11
 aceptados para e4eb17cc no se atribuyen a esta rama. F11 permanece pendiente
 exclusivamente de aceptación del coste (32 aceptados, cero regresiones
 confirmadas, 12 inconcluyentes, intentos agotados). No se publica ni etiqueta.
+
+### Revisión B→A por bloques y correcciones de limpieza
+
+Workset de revisión: fb7c4a9aad755fad54a70ce857e2af03ff8d82f5 →
+4b0440e17143f7ec3ebe531a443bc1ed63e0a424, rama perf/f11-context-startup.
+Se revisan diff, callers, contratos de contexto/operación y ciclo de vida,
+incluyendo _iter, first, pull_chunk, respuesta batch, EOF, close y rewind.
+La corrección queda identificada por los dos paths Python y el SHA-256 del
+diff en ba-review-frozen-proof.json.gz. No se toca otro worktree.
+
+B revisado: sin nuevos findings en el bloque. La guarda conserva dialecto,
+collation efectiva y el mismo objeto de expresiones; replace pasa por la
+validación del AggregateOperation ligado. El resolver real deriva sólo la
+collation; bind sigue siendo la autoridad cuando cambia la semántica. Se
+reutilizan los tests aceptados de identidad, recompilación y fallo atómico,
+además del focal compartido previo: no hay cambios causales que los invaliden.
+
+A: dos findings locales observados y corregidos, ambos P2; no son reaperturas
+de los P2 anteriores:
+
+1. Si aclose del iterador separado falla, la fuente no recibe ni un intento
+   de cierre. La cola de retirados repetía el mismo bloqueo tras rewind.
+   Se reproduce en close/EOF/rewind: seis fallos de nueve combinaciones.
+   Ahora la liberación activa delega en la cola existente; ésta intenta todos
+   los recursos, conserva el primer error y retiene sólo los cierres fallidos
+   para reintento. finish_cleanup protege el drenaje completo, también tras
+   rewind. Se retiran los tres envoltorios de limpieza redundantes del owner.
+2. Ante error de lectura y dos cierres fallidos, la nota del segundo cierre
+   quedaba en el error de limpieza y se perdía al conservar el error de lectura.
+   Se reproduce con una combinación roja de tres. Ahora se conservan también
+   esas notas secundarias, sin sustituir el error de lectura ni su fase.
+
+Verificación del código corregido:
+
+- Selección focal prevalidada: test_response_boundaries.py, test_cursors.py y
+  test_sync_cursor_consumption_contract.py. Pasan 157 pruebas y cuatro subtests
+  en cada Python 3.13/3.14/3.15. Incluye 12 combinaciones de errores y cuatro
+  cancelaciones repetidas sobre fuente/iterador separados, además de las
+  regresiones anteriores. El orden esperado de un test previo se actualiza
+  para exigir que la fuente se cierre antes del reintento del iterador fallido.
+- Replay focal prevalidado: 360 pruebas aprobadas contra capturas nativas
+  7.0/8.0/9.0, corpus cursor_consumption/response_frontier, ambos motores y
+  superficies sync/async/wire-sync/wire-async. No hay nuevas capturas físicas.
+- Ratchet de lint verde sobre los dos paths Python corregidos; diff revisado
+  y git diff --check verde. No cambia una interfaz de typing: se reutiliza
+  su evidencia aceptada, junto a los controles no alcanzados del incremento.
+- Congelación comprobada por hashes: main, e4eb17cc, wheel a10cd637 y los cinco
+  registros normativos del coste permanecen idénticos a la evidencia anterior.
+  El receipt aceptado de 4b0440e1 permanece como prefijo sin modificaciones.
+
+Revisión y corrección de 2/2 bloques completas, sin criterios focales pendientes.
+Límites: se fija el workset exacto; la ausencia de otros findings se limita al
+diff, sus callers y garantías comprobadas, sin una auditoría global nueva.
+No se ejecutan builds, suites globales, perfiles ni coste. F11 continúa con
+32 controles aceptados y 12 inconcluyentes, sin nuevos intentos. No se atribuye
+su aceptación global al nuevo código. O1–O8/D05/P2 conservan sus cierres y la
+parte II permanece fuera del alcance.
