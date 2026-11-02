@@ -3822,3 +3822,40 @@ manifests de módulos, diez registros de las dos campañas, main y la rama de
 evaluación anterior permanecen intactos. Las dos correcciones locales quedan
 comprobadas focalmente y commiteadas; F11 y el presupuesto del nuevo código
 siguen sin aceptación. No se reinicia ningún intento ni se modifica el contrato.
+
+### Preparación de la evaluación b83789bc y sonda de atribución
+
+Plan de evaluación preparado por encargo del owner; no se ejecutan builds,
+suites ni coste con esta preparación. Contrato, dependencias y criterios G1–G6
+pertenecen a la sección «Evaluación propuesta de b83789bc» del plan vigente.
+Candidato productivo b83789bc36bc1bebe693d09b782e5e242be24db4, tres módulos
+SQLite cambiados respecto a b93681b7; no se transfiere la aceptación del artefacto
+anterior. El futuro presupuesto conserva dos intentos de tres ABBA, 45 minutos
+por intento/90 acumulados y los 44 controles. Su ejecución queda pendiente de
+inicio explícito, sin tocar los contadores agotados anteriores.
+
+Se incorpora la sonda ya autorizada y ejecutada, no otra medición: evidencia
+b837-attribution-* en la carpeta existente, incluyendo worker, ejecución,
+resultados, perfiles y análisis. Worker SHA-256
+cb1b853b0f0c686006db4de58e643dfa2566731d5fa325586ba8f78eded519d8,
+Python 3.14.5, GC activo (2000,10,10), 600 lecturas en 21,376081 s.
+C=b93681b7 instalado, D=b83789bc fuente; 100 lecturas por caso/revisión,
+una preparatoria y 99 perfiladas. Tres casos: SQLite primera página y vector
+con límites 2/64. Resultados BSON iguales entre C/D y ambos registros históricos.
+
+Cada caso pasa de 99 a cero jobs _collection_options_sync y elimina 297
+iteraciones del event loop. Fetches/cierres y trabajo vectorial observado no
+cambian; bind conserva la reducción B→A anterior. CPU descriptiva C→D:
+-1,7542%, -4,2899% y -5,3738%, respectivamente. No son cotas de coste ni prueba
+de que todo ese delta proceda del job eliminado: ejecución única secuencial,
+profiling y fuente frente a distribución. GC permanece activo; ninguna traza
+pendiente al terminar. La evidencia acredita eliminación del trabajo observado,
+no el umbral +5%, los otros workloads ni packaging del candidato nuevo.
+
+La comprobación posterior de wheels se restringe a distributions-a/b: un primer
+assert auxiliar demasiado amplio incluía wheels artificiales de tests antiguos
+y falló; se corrigió la selección sin repetir la sonda. Wheels sellados y
+manifests de ambos candidatos, fuentes y registros de coste conservan sus bytes.
+No se modifica código productivo ni tests, no se reinicia el gate F11 y no se
+hacen otras lecturas de atribución. Las obligaciones G1–G6 de este candidato
+siguen 0/6 aceptadas; focales y sonda son evidencia reutilizable, no cierre F11.

@@ -2434,6 +2434,106 @@ sesiones/rollback/reconexión/contención y archivo externo; tres Python y repla
 globales ni ejecutar perfiles/coste dentro de esta corrección. El resultado es
 una corrección comprobada focalmente; no acredita el +5% ni aceptación de entrega.
 
+#### Evaluación propuesta de b83789bc tras la corrección SQLite
+
+Estado: plan preparado por encargo del owner; no autoriza todavía builds,
+suites ni nuevas mediciones. La siguiente ejecución requiere disposición de
+inicio. Se conserva el protocolo F11: no se sustituyen sus garantías por la
+sonda diagnóstica ni se reinician campañas anteriores.
+
+Payload productivo propuesto: b83789bc36bc1bebe693d09b782e5e242be24db4,
+rama perf/sqlite-empty-options. Los commits posteriores exclusivamente de
+plan/evidencia no cambian esta identidad. Base de coste inmutable:
+2fa637f6254a09acd6c81aeee5a36384fdbdbfa7. Permanecen congelados e4eb17cc,
+b93681b7, sus wheels/manifests y los registros de sus dos intentos agotados.
+O1–O8, D05 y P2 siguen cerrados; parte II excluida.
+
+Causa material que justifica evaluar otro candidato: ce2ca71c elimina el job
+redundante de opciones vacías en SQLite en memoria; b83789bc conserva identidad
+SQL ante subclases str. Frente a b93681b7 sólo cambian tres módulos productivos:
+_sqlite_admin_runtime.py, _sqlite_connection.py y sqlite.py. Cambian elegibilidad,
+observación y lectura de metadata, con alcance en contexto/collation de lecturas,
+agregación y búsqueda, sesiones y lifecycle SQLite. No hay nuevo formato ni SPI.
+
+La sonda ya ejecutada mantiene GC activo, 600 lecturas y 21,376081 segundos;
+compara b93681b7 instalado con b83789bc fuente usando el mismo worker. En cada
+caso elimina 99 jobs de opciones y 297 iteraciones del event loop por 99 lecturas
+perfiladas; conserva BSON, fetch/cierre y trabajo vectorial observado. Es evidencia
+causal de trabajo eliminado, no aceptación de coste: una ejecución C→D con
+profiling no ofrece los intervalos F11 ni equivalencia de packaging. Registro
+canónico de resultados en el receipt y evidencia b837-attribution-*.
+
+Lista cerrada de obligaciones; los IDs G1–G6 se califican aquí por b83789bc y no
+reabren las disposiciones históricas de b93681b7:
+
+| Obligación / dependencia | Evidencia faltante y ejecución mínima | Criterio observable de cierre |
+| --- | --- | --- |
+| G1 identidad y reutilización | Comparar manifest de producto b83789bc con b93681b7; fijar intérpretes, dependencias, scripts, corpus y entradas transitivas de cada control reutilizado. | Ledger enlaza hashes, comando/corpus y evidencia terminal; tres módulos productivos cambiados identificados, ninguna reutilización sólo por nombre del gate. |
+| G2 artefacto, después de G1 | Dos builds reproducibles y distribución con mecanismos existentes; instalación aislada y guards de imports. | Wheels/sdists reproducibles, checks verdes y hashes completos; todas las pruebas posteriores identifican el payload instalado, sin importar src por accidente. |
+| G3 coste, después de G2 | Nueva comparación de los 44 controles completos contra 2fa637f6, sólo tras autorización de inicio y bajo el presupuesto de abajo. | Los 44 límites superiores <=1,05 y requisitos duros de equivalencia/supuestos satisfechos; inconcluyente no cierra. |
+| G4 integración, después de G2 | Unittest/pytest completos del candidato instalado en Python 3.13/3.14/3.15, cobertura instalada y deep. Son requisitos expresos de artefacto final, aunque gran parte del producto no cambie. | Procesos terminales verdes, cobertura >=99,00% sin redondeo y deep verde; replay alcanzado dentro de la suite, sin recaptura ni tanda focal duplicada. |
+| G5 compatibilidad, después de G2 | Matriz vigente de doce celdas Python/pytest/SDK y consumidores invalidados por SQLite/artefacto: conformance, SPI, SDK-free, smokes wheel/sdist/pytest-kit, archivos SQLite históricos, sesiones y reapertura. | Celdas/gates exigidos verdes sobre el artefacto o controles independientes reutilizados mediante G1; sin skips nuevos que sustituyan una obligación. |
+| G6 entrega, después de G1–G5 | Revisar diff final, registrar aceptación y límites en receipt, recursos liberados, commits semánticos y limpieza. | Todos los criterios anteriores aceptados, producto idéntico al evaluado y árbol limpio; sin tag/publicación implícitos. |
+
+Reutilización e invalidación, sin otro runner ni ledger documental paralelo:
+
+- Se conservan focales/revisión de b83789bc: 306 casos por Python y 840 replays,
+  más evidencia anterior de consumo no alcanzado. No repetirlos por separado;
+  los globales finales los incluyen cuando pertenezcan a su corpus.
+- Capturas nativas 7/8/9, expectativas, fixtures SQLite históricas, base de coste
+  y workers permanecen oráculos/inputs válidos. Verificar hashes antes del uso;
+  no volver a capturar ni reconstruir una base antigua.
+- La aceptación funcional/compatibilidad de b93681b7 no se transfiere al nuevo
+  artefacto. El camino metadata/contexto SQLite invalida sus resultados alcanzados;
+  G4 y la matriz G5 exigen además la ejecución del candidato final expresamente.
+- Controles estáticos puros (p. ej. snapshots o tipado con targets no alcanzados)
+  sólo se reutilizan con inputs transitivos idénticos y sin requisito de ejecutarse
+  sobre la distribución nueva. Packaging, inventario, procedencia y cualquier
+  control que lea uno de los tres módulos se comprueban de nuevo. Resolver el
+  ledger antes de lanzar cada grupo; no presumir reutilización del tipado engine.
+- Ningún tiempo antiguo ni los 30/32 controles aceptados se heredan. Los registros
+  históricos sirven de diagnóstico. Los 14 inconcluyentes no son una selección
+  suficiente para aceptar este candidato: se mantienen los 44 controles.
+
+Presupuesto de coste propuesto, sin cambiar el protocolo vigente:
+
+- Contador separado de evaluación del producto material b83789bc: 0/2 intentos
+  ejecutados; no es un reset de e4eb17cc ni b93681b7. No comienza con este plan.
+- Máximo dos intentos, tres ABBA cada uno, 45 minutos de pared por intento y
+  90 acumulados. El reloj incluye lanzamiento/calentamiento/medición de workers;
+  preparación de artefactos va en G2, no se usa para esconder mediciones adicionales.
+- Mismos workers y hashes acreditados, Python 3.14.5, GC activo con thresholds
+  (2000,10,10), PYTHONHASHSEED=0 y taskpolicy -a; 500 operaciones de consumo y
+  1.000 de búsqueda por muestra, agregación y calentamientos existentes intactos.
+  No calibraciones A/A, perfiles adicionales ni otras cargas propias concurrentes.
+- A/B siempre base 2fa637f6 / wheel nuevo. Primer análisis tras tres bloques;
+  sólo si es inconcluyente procede el segundo, acumulando los seis. Fórmula,
+  límites t=4,303/2,571, alfa y supuestos exactamente los del protocolo F11.
+- Los 44 casos deben pasar el límite superior 1,05 sin compensación entre ellos.
+  Límite inferior >1,05 detiene promoción para investigar una regresión observada.
+  Fallo técnico/funcional queda registrado como fallo; no se disfraza de ruido.
+- Timeout, bloques incompletos o supuestos no defendibles impiden aceptación;
+  conservar todo lo ejecutado y el intento consumido, sin reemplazar muestras,
+  reintentar automáticamente o extender presupuesto. A los dos intentos o al
+  límite operativo, detener: F11 pendiente si queda un caso inconcluyente.
+  Otra configuración/entorno exige disposición previa del owner, no un tercer
+  intento encubierto. No se promete que este diseño decida cerca del umbral.
+
+Orden de ejecución futura: G1→G2→G3 aislado; después agrupar G4/G5 compatibles.
+Si G3 demuestra regresión, detener promoción y diferir globales hasta resolver
+su causa. Si queda inconcluyente, completar los gates independientes autorizados
+sin repetirlos después por calendario; G6 sigue pendiente de aceptación de coste.
+Antes de lanzar: comprobar intérprete/dependencias/rutas/configuración y colección
+de selecciones complejas; usar resultados terminales. Sólo una regresión demostrada
+o una garantía obligatoria incumplida permite cambiar el payload; cualquier cambio
+posterior exige identificar qué evidencia invalida, sin reiniciar automáticamente
+coste. No hay nuevas auditorías, optimizaciones opcionales, infraestructuras,
+publicación ni ampliación del alcance.
+
+Estado inicial: 0/6 obligaciones de evaluación aceptadas para este artefacto;
+preparación del plan y sondas/focales sí comprobadas. Siguiente gate al autorizar
+la ejecución: G1, seguido de G2; ningún gate se presenta como ya ejecutado aquí.
+
 ### 9.3. Parte II — Capacidades o cambios de contrato con decisión propia
 
 No es una segunda tanda implícitamente autorizada. Cada bloque requiere una
