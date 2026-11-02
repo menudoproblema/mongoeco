@@ -1,0 +1,35 @@
+{
+  "status": "implemented_and_verified_selected_increment",
+  "product_commit": "fc9e8ceac9d01f26ddf78c48cf0a72f7c0eb57c1",
+  "base": "094a546a272d84b5b2fef80a016528b3e07abdda",
+  "catalog_version": "2.0.0",
+  "catalog_sha256": "aa232d017fb8bcc85989b55c9817c0c1e379bd387dc5c3d59bdab467bcfe1081",
+  "cxp_version": "5.0.0",
+  "source_integration": {
+    "passed": 124,
+    "subtests": 3
+  },
+  "installed_wheel_integration": {
+    "passed": 124,
+    "subtests": 3
+  },
+  "python313": 91,
+  "python315": 91,
+  "package_files": 310,
+  "final_wheel_members_identical_to_installed_tested_wheel": true,
+  "artifacts": {
+    "mongoeco-4.11.0-py3-none-any.whl": "201d72577ef133cc5b658a20ed2f78970c8bd5f1fa49f3b45ea1e3851855fad8",
+    "mongoeco-4.11.0.tar.gz": "90b5285cac5279f4d0e756a42dce7248d82e60e661c891227c6e3c576b1bea3d"
+  },
+  "reused": [
+    "accepted native six-operator and thirteen-series witnesses; runtime unchanged",
+    "F11 accepted cost; no rerun: changed CXP document projection is outside timed worker operations",
+    "existing PyMongo/pytest/SQLite/SPI contracts; no transport/storage/API signature changes"
+  ],
+  "excluded": [
+    "regexBackend/runtime snapshot producer",
+    "complete MongoDB vocabulary",
+    "release version bump/tag/publication/main integration"
+  ],
+  "release_gate_limit": "Development artifact retains 4.11.0; final versioned release retains its own installed-wheel global/matrix/publication gates; no claim to have executed those again."
+}

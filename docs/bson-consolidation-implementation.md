@@ -4184,3 +4184,38 @@ perf/f11-context-startup. No hay conflictos ni cambios productivos posteriores;
 no se invalidan gates ni se repiten pruebas. La integración añade únicamente
 este registro, la nota del plan y el receipt existente. No hay push, release
 ni publicación. El resto de parte II continúa fuera del alcance.
+
+## CXP catalog 2.0.0 increment — 2026-11-02
+
+Owner authorizes the final bounded proposal: correct CXP inventories, add
+granularity only, preserve F11/candidates and defer regexBackend/general vocabulary.
+Branch fix/cxp-catalog-v2 from 094a546a. Product commit fc9e8cea; package version
+4.11.0 unchanged, no main integration, tag or publication.
+
+Four blocks complete: (1) versioned coordinated catalog/metadata/profile/tier
+references and source hashes; (2) seven integrated inventories, explicit six
+operator oracles and 7/8/9 equality guard; (3) scoped closed granularity property
+through the validated public builder; (4) documentation, current conservation
+inventory and compat snapshots, source/installed-wheel integration and packaging.
+
+Results: 124 tests plus 3 subtests on source and installed wheel; 91 tests each
+on Python 3.13/3.15; lint ratchet and public typing green. Wheel/sdist source
+verification covers 310 files, twine validates metadata. Final wheel members are
+byte-identical to the installed tested wheel; only the updated changelog affects
+the final sdist. Historical 1.2.0 evidence is preserved, not rewritten.
+
+Capability domains remain closed (removed query expressions invalid); operation
+domains stay open (unsupported expressions incompatible). $not/$last compatible
+at both levels. Missing granularity is indeterminate, explicit empty support is
+incompatible, unknown series invalid. $const/$meta and dynamic registrations
+remain outside the integrated advertised inventory; no general vocabulary claim.
+
+No new generator, evaluator or runtime snapshot producer. New tests include
+coordinated owner-list corruption against the runtime authority and all existing
+JSON/hash checks, so self-consistent false documents cannot pass conservation.
+
+Native semantic witnesses and unaffected engine/transport/storage evidence are
+reused; no F11 restart. This closes the authorized implementation increment, not
+the final versioned release gates. Global suites/matrix on the final release
+artifact remain part of release preparation. Evidence: cxp-catalog-2/receipt.json
+and compressed terminal logs under this implementation's existing evidence tree.

@@ -3052,3 +3052,21 @@ commit aceptado exacto y sólo se añaden registros de integración en docs. La
 integración sustituye la restricción histórica de mantener el incremento fuera
 de main; no amplía parte II ni autoriza release/push. Detalle y pruebas de identidad
 en el receipt de implementación y part2-x01-x04c/receipt.json.
+
+
+### Authorized CXP declaration correction — 2026-11-02
+
+Selected scope: catalog 2.0.0, seven-inventory conservation, explicit expression
+verdicts and aggregate.bucketAutoGranularitySeries. CXP 5.0.0 and document formats
+unchanged. Exclude regexBackend, runtime producers and a complete MongoDB vocabulary.
+Preserve special $const/$meta handling and dynamic extensions outside generic
+inventories; assert equal integrated dialect inventories instead of inferring union.
+
+One acceptance unit, four completed blocks: coordinated documents/pins; independent
+conservation/oracles; static granularity projection; docs/export/installed-package
+acceptance. No new runner or generator. 124 tests/3 subtests pass on source and
+installed wheel, 91 per additional Python profile. Packaging, lint and typing
+verified. Exact receipt in implementation record and cxp-catalog-2 evidence.
+No required criterion remains in this selected increment. Frozen F11 candidates
+and accepted closures remain unchanged. Final release gates are separate; no
+version bump, tag, publication or main integration is authorized by this execution.
