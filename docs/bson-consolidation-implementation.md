@@ -3966,3 +3966,20 @@ contiene 15. Corregido el recuento, sin repetir pruebas ni alterar sus resultado
 3/6 obligaciones aceptadas; G5 espera matriz activa. Continuación final G3
 autorizada y preparada: seis ABBA nuevos, crítico 4,033, sólo datos nuevos,
 tope 40 min, sin reset 2/2; no empieza hasta cerrar G4/G5.
+
+G5 aceptado por ocho celdas completas terminal 0 y cuatro compuestas: 38 nodos
+fallaron antes de consulta por EADDRNOTAVAIL en Python 3.14 (incluye AutoReconnect
+con la misma causa). Selecciones exactas precoleccionadas y repetidas en secuencial:
+11/1/24/2 verdes. Los rojos se conservan; no cambian timeouts, producto ni asserts.
+El primer guard de selección sólo admitía read_reply_parity y detuvo el proceso
+tras los once verdes; se amplió a los tres casos unacknowledged con causa idéntica,
+sin repetir los once ya comprobados. Consumidores/compatibilidad del mismo wheel
+verdes y snapshots reutilizados por ledger. 4/6 obligaciones aceptadas.
+
+La enmienda G3 está autorizada por «Continúa con la implementación». Controller
+preparado y archivado antes de medir: un intento final, seis ABBA nuevos del worker
+intacto, crítico 4,033 y datos exclusivamente nuevos para el único pendiente;
+tope 2400 s y sin miradas intermedias. Se conservan las dos campañas agotadas,
+los 43 verdes y los registros originales. Preflight de Python, SDK, GC y política
+comprobado sin lecturas de benchmark. La medición empieza sólo al terminar los
+procesos de pruebas propios. G6 permanece pendiente de aceptación final G3.

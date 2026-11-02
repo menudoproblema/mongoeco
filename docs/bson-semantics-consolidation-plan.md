@@ -2537,10 +2537,10 @@ la ejecución: G1, seguido de G2; ningún gate se presenta como ya ejecutado aqu
 #### Revisión de los tres informes: salida acotada del inconcluyente b83789bc
 
 Disposición: análisis y preparación solicitados por el owner tras ef578283.
-Se selecciona la continuación confirmatoria con datos nuevos descrita abajo,
-como enmienda propuesta para ejecutar después de su autorización. No se inicia
-otra campaña aquí, no se reanuda automáticamente la implementación pausada ni
-se reinterpretan como verdes los resultados anteriores. Presupuesto productivo
+El owner autoriza mediante «Continúa con la implementación» la continuación
+confirmatoria con datos nuevos descrita abajo. Se reanuda G4/G5 y después esta
+única etapa final; no se reinicia la campaña agotada ni se reinterpretan como
+verdes los resultados anteriores. Presupuesto productivo
 +5%, payload b83789bc/wheel 176a9857, base 2fa637f6, cierres previos y exclusión
 de parte II permanecen intactos. Los dos intentos originales siguen agotados.
 
@@ -2676,8 +2676,8 @@ No se añade runner, monitor permanente, selector de casos ni capa de validació
 La futura orquestación adapta la existente; sólo debe fijar antes de lanzar
 esta única etapa, sus paths separados, límites y composición. Evidencia de esta
 revisión y sonda en la carpeta existente; decisiones aquí, ejecuciones/estado
-en el receipt. Implementación sigue pausada: G1/G2 aceptados, G3 inconcluyente,
-G4 deep y G5 pendientes, G6 dependiente. Esta sección no declara F11 cerrado.
+en el receipt. La implementación se reanuda desde ese checkpoint, conservando
+las evidencias y pendientes allí registrados. Esta sección no declara F11 cerrado.
 
 ### 9.3. Parte II — Capacidades o cambios de contrato con decisión propia
 
