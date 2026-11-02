@@ -229,12 +229,10 @@ class ArrayStringHelperBranchTests(unittest.TestCase):
             evaluate_expression(
                 {'text': 'Ada'}, {'$regexFind': {'input': '$text'}}
             )
-        self.assertEqual(
+        self.assertIsNotNone(
             array_module._compile_aggregation_regex(
                 Regex('^ada', 'i'), None, operator='$regexMatch'
-            ).flags
-            & re.IGNORECASE,
-            re.IGNORECASE,
+            ).search('Ada')
         )
         with self.assertRaisesRegex(
             OperationFailure,
@@ -250,12 +248,11 @@ class ArrayStringHelperBranchTests(unittest.TestCase):
                 re.compile('a', re.DOTALL), None, operator='$regexMatch'
             )
         compiled_pattern = array_module._compile_aggregation_regex(
-            re.compile('a', re.IGNORECASE | re.MULTILINE),
+            re.compile('^a', re.IGNORECASE | re.MULTILINE),
             None,
             operator='$regexMatch',
         )
-        self.assertEqual(compiled_pattern.flags & re.IGNORECASE, re.IGNORECASE)
-        self.assertEqual(compiled_pattern.flags & re.MULTILINE, re.MULTILINE)
+        self.assertEqual(compiled_pattern.search('\nA').start(), 1)
         with self.assertRaisesRegex(
             OperationFailure, 'Unsupported regex option'
         ):
