@@ -3875,3 +3875,15 @@ Evidencia b837-eval-* en la carpeta existente. Ambos candidatos anteriores,
 artefactos/manifests y registros de coste intactos. No cambia código ni tests.
 2/6 obligaciones aceptadas; siguiente gate G3 aislado, con 0/2 intentos usados.
 No se conceden aceptación de coste ni cierre F11 por estos dos gates.
+
+G3 ejecutado y sin aceptación: primer look 10 aceptados/0 regresiones/34
+inconcluyentes; segundo, acumulando seis ABBA y 24 registros, 43/0/1.
+Único inconcluyente SQLiteEngine-standard-aggregate-first-page: razón
+1,0183395032, límites 0,9827550394–1,0552124406. Dos intentos usados, sin
+fallos técnicos, 1444,140782 + 1421,870213 s; total 2866,015076 s.
+Recalculados independientemente los 88 intervalos/clasificaciones de ambos looks;
+orden ABBA y registros completos verificados. Identidad BSON/contadores de los
+44 controles coincide con el corpus retenido; workers intactos, GC y política
+de lanzamiento precomprobados. La campaña termina: no tercer intento ni más
+sondas. Se conserva el inconcluyente, sin rebajar el +5% ni heredar verdes.
+G4/G5 independientes siguen autorizados; G6 depende de la aceptación G3.
