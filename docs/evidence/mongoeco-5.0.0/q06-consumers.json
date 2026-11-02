@@ -1,0 +1,453 @@
+{
+  "status": "consumer_gates_verified_not_delivery_accepted",
+  "artifact_sha256": "5ac014b1643e5230d1e894828859f372b8e8870a4337dbe91c5c92044d45bb76",
+  "python": [
+    "3.13.15",
+    "3.14.5",
+    "3.15.0"
+  ],
+  "consumer_gates": [
+    {
+      "gate": "typing",
+      "exit": 0,
+      "seconds": 23.355880833929405,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "scripts/check_public_typing.py"
+      ]
+    },
+    {
+      "gate": "api-manifest",
+      "exit": 0,
+      "seconds": 0.4272855829913169,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "scripts/update_public_api_manifest.py",
+        "--check"
+      ]
+    },
+    {
+      "gate": "mypy-strict",
+      "exit": 0,
+      "seconds": 4.279118000064045,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "-m",
+        "mypy",
+        "--strict",
+        "--follow-imports=silent",
+        "--ignore-missing-imports",
+        "-m",
+        "mongoeco.pytest_plugin",
+        "-m",
+        "mongoeco.pytest_asyncio",
+        "-m",
+        "mongoeco.pytest_anyio",
+        "-m",
+        "mongoeco._pytest_runtime",
+        "-m",
+        "mongoeco._pytest_diagnostics",
+        "-m",
+        "mongoeco.wire._diagnostics",
+        "-m",
+        "mongoeco.wire._framing",
+        "-m",
+        "mongoeco.wire._request_state",
+        "-m",
+        "mongoeco.wire._lifecycle"
+      ]
+    },
+    {
+      "gate": "mypy-engine",
+      "exit": 0,
+      "seconds": 3.7386994999833405,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "-m",
+        "mypy",
+        "--follow-imports=silent",
+        "--ignore-missing-imports",
+        "-m",
+        "mongoeco.engines.adapter",
+        "-m",
+        "mongoeco.api._async._collection_runtime"
+      ]
+    },
+    {
+      "gate": "spi",
+      "exit": 0,
+      "seconds": 0.32658045808784664,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "scripts/smoke_external_engine.py"
+      ]
+    },
+    {
+      "gate": "lint",
+      "exit": 0,
+      "seconds": 6.899473957950249,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "scripts/check_lint_ratchet.py",
+        "--base-ref",
+        "v4.11.0"
+      ]
+    },
+    {
+      "gate": "snapshots",
+      "exit": 0,
+      "seconds": 0.7351850420236588,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "scripts/update_compat_snapshots.py",
+        "--output-dir",
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/compat-current"
+      ]
+    },
+    {
+      "gate": "smoke-wheel",
+      "exit": 0,
+      "seconds": 8.961104417103343,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "scripts/smoke_installed_wheel.py",
+        "--wheel",
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/distributions-a/mongoeco-5.0.0-py3-none-any.whl"
+      ]
+    },
+    {
+      "gate": "smoke-sdist",
+      "exit": 0,
+      "seconds": 10.773159499978647,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "scripts/smoke_installed_wheel.py",
+        "--sdist",
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/distributions-a/mongoeco-5.0.0.tar.gz"
+      ]
+    },
+    {
+      "gate": "smoke-pytest-kit",
+      "exit": 0,
+      "seconds": 10.109883083030581,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "scripts/smoke_installed_wheel.py",
+        "--wheel",
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/distributions-a/mongoeco-5.0.0-py3-none-any.whl",
+        "--pytest-kit"
+      ]
+    },
+    {
+      "python": "313",
+      "gate": "typing",
+      "exit": 0,
+      "seconds": 15.497495208051987,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env313/bin/python",
+        "scripts/check_public_typing.py"
+      ]
+    },
+    {
+      "python": "313",
+      "gate": "api-manifest",
+      "exit": 0,
+      "seconds": 0.4099109169328585,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env313/bin/python",
+        "scripts/update_public_api_manifest.py",
+        "--check"
+      ]
+    },
+    {
+      "python": "313",
+      "gate": "mypy-strict",
+      "exit": 0,
+      "seconds": 3.9409886250505224,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env313/bin/python",
+        "-m",
+        "mypy",
+        "--strict",
+        "--follow-imports=silent",
+        "--ignore-missing-imports",
+        "-m",
+        "mongoeco.pytest_plugin",
+        "-m",
+        "mongoeco.pytest_asyncio",
+        "-m",
+        "mongoeco.pytest_anyio",
+        "-m",
+        "mongoeco._pytest_runtime",
+        "-m",
+        "mongoeco._pytest_diagnostics",
+        "-m",
+        "mongoeco.wire._diagnostics",
+        "-m",
+        "mongoeco.wire._framing",
+        "-m",
+        "mongoeco.wire._request_state",
+        "-m",
+        "mongoeco.wire._lifecycle"
+      ]
+    },
+    {
+      "python": "313",
+      "gate": "mypy-engine",
+      "exit": 0,
+      "seconds": 3.566228667041287,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env313/bin/python",
+        "-m",
+        "mypy",
+        "--follow-imports=silent",
+        "--ignore-missing-imports",
+        "-m",
+        "mongoeco.engines.adapter",
+        "-m",
+        "mongoeco.api._async._collection_runtime"
+      ]
+    },
+    {
+      "python": "313",
+      "gate": "spi",
+      "exit": 0,
+      "seconds": 0.31431979092303663,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env313/bin/python",
+        "scripts/smoke_external_engine.py"
+      ]
+    },
+    {
+      "python": "313",
+      "gate": "smoke-wheel",
+      "exit": 0,
+      "seconds": 10.77633008302655,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env313/bin/python",
+        "scripts/smoke_installed_wheel.py",
+        "--wheel",
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/distributions-a/mongoeco-5.0.0-py3-none-any.whl"
+      ]
+    },
+    {
+      "python": "313",
+      "gate": "smoke-sdist",
+      "exit": 0,
+      "seconds": 9.475325500010513,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env313/bin/python",
+        "scripts/smoke_installed_wheel.py",
+        "--sdist",
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/distributions-a/mongoeco-5.0.0.tar.gz"
+      ]
+    },
+    {
+      "python": "313",
+      "gate": "smoke-pytest-kit",
+      "exit": 0,
+      "seconds": 9.08034095808398,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env313/bin/python",
+        "scripts/smoke_installed_wheel.py",
+        "--wheel",
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/distributions-a/mongoeco-5.0.0-py3-none-any.whl",
+        "--pytest-kit"
+      ]
+    },
+    {
+      "python": "315",
+      "gate": "typing",
+      "exit": 0,
+      "seconds": 16.058183250017464,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env315/bin/python",
+        "scripts/check_public_typing.py"
+      ]
+    },
+    {
+      "python": "315",
+      "gate": "api-manifest",
+      "exit": 0,
+      "seconds": 0.41668649995699525,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env315/bin/python",
+        "scripts/update_public_api_manifest.py",
+        "--check"
+      ]
+    },
+    {
+      "python": "315",
+      "gate": "mypy-strict",
+      "exit": 0,
+      "seconds": 4.19394533301238,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env315/bin/python",
+        "-m",
+        "mypy",
+        "--strict",
+        "--follow-imports=silent",
+        "--ignore-missing-imports",
+        "-m",
+        "mongoeco.pytest_plugin",
+        "-m",
+        "mongoeco.pytest_asyncio",
+        "-m",
+        "mongoeco.pytest_anyio",
+        "-m",
+        "mongoeco._pytest_runtime",
+        "-m",
+        "mongoeco._pytest_diagnostics",
+        "-m",
+        "mongoeco.wire._diagnostics",
+        "-m",
+        "mongoeco.wire._framing",
+        "-m",
+        "mongoeco.wire._request_state",
+        "-m",
+        "mongoeco.wire._lifecycle"
+      ]
+    },
+    {
+      "python": "315",
+      "gate": "mypy-engine",
+      "exit": 0,
+      "seconds": 3.6313477909425274,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env315/bin/python",
+        "-m",
+        "mypy",
+        "--follow-imports=silent",
+        "--ignore-missing-imports",
+        "-m",
+        "mongoeco.engines.adapter",
+        "-m",
+        "mongoeco.api._async._collection_runtime"
+      ]
+    },
+    {
+      "python": "315",
+      "gate": "spi",
+      "exit": 0,
+      "seconds": 0.32897754199802876,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env315/bin/python",
+        "scripts/smoke_external_engine.py"
+      ]
+    },
+    {
+      "python": "315",
+      "gate": "smoke-wheel",
+      "exit": 0,
+      "seconds": 8.505478541948833,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env315/bin/python",
+        "scripts/smoke_installed_wheel.py",
+        "--wheel",
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/distributions-a/mongoeco-5.0.0-py3-none-any.whl"
+      ]
+    },
+    {
+      "python": "315",
+      "gate": "smoke-sdist",
+      "exit": 0,
+      "seconds": 10.01364941697102,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env315/bin/python",
+        "scripts/smoke_installed_wheel.py",
+        "--sdist",
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/distributions-a/mongoeco-5.0.0.tar.gz"
+      ]
+    },
+    {
+      "python": "315",
+      "gate": "smoke-pytest-kit",
+      "exit": 0,
+      "seconds": 9.930164832971059,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env315/bin/python",
+        "scripts/smoke_installed_wheel.py",
+        "--wheel",
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/distributions-a/mongoeco-5.0.0-py3-none-any.whl",
+        "--pytest-kit"
+      ]
+    }
+  ],
+  "conformance": [
+    {
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "-m",
+        "mongoeco.conformance",
+        "mongoeco.engines:MemoryEngine",
+        "--format",
+        "json",
+        "--output",
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/outside-MemoryEngine.json",
+        "--require-success"
+      ],
+      "cwd": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/external-cwd",
+      "exit": 0
+    },
+    {
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "-m",
+        "mongoeco.conformance",
+        "mongoeco.engines:SQLiteEngine",
+        "--format",
+        "json",
+        "--output",
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/outside-SQLiteEngine.json",
+        "--require-success"
+      ],
+      "cwd": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/external-cwd",
+      "exit": 0
+    },
+    {
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "-m",
+        "mongoeco.conformance",
+        "tests.consumer.engine_canary:ExternalCanaryEngine",
+        "--format",
+        "json",
+        "--output",
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/outside-ExternalCanaryEngine.json",
+        "--require-success"
+      ],
+      "cwd": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/external-cwd",
+      "exit": 0
+    }
+  ],
+  "business_canary": {
+    "cases": 38,
+    "executions": 684,
+    "source_sha256": "2e013f063ec8bbd0974f92db16e2f78a0506ee7257546d2ceeeb8c7475a3e61b",
+    "historical_private_source_available": false,
+    "authorized_replacement": true,
+    "all_sources_unchanged": true
+  },
+  "sdk_free": {
+    "tests": 14,
+    "python": "3.13.15",
+    "sdk_absent": true
+  },
+  "pcre2_per_profile": {
+    "adapter": 5,
+    "native_replays": 339
+  },
+  "sdk_profiles": {
+    "versions": [
+      "PyMongo 4.9.2",
+      "PyMongo 4.11.3",
+      "PyMongo 4.13.2",
+      "PyMongo 4.17.0",
+      "PyMongo 4.18.2",
+      "PyMongo 4.19.0"
+    ],
+    "matches_accepted_fixture": true
+  },
+  "deep_property_tests": 74,
+  "temporal_attempts_started": 0
+}
