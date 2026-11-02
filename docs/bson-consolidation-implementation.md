@@ -3601,3 +3601,37 @@ sdist d669b72658259e900973b5e3d4d3663fb7b2613532730b72c837e13c0cbf7530.
 Preflight de coste sin lecturas: hashes de los dos workers inalterados,
 manifest completo de base/candidato, imports instalados y taskpolicy -a /
 Python 3.14.5 / HASHSEED=0 / GC activo comprobados. G1–G2: 2/6 cerradas.
+
+G3 ejecutado, no aceptado: máximo de dos intentos agotado sin fallos técnicos,
+seis ABBA/24 registros íntegros. Primera evaluación 18 aceptados/0 regresiones/
+26 inconcluyentes; segunda acumulada 30/0/14. Duración: 1.444,03 s y 1.437,01 s,
+2.881,05 s acumulados, dentro de 2.700 s por intento/5.400 s totales. Se
+conservan todas las muestras y se detiene el coste automático. Los 44 intervalos
+y clasificaciones se recalculan desde crudos sin mediciones nuevas; identidad
+BSON y metadatos de los 44 controles coinciden con su referencia aceptada.
+
+| Control inconcluyente b93681b7 | Razón | Inferior | Superior |
+| --- | --- | --- | --- |
+| SQLiteEngine-default-aggregate | 1.028610 | 1.001998 | 1.055930 |
+| SQLiteEngine-default-find-limit-one | 1.063237 | 1.032719 | 1.094656 |
+| SQLiteEngine-default-find-first-page | 1.034397 | 0.994184 | 1.076235 |
+| SQLiteEngine-default-aggregate-first-page | 1.023508 | 0.994645 | 1.053209 |
+| SQLiteEngine-standard-find | 1.015152 | 0.979478 | 1.052125 |
+| SQLiteEngine-standard-find-limit-one | 1.051057 | 1.025974 | 1.076755 |
+| SQLiteEngine-standard-find-first-page | 1.032700 | 1.003450 | 1.062802 |
+| SQLiteEngine-decoder-find-limit-one | 1.051230 | 1.023971 | 1.079214 |
+| SQLiteEngine-decoder-aggregate-first-page | 1.023410 | 0.992964 | 1.054790 |
+| SQLiteEngine-son-find | 1.011931 | 0.971845 | 1.053671 |
+| SQLiteEngine-son-find-limit-one | 1.049388 | 1.035552 | 1.063410 |
+| SQLiteEngine-son-aggregate-first-page | 1.029275 | 1.007423 | 1.051601 |
+| all/limit2 | 1.051028 | 1.039780 | 1.062399 |
+| binary/limit2 | 1.040051 | 1.028363 | 1.051872 |
+
+No hay regresión confirmada, pero tampoco aceptación de rendimiento. No se
+mezclan estos datos con e4eb17cc, se descartan muestras ni se heredan verdes.
+Los 14 intervalos cruzan 1,05. Los gates independientes G4/G5 continúan conforme
+al plan para dejar pendiente únicamente lo que falte; F11 no se declara cerrado.
+Preflight de integración completado: tres Python, doce perfiles pytest/SDK,
+selección de 3.587 nodos y perfil realmente sin bson/pymongo. Un assert del
+preflight inicial situaba la ruta antes de -q; se corrigió la selección antes
+de lanzar pruebas, sin ejecuciones costosas fallidas ni cambios de producto.
