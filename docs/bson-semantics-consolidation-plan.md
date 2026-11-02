@@ -2371,6 +2371,46 @@ reproducción negativa; no obliga a reescribir materialización que ya es correc
   redondeo de coverage, un skip físico, un smoke o una prueba focal.
   Este gate no implica tag, publicación, despliegue ni aceptar la parte II.
 
+#### Evaluación autorizada de b93681b7 como candidato separado
+
+Autorizada en conversación tras el plan acotado B→A. Payload productivo
+b93681b74a284ed09138ef3d647bedf6ff7f78da; e4eb17cc y su wheel/evidencia
+permanecen congelados. No reabre O1–O8/D05/P2 ni amplía parte II.
+
+Obligaciones finitas, por orden y dependencia:
+
+1. G1: identidad y reutilización. Fijar hashes/inputs y conservar focales B→A,
+   revisión, oráculos nativos, fixtures históricas y controles estáticos con
+   inputs transitivos idénticos. No atribuir resultados del wheel anterior al nuevo.
+2. G2: dos builds reproducibles, checks de distribución, instalación aislada
+   y guard de procedencia sobre wheel inmutable; no sobrescribir artefactos previos.
+3. G3, después de G2: coste aislado contra 2fa637f6, los 44 controles completos,
+   dos workers inalterados y protocolo F11 anterior. Contador propio 0/2 para
+   esta corrección material: máximo dos intentos de tres ABBA; segunda evaluación
+   acumula los seis bloques. Sin mezclar muestras ni heredar los 32 verdes de
+   e4eb17cc. A/base también se mide en cada ABBA nuevo. Topes operativos añadidos:
+   45 minutos de pared por intento y 90 acumulados; al agotarlos, detener y
+   conservar datos incompletos como inconcluyentes, sin ampliar ni reiniciar.
+4. G4: integración final sobre el artefacto nuevo: unittest/pytest completos
+   Python 3.13/3.14/3.15, cobertura instalada >=99,00% y propiedades deep. Replay
+   alcanzado incluido en esa suite; no duplicar focales ni recapturar oráculos
+   sin invalidación. Una regresión de coste demostrada detiene promoción y
+   difiere globales hasta resolver su causa; un coste inconcluyente permite
+   completar los gates independientes para dejar explícito el bloqueo restante.
+5. G5: matriz de doce celdas Python/pytest/SDK y consumidores alcanzados: SPI,
+   perfil realmente sin SDK, conformance, reapertura/lectura SQLite histórica,
+   smokes wheel/sdist/pytest-kit. Reutilizar controles no alcanzados con
+   justificación por hashes; repetir sólo lo invalidado o exigido al artefacto final.
+6. G6: receipt final con todos los gates exigidos, evidencias y límites ligados
+   a la nueva identidad, revisión, commits semánticos y árbol limpio. No hay
+   aceptación de F11 sin coste aceptado y demás criterios obligatorios verdes.
+
+Se reutilizan los runners, scripts, capturas y documentos existentes. No hay
+nuevas optimizaciones, workloads, calibraciones A/A ni ampliaciones de muestra.
+Coste sin otras cargas propias; gates compatibles agrupados después. El intento
+segundo sólo procede por primera evaluación inconcluyente, no por regresión
+confirmada o fallo técnico que deba conservarse y resolverse causalmente.
+
 ### 9.3. Parte II — Capacidades o cambios de contrato con decisión propia
 
 No es una segunda tanda implícitamente autorizada. Cada bloque requiere una

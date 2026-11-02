@@ -3568,3 +3568,27 @@ No se ejecutan builds, suites globales, perfiles ni coste. F11 continúa con
 32 controles aceptados y 12 inconcluyentes, sin nuevos intentos. No se atribuye
 su aceptación global al nuevo código. O1–O8/D05/P2 conservan sus cierres y la
 parte II permanece fuera del alcance.
+
+### Evaluación integrada del nuevo candidato b93681b7
+
+Autorización: ejecutar el plan acotado anterior; payload congelado en
+b93681b74a284ed09138ef3d647bedf6ff7f78da, en rama perf/f11-context-startup.
+No se modifica producto. e4eb17cc y wheel a10cd637 se conservan como históricos.
+La nueva aceptación no hereda las 32 decisiones de coste anteriores.
+
+| Obligación | Estado inicial | Criterio de cierre |
+| --- | --- | --- |
+| G1 identidad/reutilización | Aceptada | Identidad fijada; dos módulos productivos alcanzados; focales/revisión y oráculos reutilizables trazados. |
+| G2 artefactos | Pendiente | Dos builds iguales, checks y runtime instalado ligados por hashes. |
+| G3 coste | Pendiente | 44 cotas superiores <=1,05 con protocolo y presupuesto aprobados. |
+| G4 integración final | Pendiente | Tres Python, unittest/pytest, cobertura >=99,00%, deep, replay integrado. |
+| G5 compatibilidad/consumidores | Pendiente | Doce celdas y consumidores alcanzados verdes sobre el artefacto nuevo; reutilización justificada. |
+| G6 entrega | Pendiente | Receipt completo, review, commits semánticos, árbol limpio y ningún criterio obligatorio pendiente. |
+
+La sonda de atribución previa (600 lecturas, GC activo, 20,81 s) acredita los
+mecanismos eliminados, no el presupuesto: wrapper 12.870→0 y bind 198→99,
+BSON y trabajo físico iguales. Los tiempos no mejoran uniformemente y no se
+promueven a gate. G1 reutiliza esa evidencia y los focales 335/157 por Python,
+replay 1.200/360 y revisión aceptada. Capturas y fixtures anteriores son oráculos,
+no ejecuciones nuevas del producto. Resultados del nuevo run en la estructura
+de evidencia existente; disposición final se añadirá sin editar historia.
