@@ -4059,3 +4059,24 @@ histórico; su promoción local se realiza ahora, después de la aceptación.
 Versión 4.11.0 sin cambios; changelog permanece en Unreleased, sin fecha de nueva
 release ni tags nuevos. No se publica, hace push ni abre parte II. El cierre de
 versión queda aplazado explícitamente y separado de la parte I ya completada.
+
+## Parte II seleccionada — X01 viabilidad y X04c granularity
+
+Base 6854f337, sin reabrir parte I ni preparar versión. Owner solicita ejecutar
+la propuesta de comenzar por contrato/viabilidad de X01 y un incremento X04c.
+Se materializa esa primera etapa y el censo en el plan existente. Evidencia en
+part2-x01-x04c. Dos sondas de mongod 9.0.2 propias/temporales finalizan 0 y se
+cierran; conexión preconfigurada no disponible, no se accede a datos del usuario.
+39 comparaciones válidas pcre2–MongoDB verdes en 3 Python (trece casos por perfil),
+configurando ASCII por defecto y conservando (*UCP). Error inválido nativo retenido.
+La construcción desde fuente de pcre2 para 3.15 funciona; falta wheel precompilado
+observado para ese perfil, no una imposibilidad demostrada de soportar Python 3.15.
+Se caracteriza granularity para trece series y nueve fronteras/errores adicionales;
+no se confunden resultados con prueba de que el runtime local ya los implemente.
+
+No cambian código productivo, dependencias, versión ni capacidades anunciadas.
+Para X01 se consulta la decisión opcional/obligatoria/aplazada sobre instalación;
+propuesta recomendada: PCRE2 opcional explícito, sin fallback silencioso por patrón.
+X04c sigue independiente: corpus completo 7/8/9, componente privado de fronteras,
+integración con agrupador existente y aceptación por candidato son sus pendientes.
+Esta etapa de definición/viabilidad no concede cierre de capacidades X01/X04c.

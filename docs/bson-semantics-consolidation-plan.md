@@ -2721,6 +2721,102 @@ Prioridad aquí es de evaluación, no autorización de ejecución.
 | X05 | P3 | Migración persistida o refactorización transversal | Perfil medido de un bloque que lo necesite |
 | X06 | P2/P3 | Ampliación sistemática de garantías O1–O8 y corpus P2 | Decisión de cobertura finita y owners |
 
+#### Incremento seleccionado: X01 viabilidad y X04c granularity
+
+Autorización del owner: «Hazlo» tras el análisis de parte II sobre 6854f337.
+Primera etapa: definición y viabilidad de X01, con caracterización independiente
+de X04c. La parte I permanece cerrada; no se crea versión ni se abren X02/X03,
+X04a/b/d, X05, Search-v2 o una auditoría X06 general. Se reutiliza el owner del
+plan y el receipt; evidencia en part2-x01-x04c, sin runner productivo nuevo.
+
+**X01: resultado de viabilidad observado.** Hay separación actual de consulta
+(compile_regex), expresiones de agregación, validación y Search-v1. PCRE2 es la
+alternativa recomendada; el paquete regex no se elige como sustituto equivalente
+por aceptar sintaxis similar. La referencia nativa de esta etapa es mongod 9.0.2
+standalone temporal, cerrado al terminar; los resultados no acreditan 7/8.
+
+Trece patrones válidos contrastan match/idx/capturas: keep-reset, branch-reset,
+propiedades Unicode, grupos nombrados, opciones inline, captura opcional ausente,
+clases word/digit por defecto y con (*UCP), offset tras Unicode, caseless y match
+vacío. También se conserva el error nativo de un patrón inválido (51111 para
+regexFind). pcre2 0.7.1 / libpcre2 10.47 coincide en los trece valores usando
+clases ASCII por defecto, en los tres Python locales: 39 comparaciones verdes.
+Los valores por defecto del binding no bastan: sin esa configuración, word/digit
+Unicode difieren de MongoDB. No usar una política global ASCII que deshabilite
+propiedades Unicode o (*UCP).
+
+Distribución observada: wheels precompilados macOS arm64 de pcre2 en 3.13/3.14;
+3.15 no tiene wheel compatible en la consulta fijada, pero su construcción desde
+sdist ha producido un wheel que importa y pasa los trece casos. Esa prueba no
+acredita publicación multiplataforma ni obliga a instalar compiladores al usuario.
+regex tiene wheels en los tres perfiles, pero no iguala la política PCRE2 observada.
+La dependencia se ha evaluado exclusivamente en /tmp; pyproject y el venv raíz
+no se modifican. No se mide ni acepta coste por estas sondas.
+
+**Contrato recomendado para la siguiente implementación X01.** Backend PCRE2
+opcional mediante instalación explícita, con el camino actual conservado cuando
+no esté habilitado. La selección debe ser estable durante la vida del runtime,
+no por patrón ni con fallback silencioso tras un error PCRE2. La preferencia
+opcional/obligatoria/aplazada está consultada al owner antes de cambiar el contrato
+de instalación. No añadir parámetro por operación ni extender SPI para ello sin
+una necesidad demostrada. No anunciar patrones de PCRE2 cuando sólo haya re.
+
+Mecanismos/disposición:
+
+| Pieza | Garantía | Disposición |
+| --- | --- | --- |
+| Validación por consulta/agregación/schema | Opciones, aridad, fases y errores propios | reuse; no absorber en compilador universal |
+| Ejecución y resultados de patrón | Motor seleccionado coherente, offsets y capturas | consolidate; adaptador interno mínimo sobre backend elegido |
+| Search-v1 | Contrato local separado de MongoDB/Atlas | reuse sin modificación |
+| Corpus/registro/capturador existentes | Oráculo nativo independiente y superficies declaradas | reuse; registrar familia X01, no otro runner |
+| Dependencia/binding | Instalación y perfil SDK-free compatibles | justify; gate explícito de distribución antes de adoptar |
+| Nueva configuración por operación o SPI | Ninguna garantía diferencial identificada | remove del diseño inicial |
+
+Bloques X01 pendientes antes de aceptar capacidad: (1) fijar selección de backend
+según la preferencia del owner y su contrato sin dependencia; (2) registrar corpus
+7/8/9 en consulta, regexMatch/Find/FindAll y schema donde su contrato lo permita;
+(3) implementar ejecución compartida conservando validadores/errores contextuales;
+(4) comprobar variantes con/sin backend, SDK-free, 3.13/3.14/3.15, wheels/source-build
+y plataformas publicadas; (5) fijar presupuesto de patrones/capturas/tiempo y gate
+final del nuevo candidato. Match vacío y avance findAll, errores, Unicode y memoria
+son obligatorios; estos trece casos de viabilidad no sustituyen esa aceptación.
+
+**X04c seleccionado: bucketAuto.granularity.** Incremento independiente de X01:
+no depende de PCRE2, ICU, SPI nuevo ni migración persistida. El alcance son las
+trece series anunciadas por MongoDB: R5/R10/R20/R40/R80, 1-2-5,
+E6/E12/E24/E48/E96/E192 y POWERSOF2, sin recortar a las fáciles. La sonda nativa
+conserva sus fronteras, tipos y acumuladores; también vacío, ceros, empate completo,
+negativos, null/string, NaN y opciones inválidas. Errores observados: 40257
+serie desconocida, 40261 tipo de granularity, 40258 límites no numéricos,
+40259 NaN y 40260 negativos. No extender estos códigos a dominios aún no sondeados.
+
+Implementación propuesta por bloques:
+
+1. Ampliar caracterización nativa 7/8/9 y registrar corpus: igualdad exacta con
+   número preferido, absorción de valores por frontera redondeada, empates,
+   cardinalidad, ceros/ausencia y acumuladores. Incluir int32/int64/double/Decimal128,
+   valores pequeños/grandes, infinitos y validación sin filas. Capturar anchura/tipo
+   BSON y precedencia/fase de errores, no sólo comparar números Python.
+2. Añadir un único componente privado de selección de fronteras; reutilizar orden,
+   evaluación, acumuladores y presupuestos existentes. Las series son datos de
+   números preferidos, no una generación geométrica aproximada. No copiar una
+   implementación del servidor ni introducir un segundo agrupador permanente.
+3. Integrarlo sólo cuando se especifica granularity; mantener el camino sin opción
+   y sus cierres aceptados. El redondeo puede absorber filas y cambiar buckets:
+   no basta redondear etiquetas después de repartir documentos.
+4. Diferenciales registrados en ambos motores y superficies soportadas; pruebas
+   focales de aridad/errores, tipos, invariantes de partición, cancelación y límites.
+   Actualizar contrato/capabilities/compatibilidad sólo tras el soporte probado.
+5. Gate final de candidato separado, con integración, distribución/compatibilidad
+y coste de los paths realmente cambiados presupuestado antes de medir. No transferir
+   tiempos F11 al incremento ni reabrir las obligaciones históricas.
+
+Cierre observable de X04c: cada caso contractual de las trece series coincide
+con referencia nativa en valores, tipos, multiplicidad, errores y fase; camino
+sin granularity conserva sus resultados; no quedan gaps obligatorios ni gates
+pendientes. Hoy es caracterización/preparación, no capacidad implementada.
+No se declaran X01 o X04c cerrados por disponer de esta propuesta.
+
 #### X01 — Regex/PCRE más allá de la gramática ya corregida
 
 - Decidir subset PCRE2, dependencia obligatoria/opcional y comportamiento sin

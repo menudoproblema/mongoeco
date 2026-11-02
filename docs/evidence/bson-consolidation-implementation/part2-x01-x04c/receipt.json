@@ -1,0 +1,29 @@
+{
+  "base": "6854f337f12788cbdf7f7c1c9b7721715ab83435",
+  "native": "MongoDB 9.0.2 standalone owned temporary; FCV in observations",
+  "regex_valid_native_cases": 13,
+  "invalid_native_cases": 1,
+  "runtime_profiles": 3,
+  "successful_backend_comparisons": 39,
+  "pcre2_version": "0.7.1",
+  "pcre2_library_version": "10.47",
+  "configuration": "pcre2.ASCII, preserving explicit (*UCP)",
+  "wheel_sha256": {
+    "pcre2-0.7.1-cp313-cp313-macosx_11_0_arm64.whl": "583b2c6adcf5e54a8dc42e19cfcf9932fe8e25e539a29d99d5ede494ad3b41f1",
+    "regex-2026.9.29-cp315-cp315-macosx_11_0_arm64.whl": "7c03031610e3e6ed1768a2b7a8fc84637c1257b50c5eacaf094c6e17a84fc563",
+    "pcre2-0.7.1-cp314-cp314-macosx_11_0_arm64.whl": "39b43d39ca7017d049b2685141aa184345ff6a117fbe8e15f54dcd891f33f408",
+    "regex-2026.9.29-cp313-cp313-macosx_11_0_arm64.whl": "c90fcf7804ea0a54b896ce0f2b9565350220b8d4890fd0db461a476a4c687963",
+    "regex-2026.9.29-cp314-cp314-macosx_11_0_arm64.whl": "0166844493626c5015c6088ee15c9ca2fd060ca15b7641d1657da6a58432ae33",
+    "pcre2-0.7.1-cp315-cp315-macosx_15_0_arm64.whl": "cb60288d54bc35ef4ee98d43f880c1b75509218e8b5442abf2388559a6f6c656"
+  },
+  "production_changed": false,
+  "dependency_changed": false,
+  "limitations": [
+    "Native 7/8 not yet characterized",
+    "Mac arm64 only; other platform/source-build requirements not validated",
+    "Not a performance or hostile-pattern resource acceptance",
+    "No matching/schema/Search contract expansion yet"
+  ],
+  "granularity_cases": 22,
+  "granularity_series": 13
+}
