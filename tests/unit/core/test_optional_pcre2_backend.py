@@ -8,12 +8,17 @@ from pathlib import Path
 
 import pytest
 
+import mongoeco
+
 
 def _run(code, backend, *, extra_path=""):
     env = dict(os.environ, MONGOECO_REGEX_BACKEND=backend)
-    env["PYTHONPATH"] = os.pathsep.join(
-        item for item in (extra_path, str(Path("src").resolve())) if item
+    product = (
+        str(Path(mongoeco.__file__).resolve().parent.parent)
+        if env.get("MONGOECO_TEST_INSTALLED_ARTIFACT") == "1"
+        else str(Path("src").resolve())
     )
+    env["PYTHONPATH"] = os.pathsep.join(item for item in (product, extra_path) if item)
     return subprocess.run(  # noqa: S603 - fixed interpreter and test-owned source
         [sys.executable, "-c", code],
         env=env,
@@ -71,6 +76,17 @@ for factory in (MemoryEngine, SQLiteEngine):
     with MongoClient(factory()) as client:
         collection = client.db.rows
         collection.insert_one({"_id": 1, "text": "éab"})
+        for pattern, text, options in (
+            ("ab", "AB", "i"),
+            ("^b", "a\nb", "m"),
+            ("a.b", "a\nb", "s"),
+            ("a b", "ab", "x"),
+        ):
+            rows = list(collection.aggregate([{"$project": {"v": {
+                "$regexMatch": {"input": text, "regex": pattern, "options": options}
+            }}}]))
+            assert rows[0]["v"] is True
+
         assert collection.find_one({"text": {"$regex": r"a\Kb"}})["_id"] == 1
         for pattern in (r"a\Kb", Regex(r"a\Kb")):
             rows = list(
@@ -135,6 +151,12 @@ for factory in (MemoryEngine, SQLiteEngine):
                 assert error.code == code, (error.code, code)
             else:
                 raise AssertionError("invalid regex accepted")
+        from tests.differential.semantic_pcre2_cases import resource_limits
+        observed = resource_limits(collection)
+        assert observed["query"] == []
+        for operator in ("$regexMatch", "$regexFind", "$regexFindAll"):
+            assert observed[operator] == {"code": 51156, "phase": "invoke"}
+        assert observed["schema"] == {"code": 121}
         schema = client.db.create_collection(
             "schema",
             validator={"$jsonSchema": {"properties": {"text": {"pattern": r"\p{L}+"}}}},

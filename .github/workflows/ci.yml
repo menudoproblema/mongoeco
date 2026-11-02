@@ -228,6 +228,13 @@ jobs:
         if: matrix.python-version != '3.14'
         run: python -m pytest -q
 
+      - name: Enable the existing optional backend consumer in coverage tests
+        if: matrix.python-version == '3.14'
+        run: |
+          WHEEL="$(find dist -name 'mongoeco-*.whl' -print -quit)"
+          python -m pip install "${WHEEL}[pcre2]"
+          python -c 'import sysconfig; print("MONGOECO_TEST_PCRE2_PATH=" + sysconfig.get_paths()["purelib"])' >> "$GITHUB_ENV"
+
       - name: Enforce installed package coverage floor
         if: matrix.python-version == '3.14'
         run: python -m pytest --cov=mongoeco --cov-report=term -q
