@@ -70,3 +70,17 @@ Se conserva Engine SPI v2, Python >=3.13 (3.13 hasta octubre de 2028), las
 fachadas sync/async, los perfiles PyMongo y la lectura de archivos SQLite previos.
 No hay una migración obligatoria del formato de archivo ni transacciones
 distribuidas nuevas. La major del paquete no cambia la versión del SPI.
+
+## Inventario, copia y rollback
+
+Conserva el manifiesto de la instalación anterior con public_api_manifest() y
+su catálogo de deprecaciones; compara el delta con el script existente. Ejecuta
+check_public_typing y el canario de conformance contra el wheel instalado.
+Prueba la actualización en una copia SQLite: lectura, índices, Search y outbox,
+conservando hashes del original antes/después. Rechaza schemas futuros; no uses
+exportación/reimportación JSON como migración BSON. Para rollback conserva el
+paquete anterior y una copia previa del archivo; no rebajes un schema futuro.
+
+Las propuestas [SPI v3](architecture/engine-spi-v3-proposal.md) y
+[Search v2](architecture/search-contract-v2-proposal.md) permanecen aplazadas.
+Esta release no las activa ni exige adapters o una migración de esos contratos.
