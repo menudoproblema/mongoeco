@@ -3859,3 +3859,19 @@ manifests de ambos candidatos, fuentes y registros de coste conservan sus bytes.
 No se modifica código productivo ni tests, no se reinicia el gate F11 y no se
 hacen otras lecturas de atribución. Las obligaciones G1–G6 de este candidato
 siguen 0/6 aceptadas; focales y sonda son evidencia reutilizable, no cierre F11.
+
+### Ejecución autorizada de la evaluación b83789bc
+
+El owner autoriza G1–G6 mediante «Impleméntalo». G1/G2 aceptados: producto exacto
+b83789bc36bc1bebe693d09b782e5e242be24db4, 284 módulos sin cambios frente a
+b93681b7 y tres módulos SQLite cambiados. Oráculos/focales se conservan; controles
+estáticos sólo se reutilizarán por inputs transitivos acreditados antes de G5.
+Dos builds limpios desde git archive, epoch 1793606466, producen wheel y sdist
+idénticos. Normalizador y checks de fuentes/distribución existentes verdes.
+Instalación aislada: 308 archivos y 287 módulos coinciden con fuente y wheel.
+Wheel SHA-256 176a98576dafa433137fca4e16467a66707a8904b7c8c54a6a90d1d19cb30e60;
+sdist eab99f0def7ed591541c061fb975b5c9b0377a0b74a273e0a90d7f813f9e5bd9.
+Evidencia b837-eval-* en la carpeta existente. Ambos candidatos anteriores,
+artefactos/manifests y registros de coste intactos. No cambia código ni tests.
+2/6 obligaciones aceptadas; siguiente gate G3 aislado, con 0/2 intentos usados.
+No se conceden aceptación de coste ni cierre F11 por estos dos gates.

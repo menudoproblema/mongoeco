@@ -2436,10 +2436,10 @@ una corrección comprobada focalmente; no acredita el +5% ni aceptación de entr
 
 #### Evaluación propuesta de b83789bc tras la corrección SQLite
 
-Estado: plan preparado por encargo del owner; no autoriza todavía builds,
-suites ni nuevas mediciones. La siguiente ejecución requiere disposición de
-inicio. Se conserva el protocolo F11: no se sustituyen sus garantías por la
-sonda diagnóstica ni se reinician campañas anteriores.
+Estado: ejecución autorizada por el owner mediante «Impleméntalo», después de
+preparar este plan. Se conserva el protocolo F11: no se sustituyen sus garantías
+por la sonda diagnóstica ni se reinician campañas anteriores. La autorización
+alcanza G1–G6 y los intentos acotados de este candidato material.
 
 Payload productivo propuesto: b83789bc36bc1bebe693d09b782e5e242be24db4,
 rama perf/sqlite-empty-options. Los commits posteriores exclusivamente de
