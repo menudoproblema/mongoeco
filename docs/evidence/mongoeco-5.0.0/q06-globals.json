@@ -1,0 +1,195 @@
+{
+  "status": "global_suites_and_coverage_verified_matrix_pending",
+  "artifact_sha256": "5ac014b1643e5230d1e894828859f372b8e8870a4337dbe91c5c92044d45bb76",
+  "gates": [
+    {
+      "gate": "unittest",
+      "version": "313",
+      "exit": 0,
+      "seconds": 73.57795758394059,
+      "log": "/tmp/mongoeco-q06-supported-unittest-313.txt",
+      "artifact": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2",
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env313/bin/python",
+        "-c",
+        "import runpy,sys;import mongoeco_dispatch_artifact_guard as g;g.pytest_sessionstart(None);sys.argv=['unittest','discover','-s','tests','-p','test*.py']\ntry:runpy.run_module('unittest',run_name='__main__')\nexcept SystemExit as e:\n g.pytest_sessionfinish(None,e.code or 0)\n raise\n"
+      ]
+    },
+    {
+      "gate": "unittest",
+      "version": "314",
+      "exit": 0,
+      "seconds": 78.15808366704732,
+      "log": "/tmp/mongoeco-q06-supported-unittest-314.txt",
+      "artifact": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2",
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "-c",
+        "import runpy,sys;import mongoeco_dispatch_artifact_guard as g;g.pytest_sessionstart(None);sys.argv=['unittest','discover','-s','tests','-p','test*.py']\ntry:runpy.run_module('unittest',run_name='__main__')\nexcept SystemExit as e:\n g.pytest_sessionfinish(None,e.code or 0)\n raise\n"
+      ]
+    },
+    {
+      "gate": "unittest",
+      "version": "315",
+      "exit": 0,
+      "seconds": 76.653626000043,
+      "log": "/tmp/mongoeco-q06-supported-unittest-315.txt",
+      "artifact": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2",
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env315/bin/python",
+        "-c",
+        "import runpy,sys;import mongoeco_dispatch_artifact_guard as g;g.pytest_sessionstart(None);sys.argv=['unittest','discover','-s','tests','-p','test*.py']\ntry:runpy.run_module('unittest',run_name='__main__')\nexcept SystemExit as e:\n g.pytest_sessionfinish(None,e.code or 0)\n raise\n"
+      ]
+    },
+    {
+      "gate": "pytest",
+      "version": "313",
+      "exit": 0,
+      "seconds": 1421.050048458972,
+      "log": "/tmp/mongoeco-q06-supported-pytest-313.txt",
+      "artifact": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2",
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env313/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-n",
+        "2",
+        "-o",
+        "pythonpath=",
+        "-p",
+        "mongoeco_dispatch_artifact_guard"
+      ]
+    },
+    {
+      "gate": "pytest",
+      "version": "314",
+      "exit": 0,
+      "seconds": 1482.3965921669733,
+      "log": "/tmp/mongoeco-q06-supported-pytest-314.txt",
+      "artifact": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2",
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-n",
+        "2",
+        "-o",
+        "pythonpath=",
+        "-p",
+        "mongoeco_dispatch_artifact_guard",
+        "--cov=mongoeco",
+        "--cov-report=term-missing",
+        "--cov-report=json:/tmp/mongoeco-q06-supported-coverage.json"
+      ]
+    },
+    {
+      "gate": "pytest",
+      "version": "315",
+      "exit": 0,
+      "seconds": 1439.9507604999235,
+      "log": "/tmp/mongoeco-q06-supported-pytest-315.txt",
+      "artifact": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2",
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env315/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-n",
+        "2",
+        "-o",
+        "pythonpath=",
+        "-p",
+        "mongoeco_dispatch_artifact_guard"
+      ]
+    }
+  ],
+  "pytest_per_profile": {
+    "passed": 65020,
+    "skipped": 1130,
+    "subtests": 14946
+  },
+  "unittest_per_profile": {
+    "tests": 3685,
+    "skipped": 3
+  },
+  "supplemental_cases_per_profile": 3,
+  "supplemental_case": "legacy_bytearray_sizing_does_not_expand_input_admission",
+  "focal_commands": [
+    {
+      "python": "313",
+      "exit": 0,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env313/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/property/test_bson_size.py::test_legacy_bytearray_sizing_does_not_expand_input_admission",
+        "-o",
+        "pythonpath=",
+        "-p",
+        "mongoeco_dispatch_artifact_guard"
+      ]
+    },
+    {
+      "python": "314",
+      "exit": 0,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env314/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/property/test_bson_size.py::test_legacy_bytearray_sizing_does_not_expand_input_admission",
+        "-o",
+        "pythonpath=",
+        "-p",
+        "mongoeco_dispatch_artifact_guard",
+        "--cov=mongoeco",
+        "--cov-append",
+        "--cov-report=term-missing",
+        "--cov-report=json:/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/coverage-final.json"
+      ]
+    },
+    {
+      "python": "315",
+      "exit": 0,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/env315/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/property/test_bson_size.py::test_legacy_bytearray_sizing_does_not_expand_input_admission",
+        "-o",
+        "pythonpath=",
+        "-p",
+        "mongoeco_dispatch_artifact_guard"
+      ]
+    }
+  ],
+  "coverage_before": {
+    "covered_lines": 48458,
+    "num_statements": 48948,
+    "percent_covered": 98.99893764811637,
+    "percent_covered_display": "99.00",
+    "missing_lines": 490,
+    "excluded_lines": 1027,
+    "percent_statements_covered": 98.99893764811637,
+    "percent_statements_covered_display": "99.00"
+  },
+  "coverage_final": {
+    "covered_lines": 48459,
+    "num_statements": 48948,
+    "percent_covered": 99.00098063250796,
+    "percent_covered_display": "99.00",
+    "missing_lines": 489,
+    "excluded_lines": 1027,
+    "percent_statements_covered": 99.00098063250796,
+    "percent_statements_covered_display": "99.00"
+  },
+  "coverage_runtime_files": 289,
+  "coverage_policy": "exact >=99, unchanged; global trace plus three added focal cases, same installed wheel and same 289-module denominator",
+  "runtime_changes_after_freeze": false,
+  "deep": 74,
+  "temporal_attempts_started": 0
+}

@@ -22,10 +22,13 @@ from bson import (
 )
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
+from bson.errors import InvalidDocument
 from hypothesis import example, given, settings, strategies as st
 
+from mongoeco.api.bson_input import encode_bson_request
 from mongoeco.core.aggregation.runtime import _bson_document_size
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.types import CodecOptions as InputCodecOptions
 
 
 CODEC = CodecOptions(uuid_representation=UuidRepresentation.STANDARD)
@@ -108,3 +111,17 @@ def test_size_retains_cstring_and_utf8_errors():
         _bson_document_size({"bad\x00key": 1})
     with pytest.raises(UnicodeEncodeError):
         _bson_document_size({"v": "\ud800"})
+
+
+@pytest.mark.parametrize("payload", [b"", b"\x00\xff", bytes(range(256))])
+def test_legacy_bytearray_sizing_does_not_expand_input_admission(payload):
+    document = {"v": bytearray(payload)}
+    # The legacy size adapter measures the binary payload; public BSON admission
+    # still rejects the original value, independently of this internal adapter.
+    assert _bson_document_size(document) == len(BSON.encode({"v": payload}))
+    with pytest.raises(InvalidDocument):
+        BSON.encode(document)
+    with pytest.raises(InvalidDocument):
+        encode_bson_request(document, codec_options=InputCodecOptions())
+    assert type(document["v"]) is bytearray
+    assert bytes(document["v"]) == payload

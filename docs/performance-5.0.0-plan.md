@@ -673,7 +673,7 @@ Se conserva `benchmarks/execution.json` preexistente, sin modificar.
 | Q03 | Implementado y comprobado focalmente | 67 tests + 12 subtests y 99 replays UUID 7/8/9 verdes; lint conforme. [Conteos](evidence/mongoeco-5.0.0/q03-counts.json): cinco modalidades × dos requests, cero nuevas construcciones tras importar y bytes/tamaños equivalentes al SDK. Ruta sin SDK, rechazo UNSPECIFIED y raw BSON conservados; logs q03-* |
 | Q04 | Implementado y comprobado focalmente | [Registro](evidence/mongoeco-5.0.0/q04-counts.json): 285 casos únicos comprobados en tandas focales y 16 comparaciones del constructor congelado. Cero retokenizaciones calientes sobre 1.000 documentos con mappings explicit/dynamic; cambios externos, valores mixtos, commit/rollback, índice, reopen/backup restore conformes. Los doce mocks retirados se corrigieron en el addendum Q02; los otros 144 casos de esa tanda se reutilizan. Logs q04-* |
 | Q05 | Diferido sin cambio productivo | [Decisión](evidence/mongoeco-5.0.0/q05-decision.json): hook idle de cursor no equivale a cerrar iterador EOF; reusarlo rompe rewind. Requiere otro predicado/estado de lifecycle y tratamiento de retries/contexto, no una reutilización suficiente |
-| Q06 | En validación integrada | [Preflight](evidence/mongoeco-5.0.0/q06-preflight.json): builds wheel/sdist reproducibles de 95fa38c5, runtime b5d9e803; wheel 5ac014b1… y 310 archivos idénticos en instalaciones físicas 3.13/3.14/3.15. Globales/matriz en ejecución; [R5 consumidores](evidence/mongoeco-5.0.0/q06-consumers.json) aceptado, deep 74 y PCRE2 339 replays por perfil verdes. Pendientes R4 terminal, evaluación temporal y aceptación final. Cero intentos temporales iniciados |
+| Q06 | En validación integrada | [Preflight](evidence/mongoeco-5.0.0/q06-preflight.json): builds wheel/sdist reproducibles de 95fa38c5, runtime b5d9e803; wheel 5ac014b1… y 310 archivos idénticos en instalaciones físicas 3.13/3.14/3.15. [Globales/cobertura](evidence/mongoeco-5.0.0/q06-globals.json) comprobados; matriz en ejecución; [R5 consumidores](evidence/mongoeco-5.0.0/q06-consumers.json) aceptado, deep 74 y PCRE2 339 replays por perfil verdes. Pendientes R4 terminal, evaluación temporal y aceptación final. Cero intentos temporales iniciados |
 
 Q01 conserva la ruta genérica de subclases/wrappers y la clasificación de enteros.
 El helper local de arrays evita duplicar la regla de framing entre lista nativa
@@ -721,3 +721,15 @@ estado/protocolo ni modificación productiva. No se acredita ahorro de tránsito
 Q00–Q04 están comprobados focalmente; Q05 tiene disposición explícita. Q06 es la
 única aceptación de entrega pendiente. Se congela el código productivo al iniciar
 sus builds y se reutiliza la evidencia anterior sólo donde siga siendo válida.
+
+
+Q06, globales: 65.020 passed, 1.130 skips previstos y 14.946 subtests por
+Python; unittest 3.685 casos y tres skips por perfil. El cálculo exacto detectó
+98,99894 % de cobertura aunque pytest mostrara 99,00 redondeado. Se añadió un
+contrato focal de bytearray: tamaño legado contra bytes SDK, rechazo público
+contra la excepción SDK y entrada intacta, con tres payloads en cada Python.
+No cambió el runtime ni se repitieron suites completas. La unión de esas trazas
+con la ejecución global da 48.459/48.948 líneas, 99,0009806 %, en los mismos 289
+módulos. Se preservan el informe anterior y el final, sin cambiar exclusiones,
+umbral ni denominador. Deep conserva sus 74 casos aceptados; los tres controles
+adicionales se registran aparte. Falta la matriz terminal antes de aceptar R4.
