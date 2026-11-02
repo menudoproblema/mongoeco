@@ -1,0 +1,26 @@
+{
+  "base": {
+    "sizes": [
+      7,
+      5,
+      5,
+      1,
+      0,
+      8
+    ],
+    "numeric_alias_calls": 6
+  },
+  "candidate": {
+    "sizes": [
+      7,
+      5,
+      5,
+      1,
+      0,
+      8
+    ],
+    "numeric_alias_calls": 0
+  },
+  "scope": "six native value roots, empty containers; no time measurement",
+  "gc_enabled": true
+}

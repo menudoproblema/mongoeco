@@ -129,5 +129,7 @@
   "final_preflight": "Q06: new B artifact and imports still required",
   "focal": "28 passed; regression test fails before change",
   "harness_tests_command": "env314/bin/python -m pytest -q tests/unit/core/test_benchmark_harness.py",
-  "preexisting_execution_sha256": "d4d1c913dd06c80552222a8123a1a86a0320413d6ebbfd99a764b715825b2c8d"
+  "preexisting_execution_sha256": "d4d1c913dd06c80552222a8123a1a86a0320413d6ebbfd99a764b715825b2c8d",
+  "harness_sha256": "sha256:df42746bcc2361660d2498b901fd308006d07ab0a40254147146e1b1533ca552",
+  "dataset_sha256": "sha256:c2b95c2ef946b1eee07d3311fedac30f6712de6ff7668d0f095f4ba705f4df63"
 }

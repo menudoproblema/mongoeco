@@ -615,6 +615,14 @@ Se conserva `benchmarks/execution.json` preexistente, sin modificar.
 | Bloque | Estado | Evidencia / siguiente gate |
 | --- | --- | --- |
 | Q00 | Implementado y comprobado focalmente | 28 tests del harness; el nuevo test falla en la base y pasa tras mover el índice. Pip check y CLI conformes, 310 archivos del wheel y 26 tareas/motor verificados. [Registro](evidence/mongoeco-5.0.0/q00-preflight.json), logs comprimidos q00-* en el mismo directorio. Preflight del artefacto B reservado a Q06 |
-| Q01–Q04 | Pendientes | Implementación y pruebas focales por bloque |
+| Q01 | Implementado y comprobado focalmente | 366 passed (300 casos seleccionados de replays BSON/respuestas 7/8/9, más propiedades y fronteras); Ruff y formato conformes. [Conteos](evidence/mongoeco-5.0.0/q01-counts.json): seis raíces nativas conservan tamaños y evitan seis llamadas al alias numérico; ninguna medición temporal. Logs q01-* en el mismo directorio |
+| Q02–Q04 | Pendientes | Implementación y pruebas focales por bloque |
 | Q05 | Pendiente de decisión | Implementación acotada o diferido motivado |
 | Q06 | Pendiente | Artefacto final, gates globales y único intento temporal; cero intentos iniciados |
+
+Q01 conserva la ruta genérica de subclases/wrappers y la clasificación de enteros.
+El helper local de arrays evita duplicar la regla de framing entre lista nativa
+y fallback. `ResponseBatchReader` no se modifica. El replay reutiliza las capturas
+aceptadas; no se han recapturado ni reescrito golden. La sonda de conteos Q01
+consume su única sonda focal (límite 60 s, GC activo); no es un intento temporal.
+Q00 registra además los hashes efectivos del harness corregido y dataset.

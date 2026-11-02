@@ -5,6 +5,8 @@ import re
 from datetime import UTC, datetime
 from uuid import UUID
 
+import pytest
+
 from bson import (
     BSON,
     Binary,
@@ -83,3 +85,26 @@ def test_bson_size_matches_sdk_bytes_across_owned_and_stored_views(document):
         DocumentCodec.to_pymongo(DocumentCodec.to_internal(document)),
     ):
         assert _bson_document_size(represented) == expected
+
+
+@pytest.mark.parametrize("scalar_type", [str, int, float, list, dict])
+def test_size_preserves_subclass_fallback(scalar_type):
+    class Subclass(scalar_type):
+        pass
+
+    values = {str: "á雪", int: 2**40, float: -0.0, list: [1, "á"], dict: {"雪": 1}}
+    document = {"v": Subclass(values[scalar_type])}
+    assert _bson_document_size(document) == len(BSON.encode(document))
+
+
+@pytest.mark.parametrize("value", [-(2**63) - 1, 2**63])
+def test_size_retains_integer_overflow(value):
+    with pytest.raises(OverflowError):
+        _bson_document_size({"v": value})
+
+
+def test_size_retains_cstring_and_utf8_errors():
+    with pytest.raises(ValueError, match="NUL"):
+        _bson_document_size({"bad\x00key": 1})
+    with pytest.raises(UnicodeEncodeError):
+        _bson_document_size({"v": "\ud800"})

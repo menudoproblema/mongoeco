@@ -30,6 +30,19 @@ def bson_string_size(value: str) -> int:
 
 
 def bson_value_size(value: Any) -> int:  # noqa: PLR0911, PLR0912 - BSON physical families
+    value_type = type(value)
+    if value_type is str:
+        return bson_string_size(value)
+    if value_type is dict:
+        return bson_document_size(value)
+    if value_type is list:
+        return _bson_array_size(value)
+    if value_type is bool:
+        return 1
+    if value is None:
+        return 0
+    if value_type is float:
+        return _NUMERIC_BYTES["double"]
     numeric = bson_numeric_alias(value)
     if numeric is not None:
         return _NUMERIC_BYTES[numeric]
@@ -44,7 +57,7 @@ def bson_value_size(value: Any) -> int:  # noqa: PLR0911, PLR0912 - BSON physica
     if document is not None:
         return bson_document_size(document)
     if isinstance(value, list):
-        return 5 + sum(bson_element_size(str(i), item) for i, item in enumerate(value))
+        return _bson_array_size(value)
     binary = binary_order_key(value)
     if binary is not None:
         return 5 + binary[0]
@@ -66,6 +79,10 @@ def bson_value_size(value: Any) -> int:  # noqa: PLR0911, PLR0912 - BSON physica
         return 0
     message = f"$bsonSize cannot encode value of type {type(value).__name__}"
     raise TypeError(message)
+
+
+def _bson_array_size(value: list[Any]) -> int:
+    return 5 + sum(bson_element_size(str(i), item) for i, item in enumerate(value))
 
 
 def bson_element_size(key: str, value: Any) -> int:
