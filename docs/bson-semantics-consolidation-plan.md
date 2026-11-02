@@ -2721,7 +2721,7 @@ Prioridad aquí es de evaluación, no autorización de ejecución.
 | X05 | P3 | Migración persistida o refactorización transversal | Perfil medido de un bloque que lo necesite |
 | X06 | P2/P3 | Ampliación sistemática de garantías O1–O8 y corpus P2 | Decisión de cobertura finita y owners |
 
-#### Incremento seleccionado: X01 viabilidad y X04c granularity
+#### Incremento seleccionado: X01 opcional y X04c granularity
 
 Autorización del owner: «Hazlo» tras el análisis de parte II sobre 6854f337.
 Primera etapa: definición y viabilidad de X01, con caracterización independiente
@@ -2753,12 +2753,14 @@ regex tiene wheels en los tres perfiles, pero no iguala la política PCRE2 obser
 La dependencia se ha evaluado exclusivamente en /tmp; pyproject y el venv raíz
 no se modifican. No se mide ni acepta coste por estas sondas.
 
-**Contrato recomendado para la siguiente implementación X01.** Backend PCRE2
+**Contrato autorizado de implementación X01.** El owner elige «Backend PCRE2
+opcional y explícito». Backend PCRE2
 opcional mediante instalación explícita, con el camino actual conservado cuando
 no esté habilitado. La selección debe ser estable durante la vida del runtime,
-no por patrón ni con fallback silencioso tras un error PCRE2. La preferencia
-opcional/obligatoria/aplazada está consultada al owner antes de cambiar el contrato
-de instalación. No añadir parámetro por operación ni extender SPI para ello sin
+no por patrón ni con fallback silencioso tras un error PCRE2. Se instala mediante `mongoeco[pcre2]` (`pcre2==0.7.1`) y se activa con
+`MONGOECO_REGEX_BACKEND=pcre2` antes de importar mongoeco. El valor por defecto
+es `python`; un nombre desconocido o dependencia ausente produce RuntimeError
+al usar el motor, sin fallback. Cambiar la variable exige reiniciar el proceso. No añadir parámetro por operación ni extender SPI para ello sin
 una necesidad demostrada. No anunciar patrones de PCRE2 cuando sólo haya re.
 
 Mecanismos/disposición:
@@ -2777,7 +2779,7 @@ según la preferencia del owner y su contrato sin dependencia; (2) registrar cor
 7/8/9 en consulta, regexMatch/Find/FindAll y schema donde su contrato lo permita;
 (3) implementar ejecución compartida conservando validadores/errores contextuales;
 (4) comprobar variantes con/sin backend, SDK-free, 3.13/3.14/3.15, wheels/source-build
-y plataformas publicadas; (5) fijar presupuesto de patrones/capturas/tiempo y gate
+y límites de plataformas comprobadas; (5) fijar presupuesto de patrones/capturas/tiempo y gate
 final del nuevo candidato. Match vacío y avance findAll, errores, Unicode y memoria
 son obligatorios; estos trece casos de viabilidad no sustituyen esa aceptación.
 
@@ -2986,3 +2988,44 @@ se separa el límite del resultado nativo, no se introduce una falsa divergencia
 Resultado esperado: una entrega acotada F00–F11 demostrada y mantenible,
 más una cartera X01–X06 con decisiones explícitas, no una obligación de
 implementar todo el catálogo antes de poder entregar una corrección.
+
+
+##### Ejecución autorizada X01/X04c y gate del incremento
+
+Rama `feat/part2-regex-granularity`, base de contrato 98289a82. La opción PCRE2
+no cambia el extra por defecto ni Search-v1; `Regex.compile()` conserva su
+contrato Python. No se anuncia equivalencia PCRE2 universal: la aceptación es
+el corpus registrado y su configuración explícita. Distribución opcional:
+macOS arm64 comprobado en CPython 3.13/3.14 con wheel, 3.15 con wheel construido
+desde fuente. Otros sistemas conservan el backend Python; no se acredita un
+wheel PCRE2 multiplataforma por esta entrega.
+
+Lista finita de cierre, sin reabrir parte I:
+
+1. X01: corpus PCRE2 nativo 7/8/9 en cuatro superficies y ambos motores,
+   consulta, tres expresiones y schema; errores de sintaxis/límite contextuales,
+   Unicode, capturas y avance vacío. Perfil sin dependencia y activación fallida
+   explícita; misma selección en los tres Python.
+2. X04c: 27 casos nativos por dialecto, trece series, tipos/anchuras/cohortes
+   Decimal128, extremos y fase de errores; propiedades de partición/contexto y
+   checkpoint compartido; regresión del camino sin opción.
+3. Integración: suite global final con cobertura >=99,00%, propiedades deep,
+   lint ratchet, API/typing/SPI y snapshots existentes. Reutilizar matriz pytest/SDK,
+   SQLite histórica y wire cuando no cambie su contrato: los nuevos diferenciales
+   sí recorren las cuatro superficies. Focal nuevo en 3.13/3.14/3.15.
+4. Distribución: wheel/sdist y metadatos del extra; instalación SDK-free, imports
+   de artefacto fuera del checkout y ejercicio de ambas capacidades. Sin versión,
+   tag, publicación ni integración en main antes del cierre.
+5. Recursos/coste: no reiniciar F11. Sus workloads no ejecutan regex ni bucketAuto;
+   revisar diff y conservar esa evidencia sólo para los paths intactos. El nuevo
+   dominio carece de base funcional equivalente. Gate absoluto acotado antes de
+   medir: una ejecución, GC activo, hasta 60 s, 600 lecturas/operaciones agregadas,
+   datasets de hasta 100 filas, patrones de hasta 4096 caracteres y 64 capturas,
+   hasta 4097 coincidencias por resultado. Verificar resultados, caché PCRE2 <=256
+   entradas y pico Python <=16 MiB en la sonda focal. Estos son límites de la
+   evaluación, no nuevas cuotas públicas ni garantía de coste universal. Un fallo
+   se conserva y corrige causalmente; no ampliar presupuesto o repetir sin causa.
+6. Receipt, revisión de diff y commits semánticos por bloque; árbol limpio.
+
+Implementación y comprobación focal no equivalen a aceptación de entrega.
+Los gates de esta lista siguen pendientes hasta consignar sus resultados.
