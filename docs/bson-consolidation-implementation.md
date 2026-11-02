@@ -3250,3 +3250,32 @@ presupuestos deterministas, workers y agregación, Python 3.14.5/GC/política/se
 Se fijan 500/1.000 operaciones antes de medir A/B; no se repiten A/A ni los gates
 aceptados. Los rojos anteriores conservan su significado histórico. No se añade
 runner, documento ni capa productiva; sólo cambia el contrato de coste autorizado.
+
+
+Primer coste bajo el contrato reformulado: tres bloques ABBA completos, identidad
+BSON conservada; 9 casos aceptados, 6 con regresión observada y 29 inconcluyentes.
+Se conserva el intento íntegro (f11-cost-bounded-*), sin ejecutar otro intento
+para esconder el rojo. Los seis casos se concentran en find con limit=1 y una
+primera página: razones estimadas 1,0839–1,1817, con cotas inferiores >1,05.
+
+El perfil causal de la API pública detecta dos sobrecostes: 18.000 vueltas de
+event loop por 2.000 lecturas frente a 12.000 en la base, y validación genérica
+de sort repetida para cada documento incluso con una única clave simple.
+Se usa ejecución eager de la tarea de cierre (disponible en Python 3.13) sólo
+cuando no hay fábrica configurada; si el cierre suspende conserva shield y
+manejo de cancelaciones repetidas, y las fábricas siguen siendo autoridad.
+La clave simple evita el recorrido compuesto; rutas punteadas y arrays paralelos
+conservan su único validador. También se evita copiar FindOperation cuando los
+objetos canónicos skip/limit son idénticos, preservando distinciones bool/int y
+manteniendo copias para overrides. No se omite resolución de contexto, admisión,
+validación, GC ni publicación. La sonda confirma que el guard se aplica al caso medido.
+
+Pasan 1.658 controles focales por cada Python 3.13/3.14/3.15; después del ajuste
+final pasan 715 controles de sort, 1.664 de cursor/contexto y 114 controles de
+ventana/cierre en cada runtime (más sus subtests). Mypy del helper y ratchet
+verdes. El perfil vuelve a 12.000 vueltas; sus tiempos instrumentados son sólo
+diagnóstico. Diff revisado. Se congela un candidato material corregido: invalida
+la aceptación de runtime del wheel anterior, no las capturas nativas/SDK cuyos
+inputs no cambiaron ni los cierres O1–O8/P2. Se construirá otro wheel y se
+repetirán los gates integrados causalmente afectados y el coste acotado; no se
+reutilizan las razones A/B del candidato anterior para aceptar el nuevo.

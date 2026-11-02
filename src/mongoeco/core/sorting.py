@@ -60,6 +60,14 @@ def _document_sort_keys(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
 ) -> list[Any]:
+    if len(sort) == 1:
+        field, direction = sort[0]
+        if "." not in field:
+            return [
+                sort_value(
+                    document, field, direction, dialect=dialect, collation=collation
+                )
+            ]
     for field, _ in sort:
         if "." in field and any(part.isdigit() for part in field.split(".")):
             _validate_numeric_sort_path(document, field.split("."))

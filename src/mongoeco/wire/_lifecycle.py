@@ -12,12 +12,19 @@ if TYPE_CHECKING:
 async def finish_cleanup(cleanup: Coroutine[Any, Any, None]) -> None:
     """Finish owned cleanup even if its caller is cancelled repeatedly."""
     try:
-        asyncio.get_running_loop()
+        loop = asyncio.get_running_loop()
     except RuntimeError:
         # The synchronous Memory runner can finish immediate coroutines inline.
         await cleanup
         return
-    task = asyncio.create_task(cleanup)
+    # Complete synchronous cleanup without adding a scheduler round trip. Keep
+    # configured factories authoritative (instrumentation and alternative Tasks).
+    # The Task constructor supports eager_start on Python 3.13 as well.
+    task = (
+        asyncio.Task(cleanup, loop=loop, eager_start=True)
+        if loop.get_task_factory() is None
+        else asyncio.create_task(cleanup)
+    )
     cancelled = False
     while not task.done():
         try:

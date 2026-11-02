@@ -448,3 +448,51 @@ def test_find_exhaustion_surfaces_cleanup_failure_and_retains_retry():
             assert source.closes == expected_attempts
 
     asyncio.run(exercise())
+
+
+def test_immediate_owned_cleanup_keeps_context_and_finishes_without_scheduling():
+    import contextvars  # noqa: PLC0415 - isolated execution context witness
+
+    variable = contextvars.ContextVar("cleanup_context", default="caller")
+    observed = []
+
+    async def exercise():
+        async def cleanup():
+            observed.append(variable.get())
+            variable.set("cleanup")
+
+        asyncio.get_running_loop().call_soon(observed.append, "scheduled")
+        await finish_cleanup(cleanup())
+        assert observed == ["caller"]
+        assert variable.get() == "caller"
+        await asyncio.sleep(0)
+        assert observed == ["caller", "scheduled"]
+
+    asyncio.run(exercise())
+
+
+def test_owned_cleanup_preserves_configured_task_factory():
+    created = []
+    closed = []
+
+    async def exercise():
+        loop = asyncio.get_running_loop()
+        previous = loop.get_task_factory()
+
+        def factory(loop, coroutine, **options):
+            created.append(coroutine)
+            return asyncio.Task(coroutine, loop=loop, **options)
+
+        async def cleanup():
+            closed.append(True)
+
+        coroutine = cleanup()
+        loop.set_task_factory(factory)
+        try:
+            await finish_cleanup(coroutine)
+        finally:
+            loop.set_task_factory(previous)
+        assert created == [coroutine]
+        assert closed == [True]
+
+    asyncio.run(exercise())

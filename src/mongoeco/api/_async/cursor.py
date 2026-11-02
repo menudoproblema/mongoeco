@@ -481,7 +481,10 @@ class AsyncCursor:
     def _open_read_source(
         self, *, skip: int, limit: int | None
     ) -> AsyncIterable[Document]:
-        operation = replace(self._base_operation(), skip=skip, limit=limit)
+        operation = self._base_operation()
+        # Reuse the identical canonical window, preserving bool/int distinctions.
+        if skip is not operation.skip or limit is not operation.limit:
+            operation = replace(operation, skip=skip, limit=limit)
         _ensure_operation_executable(self._collection, operation)
         if (
             operation.sort
