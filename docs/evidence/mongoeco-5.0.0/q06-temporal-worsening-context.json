@@ -1,0 +1,170 @@
+[
+  {
+    "task": "search_compound_candidateable_should_msm2_topk_100",
+    "full_metadata_equal": true,
+    "metrics": {
+      "A0": {
+        "wall_time_mean_sec": 1.0159,
+        "cpu_user_mean_sec": 1.01,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 114.7
+      },
+      "A1": {
+        "wall_time_mean_sec": 0.9787,
+        "cpu_user_mean_sec": 0.98,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 114.38
+      },
+      "B1": {
+        "wall_time_mean_sec": 1.0203,
+        "cpu_user_mean_sec": 1.02,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 114.28
+      },
+      "B2": {
+        "wall_time_mean_sec": 1.0821,
+        "cpu_user_mean_sec": 1.07,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.12,
+        "rss_peak_max_mb": 113.83
+      },
+      "A2": {
+        "wall_time_mean_sec": 0.9934,
+        "cpu_user_mean_sec": 0.99,
+        "cpu_sys_mean_sec": 0.0,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 113.72
+      }
+    },
+    "metadata": {
+      "summary": "memory/search opaque",
+      "engine": "memory",
+      "strategy": "search",
+      "planning_mode": "strict",
+      "streaming_batch_execution": false,
+      "incremental_group_input": false,
+      "partitioned_group_state_candidate": false,
+      "streaming_group_output_candidate": false,
+      "incremental_sort_input": false,
+      "streaming_sort_output": false,
+      "remaining_stage_count": 1,
+      "physical_plan": null,
+      "query_operator": "compound",
+      "backend": "python",
+      "mode": null,
+      "similarity": null,
+      "min_score": null,
+      "filter_mode": null,
+      "exact_fallback_reason": null,
+      "candidates_evaluated": null,
+      "candidates_requested": null,
+      "documents_filtered": null,
+      "documents_filtered_by_min_score": null,
+      "candidate_count": null,
+      "candidate_count_before_topk": null,
+      "topk_limit_hint": 10,
+      "topk_prefilter": null,
+      "ranking_source": null,
+      "compound_prefilter": null,
+      "downstream_filter_prefilter": null,
+      "vector_filter_prefilter": null,
+      "vector_filter_residual": null,
+      "candidate_expansion_strategy": null,
+      "documents_scanned": null,
+      "documents_scanned_after_prefilter": null,
+      "search_topk_strategy": "direct-window",
+      "search_topk_growth_strategy": null,
+      "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)+minimumShouldMatch(2)",
+      "outcome_oracle": "exact-output",
+      "outcome_sha256": "sha256:192dc40067ad71fe06852659f20de101565b380c2c14c21481ffe32c8690b425",
+      "outcome_items": 100
+    }
+  },
+  {
+    "task": "search_compound_candidateable_should_tie_heavy_topk_100",
+    "full_metadata_equal": true,
+    "metrics": {
+      "A0": {
+        "wall_time_mean_sec": 0.3715,
+        "cpu_user_mean_sec": 0.37,
+        "cpu_sys_mean_sec": 0.0,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 114.7
+      },
+      "A1": {
+        "wall_time_mean_sec": 0.3782,
+        "cpu_user_mean_sec": 0.37,
+        "cpu_sys_mean_sec": 0.0,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 114.39
+      },
+      "B1": {
+        "wall_time_mean_sec": 0.38,
+        "cpu_user_mean_sec": 0.38,
+        "cpu_sys_mean_sec": 0.0,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 114.28
+      },
+      "B2": {
+        "wall_time_mean_sec": 0.4144,
+        "cpu_user_mean_sec": 0.4,
+        "cpu_sys_mean_sec": 0.0,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 113.83
+      },
+      "A2": {
+        "wall_time_mean_sec": 0.3738,
+        "cpu_user_mean_sec": 0.36,
+        "cpu_sys_mean_sec": 0.0,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 113.72
+      }
+    },
+    "metadata": {
+      "summary": "memory/search opaque",
+      "engine": "memory",
+      "strategy": "search",
+      "planning_mode": "strict",
+      "streaming_batch_execution": false,
+      "incremental_group_input": false,
+      "partitioned_group_state_candidate": false,
+      "streaming_group_output_candidate": false,
+      "incremental_sort_input": false,
+      "streaming_sort_output": false,
+      "remaining_stage_count": 1,
+      "physical_plan": null,
+      "query_operator": "compound",
+      "backend": "python",
+      "mode": null,
+      "similarity": null,
+      "min_score": null,
+      "filter_mode": null,
+      "exact_fallback_reason": null,
+      "candidates_evaluated": null,
+      "candidates_requested": null,
+      "documents_filtered": null,
+      "documents_filtered_by_min_score": null,
+      "candidate_count": null,
+      "candidate_count_before_topk": null,
+      "topk_limit_hint": 10,
+      "topk_prefilter": null,
+      "ranking_source": null,
+      "compound_prefilter": null,
+      "downstream_filter_prefilter": null,
+      "vector_filter_prefilter": null,
+      "vector_filter_residual": null,
+      "candidate_expansion_strategy": null,
+      "documents_scanned": null,
+      "documents_scanned_after_prefilter": null,
+      "search_topk_strategy": "direct-window",
+      "search_topk_growth_strategy": null,
+      "query_shape": "$search.compound must(text=vector)+should(exists(title),exists(body),wildcard(body=*vector*))",
+      "outcome_oracle": "exact-output",
+      "outcome_sha256": "sha256:e5af1d46fa7b36754953f956c6a5bd1242aea3816321f5749f3232a3581ada03",
+      "outcome_items": 100
+    }
+  }
+]
