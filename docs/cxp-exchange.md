@@ -5,7 +5,7 @@ requirements. They are packaged as JSON data under
 `mongoeco.cxp.exchange.data`; a consumer can read and evaluate them without
 importing a CXP catalog, descriptor, handshake or registry module.
 Install `cxp[exchange]>=5.0.0,<6` to use the document API and context v2.
-Catalog `1.2.0` uses `cxp.catalog` spec_version 2. Snapshot and requirements
+Catalog `2.0.0` uses `cxp.catalog` spec_version 2. Snapshot and requirements
 remain spec_version 1; context remains spec_version 2. The earlier catalog
 `1.1.0` keeps its own identity and hash, and consumers must adopt the new pin
 explicitly.
@@ -24,7 +24,7 @@ context = Document(
         "spec_version": 2,
         "payload": {
             "subject_id": "mongoeco-public-catalog",
-            "configuration_revision": "mongoeco-public-catalog-1.2.0",
+            "configuration_revision": "mongoeco-public-catalog-2.0.0",
             "accepted_sources": ["declared"],
         },
     },
@@ -65,7 +65,7 @@ outside a closed domain is invalid before evaluation, including in an
 unselected `any` branch. A valid but unsatisfied requirement is incompatible,
 and a missing observation remains indeterminate.
 
-Catalog version `1.2.0` also defines thirteen typed value properties for
+Catalog version `2.0.0` also defines thirteen typed value properties for
 `transactions` and `change_streams`. The declared snapshot reports their
 exact boolean and string values, including `false` for distributed or
 persistent behavior where applicable. A consumer can require an exact value;
@@ -350,3 +350,28 @@ local `search-v1` syntax subset and never assert compatibility with an Atlas
 deployment. The owner contract and deprecation record are
 [`search-contract-v1.md`](architecture/search-contract-v1.md) and
 [`deprecations-v1.json`](../src/mongoeco/compat/resources/deprecations-v1.json).
+
+## Catalog 2.0.0 migration
+
+Catalog 2.0.0 corrects the integrated expression inventory. At capability level
+the closed domain rejects $all/$elemMatch/$exists/$nin requirements as invalid;
+the open aggregate.supportedExpressionOperators property evaluates them as
+incompatible. Both levels report $not and $last as supported. The known but
+unimplemented $sin remains invalid at capability level and incompatible at
+operation level. These modes are intentional, not a complete MongoDB vocabulary.
+
+The inventory excludes the special $const/$meta handling and dynamic operator
+registrations. A generic declaration requires identical integrated inventories
+for dialects 7/8/9. The producer inventory, document values and six independent
+operator witnesses are checked together; matching JSON hashes alone is insufficient.
+
+aggregate.bucketAutoGranularitySeries is a closed string set of the thirteen
+implemented series, scoped to $bucketAuto with otherwise valid numeric inputs.
+The declared snapshot reports the set; it is not an observed deployment claim.
+Missing information remains indeterminate and an explicit empty set is incompatible.
+No regexBackend property or runtime snapshot producer is added.
+
+The new catalog identity and hash must be adopted explicitly together with
+profiles, tiers and snapshots. Historical 1.2.0 documents remain unchanged in
+Git and published artifacts; they are not silently reinterpreted or loaded
+through a fallback. CXP remains 5.0.0; document format versions are unchanged.

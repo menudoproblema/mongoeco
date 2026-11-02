@@ -267,6 +267,7 @@ class MongoAggregationMetadata(msgspec.Struct, frozen=True, forbid_unknown_field
 
 AGGREGATION_OPERATION_FIELDS = frozenset(
     {
+        "bucketAutoGranularitySeries",
         "acceptedNoopOptions",
         "acceptsPipeline",
         "supportedExpressionOperators",
@@ -288,6 +289,9 @@ AGGREGATION_OPERATION_FIELDS = frozenset(
 class MongoAggregationOperationMetadata(
     msgspec.Struct, frozen=True, forbid_unknown_fields=True
 ):
+    bucket_auto_granularity_series: tuple[str, ...] | None = msgspec.field(
+        name="bucketAutoGranularitySeries", default=None
+    )
     accepted_noop_options: tuple[str, ...] | None = msgspec.field(
         name="acceptedNoopOptions", default=None
     )

@@ -193,7 +193,7 @@ def build_mongodb_snapshot(
     if catalog.payload["identity"] != {
         "namespace": "org.mongoeco",
         "name": "mongodb",
-        "version": "1.2.0",
+        "version": "2.0.0",
     }:
         message = "Expected the Mongoeco-owned MongoDB catalog"
         raise ValueError(message)

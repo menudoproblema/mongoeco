@@ -183,6 +183,11 @@ usa Semantic Versioning.
 
 ### Changed
 
+- Adopt Mongoeco CXP catalog 2.0.0 with corrected expression support and a typed
+  bucketAuto granularity-series property. Preserve closed capability versus open
+  operation domains; consumers must adopt the new catalog identity and hash.
+  Keep CXP 5.0.0 and document formats unchanged.
+
 - Partition MongoDB differential cases by declared topology requirements and
   run replica-set cases through owned, bounded fixtures using the existing
   pinned image matrix, capturer and replay. Preserve installed-wheel checks

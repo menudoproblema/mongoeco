@@ -481,7 +481,6 @@
           "supportedExpressionOperators": [
             "$abs",
             "$add",
-            "$all",
             "$allElementsTrue",
             "$and",
             "$anyElementTrue",
@@ -512,9 +511,7 @@
             "$dayOfWeek",
             "$dayOfYear",
             "$divide",
-            "$elemMatch",
             "$eq",
-            "$exists",
             "$exp",
             "$filter",
             "$first",
@@ -534,6 +531,7 @@
             "$isoDayOfWeek",
             "$isoWeek",
             "$isoWeekYear",
+            "$last",
             "$lastN",
             "$let",
             "$literal",
@@ -556,7 +554,7 @@
             "$month",
             "$multiply",
             "$ne",
-            "$nin",
+            "$not",
             "$objectToArray",
             "$or",
             "$percentile",
@@ -710,7 +708,6 @@
           "aggregate.supportedExpressionOperators": [
             "$abs",
             "$add",
-            "$all",
             "$allElementsTrue",
             "$and",
             "$anyElementTrue",
@@ -741,9 +738,7 @@
             "$dayOfWeek",
             "$dayOfYear",
             "$divide",
-            "$elemMatch",
             "$eq",
-            "$exists",
             "$exp",
             "$filter",
             "$first",
@@ -763,6 +758,7 @@
             "$isoDayOfWeek",
             "$isoWeek",
             "$isoWeekYear",
+            "$last",
             "$lastN",
             "$let",
             "$literal",
@@ -785,7 +781,7 @@
             "$month",
             "$multiply",
             "$ne",
-            "$nin",
+            "$not",
             "$objectToArray",
             "$or",
             "$percentile",
@@ -947,7 +943,22 @@
           "aggregate.supportsLeadingSearchStage": true,
           "aggregate.supportsLeadingVectorSearchStage": true,
           "aggregate.supportsSession": true,
-          "aggregate.unsupportedOptions": []
+          "aggregate.unsupportedOptions": [],
+          "aggregate.bucketAutoGranularitySeries": [
+            "1-2-5",
+            "E12",
+            "E192",
+            "E24",
+            "E48",
+            "E6",
+            "E96",
+            "POWERSOF2",
+            "R10",
+            "R20",
+            "R40",
+            "R5",
+            "R80"
+          ]
         },
         "support": "supported"
       },
@@ -1229,15 +1240,15 @@
     "catalog": {
       "name": "mongodb",
       "namespace": "org.mongoeco",
-      "version": "1.2.0",
-      "sha256": "f2b3d7c51846a00858b4d7c17ae1b439adc0b7285df11f67c291302c0f7013b9"
+      "version": "2.0.0",
+      "sha256": "aa232d017fb8bcc85989b55c9817c0c1e379bd387dc5c3d59bdab467bcfe1081"
     },
-    "configuration_revision": "mongoeco-public-catalog-1.2.0",
+    "configuration_revision": "mongoeco-public-catalog-2.0.0",
     "observed_at": "2026-09-26T00:00:00.000000Z",
     "provider_id": "mongoeco",
     "source": {
       "kind": "declared",
-      "reference": "org.mongoeco:public-catalog:1.2.0"
+      "reference": "org.mongoeco:public-catalog:2.0.0"
     },
     "subject_id": "mongoeco-public-catalog"
   },

@@ -645,8 +645,8 @@
 - `comment`: `status`="effective", `note`="Recorded in engine session metadata for the validation command."
 
 ## CXP Exchange
-- `catalog`: `org.mongoeco:mongodb:1.2.0`
-- `sha256`: `f2b3d7c51846a00858b4d7c17ae1b439adc0b7285df11f67c291302c0f7013b9`
+- `catalog`: `org.mongoeco:mongodb:2.0.0`
+- `sha256`: `aa232d017fb8bcc85989b55c9817c0c1e379bd387dc5c3d59bdab467bcfe1081`
 - `profiles`: `mongodb-core`, `mongodb-text-search`, `mongodb-search`, `mongodb-platform`, `mongodb-aggregate-rich`, `mongodb-mock-safe`
 
 ## Mock Safe Profile
