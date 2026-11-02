@@ -3955,3 +3955,14 @@ deep pendiente; G5 preparado, G6 pendiente. No se cierran obligaciones sin prueb
 La tabla histórica aportada también se corrige: e4eb tenía 9 consumo SQLite,
 2 vectoriales y 1 Memory inconcluyentes; los 14 inconcluyentes de b936 están
 aceptados en b837, cuyo único pendiente procede de un caso antes aceptado.
+
+Reanudación autorizada por el owner: deep/consumidores y matriz sobre el mismo
+artefacto. G4 aceptado: seis suites/cobertura reutilizadas y deep terminal 0.
+Quince controles estáticos/consumidores: catorce ejecuciones verdes y snapshots
+reutilizado por ledger. Tipado, SPI, smokes, conformance y SDK-free verdes;
+92 outcome hashes funcionales coinciden con base, sin decisión nueva de CPU.
+El primer assert auxiliar de archivado suponía 17 controles; el inventario real
+contiene 15. Corregido el recuento, sin repetir pruebas ni alterar sus resultados.
+3/6 obligaciones aceptadas; G5 espera matriz activa. Continuación final G3
+autorizada y preparada: seis ABBA nuevos, crítico 4,033, sólo datos nuevos,
+tope 40 min, sin reset 2/2; no empieza hasta cerrar G4/G5.
