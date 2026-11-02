@@ -2774,7 +2774,7 @@ Mecanismos/disposición:
 | Dependencia/binding | Instalación y perfil SDK-free compatibles | justify; gate explícito de distribución antes de adoptar |
 | Nueva configuración por operación o SPI | Ninguna garantía diferencial identificada | remove del diseño inicial |
 
-Bloques X01 pendientes antes de aceptar capacidad: (1) fijar selección de backend
+Criterios X01 antes de aceptar capacidad (cerrados en el receipt del incremento): (1) fijar selección de backend
 según la preferencia del owner y su contrato sin dependencia; (2) registrar corpus
 7/8/9 en consulta, regexMatch/Find/FindAll y schema donde su contrato lo permita;
 (3) implementar ejecución compartida conservando validadores/errores contextuales;
@@ -2816,8 +2816,9 @@ y coste de los paths realmente cambiados presupuestado antes de medir. No transf
 Cierre observable de X04c: cada caso contractual de las trece series coincide
 con referencia nativa en valores, tipos, multiplicidad, errores y fase; camino
 sin granularity conserva sus resultados; no quedan gaps obligatorios ni gates
-pendientes. Hoy es caracterización/preparación, no capacidad implementada.
-No se declaran X01 o X04c cerrados por disponer de esta propuesta.
+pendientes. La caracterización inicial no concedía cierre; la aceptación del incremento
+implementado consta en el gate y receipt siguientes. No se declara cerrada
+la cartera completa X01–X06 por este incremento.
 
 #### X01 — Regex/PCRE más allá de la gramática ya corregida
 
@@ -3028,4 +3029,14 @@ Lista finita de cierre, sin reabrir parte I:
 6. Receipt, revisión de diff y commits semánticos por bloque; árbol limpio.
 
 Implementación y comprobación focal no equivalen a aceptación de entrega.
-Los gates de esta lista siguen pendientes hasta consignar sus resultados.
+**Cierre 2026-11-02: 6/6 obligaciones aceptadas** en el receipt de implementación
+y part2-x01-x04c/receipt.json. Selección nativa integrada 990 passed; suite global
+64.980 passed / 14.946 subtests; deep 66; cobertura exacta 48.445/48.934 líneas
+(289 módulos), 99,00069481342216 %. La composición de cobertura sólo admite
+trazas de módulos con identidad y bytes completos idénticos; conserva todos
+los módulos del candidato, informes originales y aliases comprobados.
+Distribuciones reproducibles y perfiles SDK-free verificados. Sonda única:
+503 operaciones, GC activo, 3,110120375 s, 4.387.624 bytes Python, caché 256;
+presupuesto satisfecho sin tocar F11. Artefacto productivo 28898b3a, wheels
+reproducibles ae9da5d6 y sdist 7bf6ecad; identidades completas en receipt.
+Sin release ni integración en main; resto de parte II permanece fuera del corte.

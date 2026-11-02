@@ -4116,3 +4116,56 @@ Treinta propiedades focales acreditan partición, fronteras contiguas, contexto
 decimal hostil y checkpoint compartido. La regresión de agrupación pasa también
 en 3.13/3.15; el test de rechazo antiguo usa ahora una serie inválida. Estado:
 implementado y comprobado focalmente; pendiente del gate de entrega común.
+
+### Aceptación del incremento seleccionado X01/X04c — 2026-11-02
+
+**6/6 obligaciones cerradas**, 2/2 bloques funcionales; no quedan criterios
+obligatorios pendientes dentro de este incremento. No equivale a cerrar la
+cartera completa de parte II. Parte I y sus candidatos permanecen aceptados e
+inmutados; main sigue en 6854f337. No se prepara versión ni se publica.
+
+| Gate del incremento | Evidencia y resultado |
+| --- | --- |
+| X01 | Catorce casos nativos × 7/8/9; 339 checks por Python 3.13/3.14/3.15, cuatro superficies y ambos motores. Opcional/ausente/default explícitos; errores contextuales y límites nativos. |
+| X04c | 651 controles diferenciales, trece series y 27 casos por dialecto, más treinta propiedades de partición/contexto/checkpoint. Selección integrada: 990 verdes. |
+| Integración | Suite global: 64.980 passed, 1.130 skipped, 14.946 subtests; deep: 66 passed. Ratchet 13 archivos; API/typing/SPI y snapshots verdes. Matriz pytest/SDK y contratos intactos reutilizados según receipt. |
+| Cobertura | 48.445/48.934 líneas, 289 módulos, **99,00069481342216 % exacto**, sin redondear el gate ni excluir módulos. Composición de trazas reales con identidad de módulo y SHA256 completos. |
+| Distribución | 310 archivos productivos; dos wheels y sdists binariamente reproducibles con SOURCE_DATE_EPOCH y normalize_sdist existentes. Metadatos del extra, smokes limpios wheel/sdist y SDK-free desde wheel con/sin PCRE2 verdes. |
+| Recursos | Único intento, GC activo, 503 operaciones, 3,110120375 s de pared / 3,099469 s CPU, pico Python 4.387.624 bytes y caché 256/256. Cumple 600 operaciones/60 s/16 MiB. No se reinicia F11. |
+
+Los skips nuevos de la suite por defecto son 336 del perfil PCRE2 opt-in y 41
+casos de servidor vivo sin URI global. Se cubren mediante perfil PCRE2 explícito
+y capturas nativas propias 7/8/9, no mediante aceptación de skips.
+
+La ampliación de cobertura detectó una aserción privada ligada a `.flags` de re;
+se sustituyó por matching observable de i/m. 108 pruebas focales opcionales y
+nueve pruebas y nueve subtests por defecto pasan después. No hubo cambio productivo ni se
+invalida la suite global. Se conservan el fallo inicial y su resolución.
+
+El primer informe de cobertura contó 1.100 rutas de varias instalaciones (80,56 %),
+y el informe limitado al checkout omitía trazas de plugins ejecutados en la
+instalación previa (98,63 %). Se resuelve por composición de las ejecuciones ya
+realizadas: sólo alias con sufijo de módulo y SHA256 de **todo el archivo** idénticos
+al candidato; todos los 289 módulos actuales permanecen en el denominador. No se
+transfieren líneas de módulos modificados desde otra instalación. Informes crudos,
+alias y resultado exacto archivados; no se repite la suite para corregir atribución.
+
+Artefactos reproducibles aceptados en /tmp/mongoeco-part2-repro-a y -b:
+wheel `ae9da5d6a8ee3a0621c957ec53ccd3e26ffab5e0039aeaa3cfe4ced61ff6e20e`;
+sdist `7bf6ecad0bc2993616072209faf94f873c0f4ced796e2efc5da5d2b4b6a04437`.
+Todos los miembros son idénticos a los artefactos instalados/probados inicialmente;
+la suite usa los mismos bytes productivos del checkout verificados contra ellos.
+Payload productivo: 28898b3a9099866a6f3199357a716e13f12d7858; documentación de
+contrato/distribución aff23486 y refinamiento de test 4081dd7f no cambian ese payload.
+
+Coste histórico: hashes de los dos workers conservados; sus 44 controles no
+ejecutan regex/bucketAuto y los imports añadidos quedan fuera de lo medido. Se
+reutiliza esa evidencia sólo para esos paths; el nuevo dominio, sin base funcional
+equivalente, tiene la aceptación absoluta anterior. No se infiere coste universal
+ni un ratio nuevo frente a la base F11.
+
+Límites: PCRE2 opcional comprobado en macOS arm64, con build desde fuente para
+3.15; no se acredita distribución binaria en otros sistemas ni equivalencia PCRE
+completa. Memoria medida: asignaciones Python del workload acotado, no todas las
+asignaciones nativas. Search-v1/Regex.compile siguen Python. Resto de parte II
+fuera del corte. Evidencia y trazabilidad en part2-x01-x04c/receipt.json.

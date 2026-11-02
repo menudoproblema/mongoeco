@@ -25,5 +25,1126 @@
     "No matching/schema/Search contract expansion yet"
   ],
   "granularity_cases": 22,
-  "granularity_series": 13
+  "granularity_series": 13,
+  "phase": "initial characterization (historical)",
+  "implementation": {
+    "branch": "feat/part2-regex-granularity",
+    "regex_commit": "5b81bc0a5ffb4421476d017993e12441c56a20d3",
+    "granularity_commit": "28898b3a9099866a6f3199357a716e13f12d7858",
+    "status": "accepted_selected_increment",
+    "native_versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "regex_cases_per_dialect": 14,
+    "granularity_cases_per_dialect": 27,
+    "integrated_differential_checks": 990,
+    "pcre_checks_each_python": 339,
+    "python_profiles": [
+      "3.13.15",
+      "3.14.5",
+      "3.15.0"
+    ],
+    "focal_314": {
+      "passed": 54,
+      "subtests": 9
+    },
+    "focal_313_and_315_each": {
+      "passed": 85,
+      "subtests": 95
+    },
+    "deep_passed": 66,
+    "product_files": 310,
+    "artifacts": {
+      "mongoeco-part2-dist": {
+        "mongoeco-4.11.0-py3-none-any.whl": "1888bdd0721a2a8cffaf0b83e83ea4bff6db97258b6c53b2f3d15106613ab2c3",
+        "mongoeco-4.11.0.tar.gz": "237f2474f827c0739be6d1ae61b98104e09ac2843fc1505dc6309b1d46147687"
+      },
+      "mongoeco-part2-repro-a": {
+        "mongoeco-4.11.0-py3-none-any.whl": "ae9da5d6a8ee3a0621c957ec53ccd3e26ffab5e0039aeaa3cfe4ced61ff6e20e",
+        "mongoeco-4.11.0.tar.gz": "7bf6ecad0bc2993616072209faf94f873c0f4ced796e2efc5da5d2b4b6a04437"
+      },
+      "mongoeco-part2-repro-b": {
+        "mongoeco-4.11.0-py3-none-any.whl": "ae9da5d6a8ee3a0621c957ec53ccd3e26ffab5e0039aeaa3cfe4ced61ff6e20e",
+        "mongoeco-4.11.0.tar.gz": "7bf6ecad0bc2993616072209faf94f873c0f4ced796e2efc5da5d2b4b6a04437"
+      },
+      "verified": "existing normalize_sdist.py; two binary-identical builds; all members equal smoke-tested artifacts"
+    },
+    "pending": [],
+    "fixtures": {
+      "semantic_pcre2_regex_7_0.json": "e496a1375cb4e10a298131d93cfd532414f387911a216b2cb67ff999d15fef1c",
+      "semantic_pcre2_regex_9_0.json": "3b50cb642232d0f6002450013d699c88c37e1cb1bc3590f6b7d1fc6facfff5cb",
+      "semantic_bucket_granularity_9_0.json": "b29f5c80220687da34f6f32286f68bbe86cfb46567c3ab3da70e4a2352afe99b",
+      "semantic_bucket_granularity_7_0.json": "d5199bc87053c9cf7a57fd12f84f0c7a6dc3d454df769b3fb7414b39fd332b32",
+      "semantic_pcre2_regex_8_0.json": "5d9e135174504f025d8dea64b6282b278ac6345acf4a70799260c4f167ba949a",
+      "semantic_bucket_granularity_8_0.json": "88cb0c516a5c31308f6a0e59cbe3b26f0ad33b15d3497923fabf80ab1de00930"
+    },
+    "reuse": {
+      "historical_part_i": "F00-F11 accepted unchanged; no cost restart or reopened obligations",
+      "pytest_sdk_matrix": "reuse accepted plugin/SDK matrix for unchanged transport, SDK dispatch and pytest contracts; explicit new engine corpus fresh in three Python and all four surfaces",
+      "sqlite_historical": "storage, codecs, persistence format and engine unchanged; historical fixtures also included by current full pytest run",
+      "global_artifact_equivalence": "310 tracked product files verified against built distributions; all archive member bytes equal installed smoke-tested artifacts; full suite executes identical checkout product bytes",
+      "spi_typing_api": "fresh existing check_public_typing/update_public_api_manifest --check/smoke_external_engine",
+      "compat_snapshots": "fresh update_compat_snapshots produced no diff",
+      "cost": "two historical worker source hashes unchanged and no changed function invoked during measured workload; added imports occur before timing; bounded new work measured separately"
+    },
+    "frozen": {
+      "main": "6854f337f12788cbdf7f7c1c9b7721715ab83435",
+      "e4eb17cc": "e4eb17ccf75634f7ff365c6f43ed8387f16e72e7",
+      "b93681b7": "b93681b74a284ed09138ef3d647bedf6ff7f78da"
+    },
+    "global": {
+      "passed": 64980,
+      "skipped": 1130,
+      "subtests": 14946,
+      "seconds": 1962.33,
+      "new_skips": {
+        "optional_backend_default_profile": 336,
+        "live_real_parity_cases_without_global_uri": 41
+      },
+      "native_substitute": "fresh owned 7/8/9 captures and strict public replay; not skipped acceptance"
+    },
+    "coverage": {
+      "reports": [
+        "/tmp/mongoeco-part2-coverage.json",
+        "/tmp/mongoeco-part2-coverage-kit.json"
+      ],
+      "modules": 289,
+      "aliases": {
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/__init__.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/__init__.py",
+          "sha256": "ec68cd57296508a4a48048036bed7725de498f42c47d7408c209d1d483d081d9",
+          "executed_lines": 13
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_change_streams/cursor.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_change_streams/cursor.py",
+          "sha256": "cb21a3da70a93fa266b7c6f4b48f25ed79982e98979b90df6593b0cdb96a94f8",
+          "executed_lines": 73
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_change_streams/hub.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_change_streams/hub.py",
+          "sha256": "3f0c599a813d06adbfdbe327664d0f685a4783d9a5aaf5bf12057549b8582f9a",
+          "executed_lines": 145
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_change_streams/journal.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_change_streams/journal.py",
+          "sha256": "e8dc740c56133d457ec8297b0c32213c14b43318fcdde945dced40f3c9aef268",
+          "executed_lines": 13
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_change_streams/models.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_change_streams/models.py",
+          "sha256": "38fa7e4f634af5d84c45e873be708789bac79e379fd41e2c0d9dea15feaedf68",
+          "executed_lines": 47
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_change_streams/pipeline.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_change_streams/pipeline.py",
+          "sha256": "9ea1343b0059172c417554db9232ab29d33ef3fb60d11506ca93be12ac9bd6e3",
+          "executed_lines": 26
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_pytest_diagnostics.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_pytest_diagnostics.py",
+          "sha256": "7dbd5a5f61f384497234f0b09ba25b855e91930966239dc0cce8a60f583f0366",
+          "executed_lines": 38
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_pytest_runtime.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_pytest_runtime.py",
+          "sha256": "dc85580c211e7b3f47b9dcb6e32cf0df6374b62ba9cf0a7b5343f123a4ade068",
+          "executed_lines": 67
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_types/__init__.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_types/__init__.py",
+          "sha256": "33a5c16aa4054fd2f97db6880cfb70845abd97ae66e0810e253c72d9ac6624d6",
+          "executed_lines": 16
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_types/_bson_objectid.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_types/_bson_objectid.py",
+          "sha256": "954f5178b97f02ca87e6f2c814c7df199a8b74f77c0d2dc4ce2159bbc7c984ac",
+          "executed_lines": 29
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_types/_bson_values.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_types/_bson_values.py",
+          "sha256": "5bdeec477fb21fe196037db367d4c4c01a4da04b8cb813527f8b76d4867ce82f",
+          "executed_lines": 49
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_types/aliases.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_types/aliases.py",
+          "sha256": "e1fe78350f499b068cd2dced5b6abdf26762a13c25e9c646e0d56fefcf08017f",
+          "executed_lines": 30
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_types/bson.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_types/bson.py",
+          "sha256": "8b351cd3fc4fdbf048c6743551ec2f2c88abe3f22f19a5d2c5b0e27998993e79",
+          "executed_lines": 3
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_types/concerns.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_types/concerns.py",
+          "sha256": "a8bc000501403ae244707646567d5e732729844a10a32b467da863260b5e9901",
+          "executed_lines": 122
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_types/documents.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_types/documents.py",
+          "sha256": "cd86534e11f5a92b586ad2dceae0d1b7decfa4753b3c3bc8303045514f299524",
+          "executed_lines": 585
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_types/writes.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_types/writes.py",
+          "sha256": "94f1c7bfa1c2786ad0878b5788b6153d28cc4c6ae3ae1c1a6b7f849b2a6ba5bf",
+          "executed_lines": 93
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/_version.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/_version.py",
+          "sha256": "eef3830a7310f86c28f81dcb992dc86c00fc4aa3be29e0e657c07c9b04b1c22d",
+          "executed_lines": 2
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/__init__.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/__init__.py",
+          "sha256": "8b273eba98f92e35bcfc12c977282dd41aa47438bcf41834f965303d39957061",
+          "executed_lines": 11
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/__init__.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/__init__.py",
+          "sha256": "1c5f0d83c3a9db42fa83f9769ec139b0907983ccf573d8109221aa3fbc2d0e44",
+          "executed_lines": 8
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/_active_operations.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_active_operations.py",
+          "sha256": "471588c3eb3b1fb8b8dad84ad44be910979c6cdbcf157f76e5f94fc57944dc87",
+          "executed_lines": 16
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/_collection_bulk.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_collection_bulk.py",
+          "sha256": "56b6e381e727474bcb20d2c5ac24472f98c119e2a83b832ca3fb96deedb38b64",
+          "executed_lines": 43
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/_collection_search_indexes.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_collection_search_indexes.py",
+          "sha256": "dbe72c24eb352f3cf8b44d606b5b56b136a59af70743e8ae0d3f5d93c394a369",
+          "executed_lines": 21
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/_collection_watch.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_collection_watch.py",
+          "sha256": "4d4320ed9af095fc6a96a8071a25711a6c2f4512311c03ce208bc16feecd6ab9",
+          "executed_lines": 17
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/_database_admin_namespace.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_database_admin_namespace.py",
+          "sha256": "0b3c2554e46deccf5c9ac2fa4f49e234aaefef22d43ffe87495fcea175e9fd2a",
+          "executed_lines": 22
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/_database_admin_routing.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_database_admin_routing.py",
+          "sha256": "85c8e1d1e97b5b16ee1b3bc6f8cff3dd2ee92559519347b706deab1a9c7f099a",
+          "executed_lines": 57
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/_database_command_contract.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_database_command_contract.py",
+          "sha256": "f10642efb8f6d9a87f2f79e9e99ab8eb187d0ae1e0b827ac23c4d5d0ce3f6a6d",
+          "executed_lines": 14
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/_materialized_cursor.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_materialized_cursor.py",
+          "sha256": "0ced3229d3d0bc1997fb1934e2350f88bd4b453d2b6d1aab305d2aa656388f8c",
+          "executed_lines": 16
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/_response.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_response.py",
+          "sha256": "465be9c60ff632af7593b90ecd0ed71d3f374765dec7fc762a0139dce11554ee",
+          "executed_lines": 38
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/_write_command_validation.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_write_command_validation.py",
+          "sha256": "aa7452a03922e0da52b9b189c9c566f84c3dbde708db99a2cb09f560499d795c",
+          "executed_lines": 38
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/_write_errors.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_write_errors.py",
+          "sha256": "06bf9e5dcfa04be1b93214d5887dd87a34c83739109783e0c9d6ca150fa18c2c",
+          "executed_lines": 23
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/_write_failures.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_write_failures.py",
+          "sha256": "7189b105e9829dd6d63af4b19d71b924a36d20048177b7d53ebe23220bbf7a38",
+          "executed_lines": 7
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/database_commands.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/database_commands.py",
+          "sha256": "b5b9451a2f03a4b322a554432b41e45bcd14892899b9565a4a49bdf994ccf245",
+          "executed_lines": 403
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/index_cursor.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/index_cursor.py",
+          "sha256": "13e9fb70af6028dceb26fe8a0d7c5f35fcc6ab06639a6e452ab16eba72f6082c",
+          "executed_lines": 6
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/listing_cursor.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/listing_cursor.py",
+          "sha256": "872abd8595c997982d8e03199c547f65c77d6097519090f4fcdeca85e86694fc",
+          "executed_lines": 6
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/raw_batch_cursor.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/raw_batch_cursor.py",
+          "sha256": "90fb5eb866a0e32210a722c5b5faefbd062b7defeaa746259261c4e38f45ec90",
+          "executed_lines": 21
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_async/search_index_cursor.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/search_index_cursor.py",
+          "sha256": "53a6c83550a353c833a87ee8cfda7c6d33e2567bcb63914903ee6c82f24601d7",
+          "executed_lines": 6
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_change_delivery.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_change_delivery.py",
+          "sha256": "542b1a9a3343cd36ea6e443c302e369f807c4089e4d206471354c719870c7970",
+          "executed_lines": 15
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/_command_bson.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_command_bson.py",
+          "sha256": "068ccedb4bf5f0d47c61ba61d0505e48e488ee2b6ec30a5fab86dd78a864ebac",
+          "executed_lines": 41
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/bson_input.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/bson_input.py",
+          "sha256": "621da3fe737ae7159120fcabd4509773960f86ac992dbd5d984d38e4b3b76db5",
+          "executed_lines": 26
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/operations.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/operations.py",
+          "sha256": "e217c0dc54b8328159ed95d9c26b289a9bbd57449c0689aeca3da7add33209ea",
+          "executed_lines": 301
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/api/public_api.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/api/public_api.py",
+          "sha256": "3f1b8d38eaabe6d17329860e555cae889e2ab9c57581c74c6a893e4bfb5fa95a",
+          "executed_lines": 82
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/change_streams.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/change_streams.py",
+          "sha256": "9e50c719886ef892f042ebbab2c71f08aeb33058b11907110a5af282b921574a",
+          "executed_lines": 7
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/compat/__init__.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/compat/__init__.py",
+          "sha256": "161301af735ab4fb8546ab4225d6c779a634bc74fccf20eceeb5989005795e9d",
+          "executed_lines": 19
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/compat/_catalog_constants.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/compat/_catalog_constants.py",
+          "sha256": "ec1a8d5b094fda2bafa85449a5f5ef342c49c894cfb900a7d2f02b47dcf8bb2a",
+          "executed_lines": 12
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/compat/_catalog_data.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/compat/_catalog_data.py",
+          "sha256": "47e4ef2fc7d5f2f6b2bc2318ace546b3b38d9ca6c921cff7926bf0375da42afa",
+          "executed_lines": 6
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/compat/_catalog_database_commands.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/compat/_catalog_database_commands.py",
+          "sha256": "2512a2a5a987ead10ac5b507b7e0a63c2b2c8fe08ccef16137f26b54106f5bfe",
+          "executed_lines": 4
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/compat/_catalog_dialects.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/compat/_catalog_dialects.py",
+          "sha256": "b288e2362c0b9d651fce4020968f6ffaddc5c932dfe6bc078165e55846bfe866",
+          "executed_lines": 26
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/compat/_catalog_export.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/compat/_catalog_export.py",
+          "sha256": "40e3eae8264da598e155c681880f3425e98009216a58db43ca894798f2313c40",
+          "executed_lines": 19
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/compat/_catalog_models.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/compat/_catalog_models.py",
+          "sha256": "636e5ebfb2fd679c71fe4726b67ee2cff0622698f8dbe0baeef686e8fa4a2753",
+          "executed_lines": 46
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/compat/_catalog_operation_options.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/compat/_catalog_operation_options.py",
+          "sha256": "ef0b663f2976f61e2f7e754ed8f0b29b058183fa7795036ff5336df7bb018333",
+          "executed_lines": 7
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/compat/_catalog_profiles.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/compat/_catalog_profiles.py",
+          "sha256": "680077b08920b530432f202d4b2f360111d8e157b8ee84a252874a2d1dbb4a28",
+          "executed_lines": 7
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/compat/_catalog_runtime_subsets.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/compat/_catalog_runtime_subsets.py",
+          "sha256": "2fdff4d77be41259545021993e44d71fbc991c43aa446dbc09b7500641e1b576",
+          "executed_lines": 1
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/compat/base.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/compat/base.py",
+          "sha256": "3ac58fbbebfdb573b5e6a8b9af9495e3d58adceee01dc9bc81a2e68454bf30ff",
+          "executed_lines": 262
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/compat/catalog.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/compat/catalog.py",
+          "sha256": "cdf34be9f0b12daf48971beb7c0831802cba40b5968f97a380c485d97c2f96d0",
+          "executed_lines": 4
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/compat/operation_support.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/compat/operation_support.py",
+          "sha256": "327c3a35f8011369cfedb1735d348ff9cd1393a1c1b82377a462e8d6e4751061",
+          "executed_lines": 8
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/compat/registry.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/compat/registry.py",
+          "sha256": "f2f97e1bcaf0508319ae95a37f8606e5274076fa4dd9e49a6d49e75548ddd0bb",
+          "executed_lines": 51
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/_public_materialization.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/_public_materialization.py",
+          "sha256": "6540ec0607f4393583b8e0d7878bdce374264931431bbc6e672508a803e1f69a",
+          "executed_lines": 48
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/_search_contract.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/_search_contract.py",
+          "sha256": "04eadc9e89446c8b63842d974e3bc627adf662fe2974badb7d4eb9e99884dbb7",
+          "executed_lines": 4
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/aggregation/__init__.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/__init__.py",
+          "sha256": "d58a21eaec7ab66ab81c9e9b2f3781c0c736fcd9f5e7eb9cc5b74198d9689708",
+          "executed_lines": 19
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/aggregation/compiled_pipeline.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py",
+          "sha256": "bb87e3d0821abfb4b7db27f824e8d2c60b14a7c6b176150f3ad71d4a1232f437",
+          "executed_lines": 71
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/aggregation/cost.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/cost.py",
+          "sha256": "48b6c24a3d397e9f63e4b01486f0e763af722731a9ae9d7ba50b20e28aa35ac5",
+          "executed_lines": 8
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/aggregation/evaluation_environment.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/evaluation_environment.py",
+          "sha256": "ae71ad9f17ab55b4c2756e3e455f6c51aa5442e272f264e252a3d0cc7843a0ce",
+          "executed_lines": 34
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/aggregation/expression_values.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/expression_values.py",
+          "sha256": "5a6a862c25056758fcd40489b231cd4149fe02db0b64dea559e7d2643de18a04",
+          "executed_lines": 19
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/aggregation/extensions.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/extensions.py",
+          "sha256": "944df29126d7163492bd873f3e83ec9b95cb913018a89a34b6c7a0959b550072",
+          "executed_lines": 42
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/aggregation/group_execution.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/group_execution.py",
+          "sha256": "504abe6810e31f3701c5e684ed6d9f9dddfcb999831d9bf6141f8793c52101be",
+          "executed_lines": 19
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/aggregation/information_stages.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/information_stages.py",
+          "sha256": "8807458b28f0c0c60902f24077da402650fbb3f55db6789c79e28f4c5bf5080f",
+          "executed_lines": 3
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/aggregation/numeric_accumulation.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/numeric_accumulation.py",
+          "sha256": "79ab8e509a26d9ff9d11ce3c02025cbeb35216a3c0346e9ba254287971bf51fb",
+          "executed_lines": 51
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/aggregation/resources.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/resources.py",
+          "sha256": "2ec8fdb898657ff7a9565bbbd66ec9815734f4e41815cc0a0b126c3283908c84",
+          "executed_lines": 13
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/aggregation/spill.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/spill.py",
+          "sha256": "490e17078ae962c6ae142b6d0325e6cc9094d1ae3755530cc44daa1a0df19cee",
+          "executed_lines": 74
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/aggregation/write_validation.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/write_validation.py",
+          "sha256": "97e5e389a763745051ab4b6b1497b5c1947e8014a26f293b065f8f1df53220a9",
+          "executed_lines": 3
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/bson_identity.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_identity.py",
+          "sha256": "5a2929dbe5720e59ab49078d7ad39e9bfe042f8d7b6fcea1fae3343ebfc166a2",
+          "executed_lines": 15
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/bson_ordering.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_ordering.py",
+          "sha256": "117c48675cdda956b4a041689c6d99a3a65b95d19748578944126644a35112e1",
+          "executed_lines": 50
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/bson_raw.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_raw.py",
+          "sha256": "b616937f686b6deb5455e238044f48751103b011445e4d9a887f23665c1116f2",
+          "executed_lines": 64
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/bson_size.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_size.py",
+          "sha256": "bd27dd46674eb9e77505479737bc29d22b016754c66f3a6985d72154540fea71",
+          "executed_lines": 29
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/bson_values.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_values.py",
+          "sha256": "18af6b992e721002eeb478a2987fa4e8737afbf719758df4182dcbc27ee41c3a",
+          "executed_lines": 41
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/change_events.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/change_events.py",
+          "sha256": "8cf7335ccb9ef899c3e6e8dd14fb86743ad0e7366709cc8838e156c393b946b3",
+          "executed_lines": 49
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/codec.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/codec.py",
+          "sha256": "5e98477d7ab1dddf732ca2a8c2f1f9082d133e3643adaf682e0db2ea69bc5424",
+          "executed_lines": 214
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/compiled_query.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/compiled_query.py",
+          "sha256": "6279f46488543c895adda55d844b695bdc6229503769fd839922250e531a8a14",
+          "executed_lines": 49
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/decimal_math.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/decimal_math.py",
+          "sha256": "b3e9575a749ecdd8a47ed8d9346171ded60ca45bd0f5dae3c71d553b9bd59bd5",
+          "executed_lines": 27
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/error_documents.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py",
+          "sha256": "ce7c7fe39b0738176b46685e3ca174cb45c96aea3676ada4a73978d00097425a",
+          "executed_lines": 47
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/filtering.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/filtering.py",
+          "sha256": "6c948655bd0095fdf2b38b9fcc119e59f3e5c713c17f23ddb882757dcebb49b1",
+          "executed_lines": 59
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/geo.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/geo.py",
+          "sha256": "c38f5d0787cb0cda0c74ad397fce4127feb4528de5b2b83fe23c73055dcc9054",
+          "executed_lines": 24
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/json_compat.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/json_compat.py",
+          "sha256": "04cd0f2c9818d03887c03f02e297fef4193923f52c63864ef97d0a2c8ccaf971",
+          "executed_lines": 20
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/operation_limits.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/operation_limits.py",
+          "sha256": "b996255e756af3f0d141633259151811c949eb3d1aad27075a7d9d7e8326c076",
+          "executed_lines": 7
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/projections.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/projections.py",
+          "sha256": "f1e406b6b3703eb8e8c6439b45abc46b28e768bfbc2de23c615e9ac344f56467",
+          "executed_lines": 58
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/query_operators.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/query_operators.py",
+          "sha256": "ed601a9d154dc103c2dad199240f851d57fe57ea4b80899085c2616e06561633",
+          "executed_lines": 15
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/runtime_metadata.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/runtime_metadata.py",
+          "sha256": "a8da52d58ec499b91d07116e6e2f29f388a4ab3956b87fdcf1b9224e8e93cf98",
+          "executed_lines": 72
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/schema_validation.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/schema_validation.py",
+          "sha256": "0df59b7baf65eee05e95d0781331ecbecc5a80238a0bc22d21573a0bf9107e7e",
+          "executed_lines": 78
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/search.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/search.py",
+          "sha256": "d6a4c0e487da074dc8f12de7d4de4ed1b9d07d6be0848bc86ceffd22c3932440",
+          "executed_lines": 362
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/search_execution.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/search_execution.py",
+          "sha256": "325c752004edc79afa61e44bc1200435ad660993980628f9fa9df08cb77c1e5f",
+          "executed_lines": 31
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/search_filter_prefilter.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/search_filter_prefilter.py",
+          "sha256": "63c424d35efc52797893faaa6ca831b9fa076c43e2d2d706e500181dad4bc114",
+          "executed_lines": 58
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/search_models.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/search_models.py",
+          "sha256": "2da324926c1bdc77a90605400f688075a2b6cc3c4e0c2e443bfac9ddf9841296",
+          "executed_lines": 186
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/search_planning.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/search_planning.py",
+          "sha256": "8ef97414dd9c65b99a22faaeb65f0bdde8a170c711daafcf5931d9675c5cbf45",
+          "executed_lines": 125
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/server_errors.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/server_errors.py",
+          "sha256": "11eb603474fde3ac4cf1741103008c1cdc22961791fe6f6c5c007e93fb8b24c0",
+          "executed_lines": 34
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/sql_translation.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/sql_translation.py",
+          "sha256": "4670f90dc50fef0393f822315bb7df947496340485a15c6fd0d3d1e2b024717a",
+          "executed_lines": 21
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/update_paths.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/update_paths.py",
+          "sha256": "a90046a5031f144cd985e018b7164a4521117e62fc9ec499801a76657055ea96",
+          "executed_lines": 47
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/update_scalar_operators.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/update_scalar_operators.py",
+          "sha256": "24972fc3783908a7d9a93e98de566d7ee3d2fbdf9ebfe0b72c7dca3968b0efc5",
+          "executed_lines": 42
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/upserts.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/upserts.py",
+          "sha256": "9d660c7c0b7f78917e4ffcba7937b8f93a0533073b3d530116ecc808b0c049d5",
+          "executed_lines": 10
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/validation.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/validation.py",
+          "sha256": "c759ee80aac305c0b0c109bb8b35fab599929b4babe9aa351d9ab3e0132ef2bf",
+          "executed_lines": 8
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/core/work_control.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/core/work_control.py",
+          "sha256": "a271ce019072e9302fb29375cb1ed5e3ab0ffd1185eb281087a466700a402b4e",
+          "executed_lines": 12
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/cxp/__init__.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/cxp/__init__.py",
+          "sha256": "3aa31881f486c7c0be2fd9d1301d1029d0de4412563ad0326c3e7727b2b3293b",
+          "executed_lines": 1
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/cxp/exchange/__init__.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/cxp/exchange/__init__.py",
+          "sha256": "be6be0a82199aa15dad1c49ab81c2c4241cbeb4500af7808c3493d259a960e72",
+          "executed_lines": 5
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/cxp/exchange/documents.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/cxp/exchange/documents.py",
+          "sha256": "8d54fa6d60534687b62c2ef63aa43e9a5498841245330fbcac016eb9ed97580e",
+          "executed_lines": 11
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/cxp/exchange/metadata.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/cxp/exchange/metadata.py",
+          "sha256": "cae9e3d44db44c8b33f9bab0e6a0b6da51e7b6ed83d99d0bb990274da20ad8a0",
+          "executed_lines": 209
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/cxp/exchange/projection.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/cxp/exchange/projection.py",
+          "sha256": "b6ea9c5c3995fd1cb217bb7b3ff68142af986a9a0694ea88e3a35854b7966dad",
+          "executed_lines": 13
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/cxp/exchange/snapshot.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/cxp/exchange/snapshot.py",
+          "sha256": "f18f991789a5a7ad209afa88e019a62368dcbbdb26216c092f72d5718ac1847e",
+          "executed_lines": 30
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/__init__.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/__init__.py",
+          "sha256": "e1a9ec7f76ba334464eaa0dec9bcd155d5e9da175525e73ef72fcb64b1f98261",
+          "executed_lines": 23
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/_runtime_attempts.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/_runtime_attempts.py",
+          "sha256": "72203f1afe28da2f5af52f54387b27e8e19f68bf20fb8ad79e89004d0014bd53",
+          "executed_lines": 16
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/_runtime_plan_resolution.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/_runtime_plan_resolution.py",
+          "sha256": "d1888f437e2bc58043927fdff576f3b21fe276240897c1371e434266227438a3",
+          "executed_lines": 5
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/_runtime_planning.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/_runtime_planning.py",
+          "sha256": "a304df9e076423bfbbe92e5cca204edf1d598796f827b4f3e84f90d6adaa6cbb",
+          "executed_lines": 4
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/_topology_reducer.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/_topology_reducer.py",
+          "sha256": "85bd8f8ca08ae48b65e1e64767e5a6925f1d6f8bf1ff5bd2bd1caf63250f8fc7",
+          "executed_lines": 16
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/connections.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/connections.py",
+          "sha256": "91f5a22b72a9e940305f46a62fcaee0897243af267ed8177b4ffd585cae6b55c",
+          "executed_lines": 96
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/discovery.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/discovery.py",
+          "sha256": "9490c5fc68acb3b7b863f1373e96a5b933f39fbb9094aa5e228e658b5e109319",
+          "executed_lines": 21
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/execution.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/execution.py",
+          "sha256": "ad337094d6c536e493d0a71997460fd222c01044832d3fbec3d69c0411795341",
+          "executed_lines": 33
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/failpoints.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/failpoints.py",
+          "sha256": "b9b19a9d653b1bfc57eaee618d5045f80d060e657d19e10b505922a6ad17f05b",
+          "executed_lines": 37
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/monitoring.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/monitoring.py",
+          "sha256": "91c2f9024e5d052c189abfc7040b999e03426394c72cfb3fc0a17dd7249f8fe7",
+          "executed_lines": 105
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/policies.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/policies.py",
+          "sha256": "de291b80c38f38307c727ccce5e2cbc226c412502c0de31bd3d9174d1b278446",
+          "executed_lines": 47
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/requests.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/requests.py",
+          "sha256": "1c768d925a138642347f2eb130edf4fc5a3f50ffcc1964321183e491cfdac1c0",
+          "executed_lines": 47
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/runtime.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/runtime.py",
+          "sha256": "cf7e18b6f10a7dbefc9c645d9174f6f4aeeb45de93f8adba499c59402391482e",
+          "executed_lines": 99
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/security.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/security.py",
+          "sha256": "10f000033d3a20b88184bc2c0c70d849ae4080afe9f41b452a56b7a4c82a04e2",
+          "executed_lines": 36
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/topology.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/topology.py",
+          "sha256": "9b678725ee653e751d01e07010da89ae0909969fa2e4bebd65c0a6d66d28cec5",
+          "executed_lines": 89
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/topology_monitor.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/topology_monitor.py",
+          "sha256": "75bde0215da5c7c522b890e62e37dd3a734e84b0633d3d3c4823c3b7fc8f4814",
+          "executed_lines": 7
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/driver/uri.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/driver/uri.py",
+          "sha256": "fd69f3c94a9fe059f1d04b9032cf09f205dfbf54a7fe466f4117538248f5cee2",
+          "executed_lines": 90
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/__init__.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/__init__.py",
+          "sha256": "99544c3349de74cd23499c3b20ec0a0ddc1e836ebd68642e17c88bbc60c42c62",
+          "executed_lines": 11
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_active_operations.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_active_operations.py",
+          "sha256": "13109078101f8f122703a33312ecfbbfcf5b28b53baf1302751bec0340e17451",
+          "executed_lines": 45
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_change_dispatch.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_change_dispatch.py",
+          "sha256": "bbeee96364289e3ebecbc84fdd16b3af7e691cf6d56dc94799c3c0b0e1c6a5e5",
+          "executed_lines": 37
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_executor_admission.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_executor_admission.py",
+          "sha256": "2ab4cda2f7cc7b33d07deee6d5cd6c20f10b1e37d374d9e331cd85a144c76b4f",
+          "executed_lines": 44
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_memory_collection.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_memory_collection.py",
+          "sha256": "2a49d4d8749ce593f991bcfb6cdc0215297f4af6aa6bd6ef7b3c83af78ecb37e",
+          "executed_lines": 208
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_memory_search_runtime.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_memory_search_runtime.py",
+          "sha256": "2f158eb28800927c1c537aeb3b100ec5f3d3649bbcb0b20725fbe9b43d80fd9b",
+          "executed_lines": 31
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_memory_vector_runtime.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_memory_vector_runtime.py",
+          "sha256": "8db0aeca714ccc7369d4142cbe8cffbf78cb4a7ee64811aeaf50313751aa2999",
+          "executed_lines": 52
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_runtime_metrics.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_runtime_metrics.py",
+          "sha256": "90fb1942bf7f3376550ea34a5003fd094d97d8ffe2152ff5d32d277b74d5c04e",
+          "executed_lines": 24
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_shared_namespace_admin.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_shared_namespace_admin.py",
+          "sha256": "fec69ff68e5aeaa3d8006c443c9c1123e00f94115702dd99ade6f89914c3b922",
+          "executed_lines": 16
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_shared_search_admin.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_shared_search_admin.py",
+          "sha256": "4c64c45bc691030e575c41043c8e834a69fde68a37555d9e4b62f7690326022b",
+          "executed_lines": 11
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_shared_ttl.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_shared_ttl.py",
+          "sha256": "a71a3fccfae09157c5b2fbf1ebeb95122732b23fc498862cd9f9931ceeb0a8bc",
+          "executed_lines": 8
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_bulk.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_bulk.py",
+          "sha256": "12449f18523bc9b19b209802a2a526b8139372fcd958639d795bc6e0c3903d2f",
+          "executed_lines": 24
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_catalog.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_catalog.py",
+          "sha256": "aa18b979e70c940171478d43b07a423c69b55892d3170b31ab8717cfeb3ad3f4",
+          "executed_lines": 28
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_compound_prefilter.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_compound_prefilter.py",
+          "sha256": "b9259a6908c063db6664f8662db0528600c1167f92552e0e5f8d50f4f1d737c4",
+          "executed_lines": 54
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_compound_ranking.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_compound_ranking.py",
+          "sha256": "e9fe9509dddf84b7875735621fc4732e43a00a8f245cd9d93b164f092b2f04e1",
+          "executed_lines": 42
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_explain_contract.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_explain_contract.py",
+          "sha256": "28a167e98c40d6d8ebca207ffff376987d55ffcbf4beba2d85f725dc95bbc145",
+          "executed_lines": 7
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_fast_paths.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_fast_paths.py",
+          "sha256": "ff591d367065aafd9397238fb0a9b0cd900a6c3a050495b299a7cbd504a806f0",
+          "executed_lines": 34
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_index_catalog.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_index_catalog.py",
+          "sha256": "6f7c91ffc370e5928230f7aad2b053a932b22bee6442a86fc274e1d818cb48db",
+          "executed_lines": 65
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_index_runtime.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_index_runtime.py",
+          "sha256": "a81e09f3682eb702e460c285c78ce878b1a450f203e6339a221d612e2ef0fc93",
+          "executed_lines": 47
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_namespace_admin.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_namespace_admin.py",
+          "sha256": "93f607a7feec213234a6eb041d2741fd3e605411999a50ba3ffff5849f25185b",
+          "executed_lines": 17
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_outbox.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_outbox.py",
+          "sha256": "30083c488c25bbaddec55722a2fa41dcb70e60f6a92dab56f1ea6b88a922c8d4",
+          "executed_lines": 169
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_plan_heuristics.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_plan_heuristics.py",
+          "sha256": "591ba21999004063def57ebcab5e0b24cd2db31523787d6939cd5e1c41e9b45a",
+          "executed_lines": 12
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_read_execution.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_read_execution.py",
+          "sha256": "fc0267d099e3e41ab9b383354f88db08275717e942b1918fa33d0db8f93baff1",
+          "executed_lines": 11
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_read_fast_path_runtime.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_read_fast_path_runtime.py",
+          "sha256": "d71cb3b40692026021581065e7b9bb77372d6d3c9e42e26d534358cd028a20dc",
+          "executed_lines": 22
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_read_ops.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_read_ops.py",
+          "sha256": "40a901e127583b70a4f9b971a2e9266d2b84bada1a710e7a86431464a4610bcd",
+          "executed_lines": 14
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_read_runtime.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_read_runtime.py",
+          "sha256": "8046f96389f8f79b5e7acf00f86a2d4e7b24a3dfd8875528034a15a7f0cc1791",
+          "executed_lines": 16
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_reader.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_reader.py",
+          "sha256": "ee1ceb78a98d56ec49c6b8dc328b4da517dc08659baa9c302387b3a02ee23fd6",
+          "executed_lines": 168
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_runtime.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_runtime.py",
+          "sha256": "81d99ec2de1e33c02480f3912fc86ea1b6284c955c802039ad7991e2f91e26ec",
+          "executed_lines": 36
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_search_admin.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_search_admin.py",
+          "sha256": "a2995bedc87b36ee5bfc08e49a7506a9f718b7af8a4ffc5fb0b4de28ea121abf",
+          "executed_lines": 14
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_search_backend.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_search_backend.py",
+          "sha256": "8cc4645aa3ee5ca434beffa7d314882d2dad7c6f7cf1c48590bd8a7e88d75b4e",
+          "executed_lines": 14
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_search_runtime.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_search_runtime.py",
+          "sha256": "b28a36281c76dcf24e4242b4ae89bac05b2402b36ba9025cea783cb02c64bac1",
+          "executed_lines": 109
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_session_runtime.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_session_runtime.py",
+          "sha256": "b85976a6c55189c4345c869cda5d3b481cf5d91adce18291cd89b897e12a567e",
+          "executed_lines": 99
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_vector_backend.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_vector_backend.py",
+          "sha256": "fcd7e6dd5dc599d0351a1a8118dff6d6b07199089312d53030afdb5646bf3533",
+          "executed_lines": 44
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_sqlite_write_scope.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_write_scope.py",
+          "sha256": "ff4f4af2ec48fd750b824a5f2f6c2521d836a22f3392c3ed17bde7cf6bcfcff2",
+          "executed_lines": 36
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_vector_index_cache.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_vector_index_cache.py",
+          "sha256": "f95a3962c7a325903108940e1f914fdce01846df3d1be7888e408bc879b5e98e",
+          "executed_lines": 46
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_vector_query_cache.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_vector_query_cache.py",
+          "sha256": "6e09498af9bc81a43161b17a962ff1246be4ef8325eb1fcdb6fb788f259488eb",
+          "executed_lines": 42
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/_vector_ranking.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_vector_ranking.py",
+          "sha256": "e51a7db103c59478024c91a757163c5042f6bccc762943c99368786ee2409a55",
+          "executed_lines": 7
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/adapter.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/adapter.py",
+          "sha256": "3235388141b100cc9b035838c71682d1f25af9fbfc569bb1e76a3c97d304a191",
+          "executed_lines": 125
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/base.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/base.py",
+          "sha256": "8b3f639b7db0698899b99347d400046d7afcc7344eb24bbc765a0532ed1c8e41",
+          "executed_lines": 46
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/capabilities.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/capabilities.py",
+          "sha256": "087c3b2d19bebebf26bb59f227a7fb850ed2f15675c9ecf25c4081fe589bbdc0",
+          "executed_lines": 65
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/mvcc.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/mvcc.py",
+          "sha256": "42f327bd8b16b705d95f3625bb22009a4a7c16f4c07e1db44f2cbc6c9932b42a",
+          "executed_lines": 25
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/profiling.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/profiling.py",
+          "sha256": "8f880974dbbbba9db63dee4b1d0560797f9e1e891a2964d2ab6d107eed8c7beb",
+          "executed_lines": 31
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/results.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/results.py",
+          "sha256": "5792a9ccebaa3e82bb9d11c0295d200ec9c90bf813a8342dd75f8481a8956915",
+          "executed_lines": 96
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/semantic_core.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/semantic_core.py",
+          "sha256": "929fa922cad0e3070aa7985d5a410b428d300989b13bcf75e594f41f85fbcf64",
+          "executed_lines": 125
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/snapshots.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/snapshots.py",
+          "sha256": "30ba0d47d6ba8976389770dd3974b08a8e3990592529e560e09a80981993a7c8",
+          "executed_lines": 117
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/sqlite_planner.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/sqlite_planner.py",
+          "sha256": "946467f1e36abcf89d65ba55a00dd9cb1cd992650c6804b04dfd8ed49028f410",
+          "executed_lines": 108
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/engines/sqlite_query.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/sqlite_query.py",
+          "sha256": "4622130836f2d7d7ff10941982e788aaf4bb5c945ee06890acf37d1a9b4e8b72",
+          "executed_lines": 95
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/errors.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/errors.py",
+          "sha256": "2d37c42de58f9a0efe20c897bd357255050629a708af5e4890b0c5eb7b92e9fd",
+          "executed_lines": 55
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/pytest_anyio.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/pytest_anyio.py",
+          "sha256": "7892ccba2d9495fe0a5d5c23cf5d146761df957c2409cbdb9b6616c9f39b72fc",
+          "executed_lines": 36
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/pytest_asyncio.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/pytest_asyncio.py",
+          "sha256": "5e07a3158ea2ab74d1c1bb85103af05e208e65a67f66eb53bb2777ed1121e116",
+          "executed_lines": 24
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/pytest_plugin.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/pytest_plugin.py",
+          "sha256": "32d18afe9936cbf46eb413a941034fc60988088b835efc63d13f905575d08c61",
+          "executed_lines": 75
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/session.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/session.py",
+          "sha256": "119a3321a9f45ff12a691891ef6bea5f237d3237a708f4e0a356bcc50fc90556",
+          "executed_lines": 131
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/session_guards.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/session_guards.py",
+          "sha256": "d86123091ca3169de364427e3b29b22c8be178a76ee03d211abb33cc4ba2ab7c",
+          "executed_lines": 13
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/types.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/types.py",
+          "sha256": "b93d328b63164cc43c7ab84bbbe779a0180c77efdb3797c4d32f9f606fbee393",
+          "executed_lines": 2
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/__init__.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/__init__.py",
+          "sha256": "7bb2dc78edcfd56e6a336400e0eaa98bcc8abee221ab5263c1dabf3857ab80ff",
+          "executed_lines": 10
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/_diagnostics.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/_diagnostics.py",
+          "sha256": "52c45e3d10f5b693e034db9f9e07fe2886287c7da1143f1a0b586d82ec28ddea",
+          "executed_lines": 42
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/_executor_handlers.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/_executor_handlers.py",
+          "sha256": "9b1504bc14f9102ac00b72747f48e3be13ef52caccf4a13630ad11ac84acdb33",
+          "executed_lines": 31
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/_executor_passthrough.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/_executor_passthrough.py",
+          "sha256": "87b4211303f4a2690a0848d7fd40e5b22e318f20718fcf995a9754ae31b7f08e",
+          "executed_lines": 30
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/_executor_support.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/_executor_support.py",
+          "sha256": "b389ca77ae33b0af7e989a1961278cec791ce3657f8dee2045ce85911eae29db",
+          "executed_lines": 34
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/_framing.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/_framing.py",
+          "sha256": "809495d99c05a0f326579fa65f61fc227a83885ac4af76e68cc430dc28d2b6c1",
+          "executed_lines": 19
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/_request_state.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/_request_state.py",
+          "sha256": "523a32c68aaa8e9963e5c6f2cada8022c73ab6e906573cf1a5fb323afe05d34c",
+          "executed_lines": 30
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/_session_identity.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/_session_identity.py",
+          "sha256": "5a1492ec795eb4da2454c1d66587129c58b7c91423d272f18c6f11f92fa94734",
+          "executed_lines": 11
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/auth.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/auth.py",
+          "sha256": "56a47bc4ec79a79ba44f5b1ed47747c6079e6851c4793b4efd1f0854b5a03bbd",
+          "executed_lines": 41
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/bson_bridge.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/bson_bridge.py",
+          "sha256": "ff0d2b8264fd2e26ae6aac387b841831588f5588815587208b389718a046d80f",
+          "executed_lines": 54
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/capabilities.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/capabilities.py",
+          "sha256": "fcf8602a558e6ccf21825c0b8720055682ee897eb7fb73c86b826b035c98d992",
+          "executed_lines": 26
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/connections.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/connections.py",
+          "sha256": "ff2d7685eb0ce9ef6fd2bdcb0ecc6f875bbe64cf2a7951efe8c0300a3987b458",
+          "executed_lines": 49
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/cursors.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/cursors.py",
+          "sha256": "0b309823ba2248a75edddf8870158f5f4ddf6c0c0d283f878ea231b95492e214",
+          "executed_lines": 80
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/executor.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/executor.py",
+          "sha256": "24d71db52f16852be61077ff65494fa71ba209b873ae4a736ff73973985e06c3",
+          "executed_lines": 33
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/handshake.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/handshake.py",
+          "sha256": "f3b461808ebd60f5a05966792a354213494b9be1ad311ca8c3bd8e273fd69858",
+          "executed_lines": 15
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/protocol.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/protocol.py",
+          "sha256": "0a2a49ab173e1c672d8654a3c1c523f76e4bed0cc7a97c871655f9446aa60889",
+          "executed_lines": 123
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/proxy.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/proxy.py",
+          "sha256": "0f16c385d7ee0b81d657d22e2277375826ee648e6b484f06f328e76429b16c07",
+          "executed_lines": 185
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/requests.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/requests.py",
+          "sha256": "8486fabfa625c55ed30dec6ff064cb20f29053fbd20b71f1e63be8fcaa85d29e",
+          "executed_lines": 17
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/scram.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/scram.py",
+          "sha256": "fb1f1cfb27bb80afb90964e7d5e9e7a21ef3b3a44d1bd5c498335b2228819b32",
+          "executed_lines": 39
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/sessions.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/sessions.py",
+          "sha256": "1103333ecc6cc892d7513c871ee0d636412a34c9bdfad7e36800fac7f270a922",
+          "executed_lines": 46
+        },
+        "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/mongoeco/wire/surface.py": {
+          "target": "/Users/uve/Proyectos/mongoeco/src/mongoeco/wire/surface.py",
+          "sha256": "86210db786b19c1135252e94c7ba3ff090c8db6acc0fa2b0a235aa2baf0f9264",
+          "executed_lines": 23
+        }
+      },
+      "method": "union of real executed lines; aliases require identical module suffix and SHA256 of complete current source bytes; enumerate every tracked product Python file",
+      "totals": {
+        "covered_lines": 48445,
+        "num_statements": 48934,
+        "percent_covered": 99.00069481342216,
+        "percent_covered_display": "99.00",
+        "missing_lines": 489,
+        "excluded_lines": 1027,
+        "percent_statements_covered": 99.00069481342216,
+        "percent_statements_covered_display": "99.00"
+      }
+    },
+    "resources": {
+      "status": "passed",
+      "attempt": 1,
+      "operations": 503,
+      "wall_seconds": 3.1101203750586137,
+      "cpu_seconds": 3.099469,
+      "python_peak_bytes": 4387624,
+      "cache": {
+        "hits": 38,
+        "misses": 304,
+        "maxsize": 256,
+        "currsize": 256
+      },
+      "gc_enabled": true,
+      "module": "/tmp/mongoeco-part2-installed/mongoeco/__init__.py"
+    },
+    "test_refinement_commit": "4081dd7f0b09f1ce30341dd1bbac84868541d55e",
+    "gates": {
+      "X01": "accepted",
+      "X04c": "accepted",
+      "integration_coverage_compatibility": "accepted",
+      "distribution": "accepted",
+      "bounded_resources": "accepted",
+      "receipt_review": "accepted"
+    },
+    "limitations": [
+      "Optional PCRE2 tested on macOS arm64 only; CPython 3.15 source-built wheel, no universal wheel availability claim",
+      "Bounded corpus is not full PCRE2 equivalence; Search-v1 and Regex.compile retain Python contract",
+      "Resource result is absolute instrumented bounded work, Python allocation peak only; no universal latency or native-allocation bound",
+      "Remaining Part II X01 expansion, X02/X03/X04a-b-d/X05/X06 excluded; no release, tag, push or main integration"
+    ]
+  }
 }
