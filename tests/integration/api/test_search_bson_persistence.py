@@ -314,9 +314,6 @@ def test_vector_residual_preparation_is_shared_with_exact_fallback(
         )
         with (
             patch.object(
-                sqlite_runtime, "compile_filter", wraps=sqlite_runtime.compile_filter
-            ) as prepared,
-            patch.object(
                 filtering_module,
                 "compile_filter",
                 wraps=filtering_module.compile_filter,
@@ -332,8 +329,9 @@ def test_vector_residual_preparation_is_shared_with_exact_fallback(
                 pipeline({"v": Binary(b"x", subtype)}, "vector", limit=limit),
             )
         assert actual == expected
-        assert prepared.call_count == 1
         assert exact.call_count == int(limit > len(expected_ids))
-        assert not any(
-            call.args and set(call.args[0]) == {"v"} for call in repeated.call_args_list
-        )
+        residual_calls = [
+            call for call in repeated.call_args_list
+            if call.args and set(call.args[0]) == {"v"}
+        ]
+        assert len(residual_calls) == 1

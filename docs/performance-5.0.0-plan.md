@@ -628,3 +628,10 @@ y fallback. `ResponseBatchReader` no se modifica. El replay reutiliza las captur
 aceptadas; no se han recapturado ni reescrito golden. La sonda de conteos Q01
 consume su única sonda focal (límite 60 s, GC activo); no es un intento temporal.
 Q00 registra además los hashes efectivos del harness corregido y dataset.
+
+Q02, control adicional durante Q04: la tanda ampliada encontró doce tests que
+parcheaban el import privado SQLite del compilador retirado. Se adaptó su
+observación a la autoridad compartida; siguen exigiendo una preparación raíz
+por residual, reutilización con fallback exacto y los IDs del golden nativo.
+Los doce casos pasan (q02-fallback.txt.gz). No hay alias de compatibilidad ni
+cambio productivo adicional por esta adaptación de test.
