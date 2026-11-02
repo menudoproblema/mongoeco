@@ -1,4 +1,4 @@
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import Any, assert_never
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -142,6 +142,35 @@ class BSONComparator:
         dialect: MongoDialect = MONGODB_DIALECT_70,
     ) -> int:
         return dialect.policy.compare_values(a, b)
+
+
+def _lazy_filter_predicate(
+    filter_spec: dict[str, Any] | None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
+    variables: Mapping[str, Any] | None = None,
+) -> Callable[[dict[str, Any]], bool]:
+    """Own a residual plan for one operation, prepared at its first actual use."""
+    prepared = None
+
+    def matches(document):
+        nonlocal prepared
+        if filter_spec is None:
+            return True
+        if prepared is None:
+            prepared = compile_filter(
+                filter_spec, dialect=dialect, variables=variables or {}
+            )
+        return QueryEngine.match_plan(
+            document,
+            prepared,
+            dialect=dialect,
+            collation=collation,
+            variables=variables,
+        )
+
+    return matches
 
 
 class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):

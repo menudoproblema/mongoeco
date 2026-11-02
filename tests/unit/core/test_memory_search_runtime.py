@@ -1,12 +1,14 @@
 import asyncio
 import unittest
+
 from unittest.mock import patch
 
 import mongoeco.engines._memory_search_runtime as memory_search_runtime_module
+
 from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.core import filtering as filtering_module
 from mongoeco.core.operation_context import OperationContext
 from mongoeco.engines._memory_search_runtime import (
-    _matches_vector_postfilter,
     _vector_filter_residual_description,
     execute_search_documents,
     explain_search_documents,
@@ -82,33 +84,26 @@ class MemorySearchRuntimeTests(unittest.TestCase):
             "non-exact-prefilter",
         )
 
-    def test_vector_postfilter_delegates_to_mql_with_its_context(self) -> None:
-        self.assertTrue(_matches_vector_postfilter({}, filter_spec=None))
+    def test_residual_delegates_to_mql_and_propagates_internal_failures(self):
+        self.assertTrue(filtering_module._lazy_filter_predicate(None)({}))
         context = OperationContext.create(dialect=MONGODB_DIALECT_70)
-        with patch.object(
-            memory_search_runtime_module.QueryEngine, "match", return_value=False
-        ) as match:
-            self.assertFalse(
-                _matches_vector_postfilter(
-                    {}, filter_spec={"kind": "note"}, operation_context=context
-                )
-            )
-        match.assert_called_once_with(
-            {},
+        matches = filtering_module._lazy_filter_predicate(
             {"kind": "note"},
             dialect=context.dialect,
             collation=context.collation,
             variables=context.expressions,
         )
+        self.assertTrue(matches({"kind": "note"}))
+        self.assertFalse(matches({"kind": "other"}))
         with (
             patch.object(
-                memory_search_runtime_module.QueryEngine,
-                "match",
+                filtering_module.QueryEngine,
+                "match_plan",
                 side_effect=TypeError("internal failure"),
             ),
             self.assertRaisesRegex(TypeError, "internal failure"),
         ):
-            _matches_vector_postfilter({}, filter_spec={"kind": "note"})
+            matches({})
 
     def test_execute_and_explain_cover_near_compound_and_vector_paths(self) -> None:
         async def _run() -> None:
@@ -257,7 +252,9 @@ class MemorySearchRuntimeTests(unittest.TestCase):
 
         asyncio.run(_run())
 
-    def test_execute_search_documents_covers_guard_and_postfilter_branches(self) -> None:
+    def test_execute_search_documents_covers_guard_and_postfilter_branches(
+        self,
+    ) -> None:
         async def _run() -> None:
             engine = MemoryEngine()
             await engine.connect()
@@ -299,7 +296,11 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                 self.assertEqual([doc["_id"] for doc in near_docs], [3])
 
                 with (
-                    patch.object(memory_search_runtime_module.QueryEngine, "match", return_value=False),
+                    patch.object(
+                        filtering_module.QueryEngine,
+                        "match_plan",
+                        return_value=False,
+                    ),
                 ):
                     text_docs = await execute_search_documents(
                         engine,
@@ -331,9 +332,21 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                 self.assertEqual(missing_path_hits, [])
 
                 with (
-                    patch.object(memory_search_runtime_module, "candidate_rows_for_vector_filter", side_effect=[(None, None), ([0, 1], {"exact": True})]),
-                    patch.object(memory_search_runtime_module, "vector_scores_for_rows", return_value=[(1.0, 0), (0.9, 1)]),
-                    patch.object(memory_search_runtime_module.QueryEngine, "match", return_value=False),
+                    patch.object(
+                        memory_search_runtime_module,
+                        "candidate_rows_for_vector_filter",
+                        side_effect=[(None, None), ([0, 1], {"exact": True})],
+                    ),
+                    patch.object(
+                        memory_search_runtime_module,
+                        "vector_scores_for_rows",
+                        return_value=[(1.0, 0), (0.9, 1)],
+                    ),
+                    patch.object(
+                        filtering_module.QueryEngine,
+                        "match_plan",
+                        return_value=False,
+                    ),
                 ):
                     query_postfilter_hits = await execute_search_documents(
                         engine,
@@ -351,9 +364,21 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                 self.assertEqual(query_postfilter_hits, [])
 
                 with (
-                    patch.object(memory_search_runtime_module, "candidate_rows_for_vector_filter", side_effect=[([0, 1], {"exact": True}), (None, None)]),
-                    patch.object(memory_search_runtime_module, "vector_scores_for_rows", return_value=[(1.0, 0), (0.9, 1)]),
-                    patch.object(memory_search_runtime_module.QueryEngine, "match", return_value=False),
+                    patch.object(
+                        memory_search_runtime_module,
+                        "candidate_rows_for_vector_filter",
+                        side_effect=[([0, 1], {"exact": True}), (None, None)],
+                    ),
+                    patch.object(
+                        memory_search_runtime_module,
+                        "vector_scores_for_rows",
+                        return_value=[(1.0, 0), (0.9, 1)],
+                    ),
+                    patch.object(
+                        filtering_module.QueryEngine,
+                        "match_plan",
+                        return_value=False,
+                    ),
                 ):
                     downstream_postfilter_hits = await execute_search_documents(
                         engine,
@@ -369,7 +394,9 @@ class MemorySearchRuntimeTests(unittest.TestCase):
 
         asyncio.run(_run())
 
-    def test_explain_search_documents_covers_vector_candidate_intersection_and_postfilters(self) -> None:
+    def test_explain_search_documents_covers_vector_candidate_intersection_and_postfilters(
+        self,
+    ) -> None:
         async def _run() -> None:
             engine = MemoryEngine()
             await engine.connect()
@@ -430,8 +457,8 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                         side_effect=[[(1.0, 0), (0.9, 1)], [(1.0, 0), (0.9, 1)]],
                     ),
                     patch.object(
-                        memory_search_runtime_module.QueryEngine,
-                        "match",
+                        filtering_module.QueryEngine,
+                        "match_plan",
                         side_effect=[False, True, False],
                     ),
                 ):

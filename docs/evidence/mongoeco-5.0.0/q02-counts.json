@@ -1,0 +1,19 @@
+{
+  "status": "focally_verified_not_delivery_accepted",
+  "source": "test_search_residual_prepares_once_per_operation_in_productive_routes",
+  "engines": [
+    "MemoryEngine",
+    "SQLiteEngine"
+  ],
+  "operations_per_engine": 2,
+  "candidates_per_operation": 10,
+  "preparations_per_engine": 2,
+  "mql_decisions_per_engine": 20,
+  "output_ids": [
+    "range(0,10)",
+    "range(1,10)"
+  ],
+  "lazy_empty_and_error": "existing migrated residual tests",
+  "contexts": "bindings, collation and distinct stable NOW frames",
+  "temporal_attempts": 0
+}

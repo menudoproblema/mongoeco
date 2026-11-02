@@ -7,14 +7,14 @@ import uuid
 
 from copy import deepcopy
 from dataclasses import dataclass
+from functools import partial
 from typing import TYPE_CHECKING, Any, Protocol
 
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.bson_ordering import bson_engine_key
-from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.filtering import _lazy_filter_predicate
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.paths import get_document_value
-from mongoeco.core.query_plan import compile_filter
 from mongoeco.core.runtime_metadata import RuntimeDocumentState
 from mongoeco.core.search import (
     VECTOR_SEARCH_SCORE_FIELD,
@@ -197,61 +197,6 @@ class _SQLiteSearchRuntimeEngine(Protocol):
         context: ClientSession | None,
     ) -> None: ...
     def _bind_connection(self, conn: sqlite3.Connection) -> Any: ...
-
-
-def _matches_operation_filter(
-    document: Document,
-    filter_spec: dict[str, object],
-    operation_context: OperationContext | None,
-    *,
-    prepared=None,
-) -> bool:
-    match = QueryEngine.match if prepared is None else QueryEngine.match_plan
-    return match(
-        document,
-        filter_spec if prepared is None else prepared,
-        dialect=(
-            operation_context.dialect
-            if operation_context is not None
-            else MONGODB_DIALECT_70
-        ),
-        collation=(
-            operation_context.collation if operation_context is not None else None
-        ),
-        variables=(
-            operation_context.expressions if operation_context is not None else None
-        ),
-    )
-
-
-def _operation_filter_predicate(filter_spec, operation_context):
-    """Prepare a residual once, lazily at the original first-document boundary."""
-    prepared = None
-
-    def matches(document):
-        nonlocal prepared
-        if prepared is None:
-            dialect = (
-                operation_context.dialect
-                if operation_context is not None
-                else MONGODB_DIALECT_70
-            )
-            variables = (
-                operation_context.expressions if operation_context is not None else None
-            )
-            prepared = compile_filter(
-                filter_spec,
-                dialect=dialect,
-                variables=variables or {},
-            )
-        return _matches_operation_filter(
-            document,
-            filter_spec,
-            operation_context,
-            prepared=prepared,
-        )
-
-    return matches
 
 
 @dataclass(frozen=True, slots=True)
@@ -1574,9 +1519,21 @@ def exact_vector_hits_sync(
     skip_downstream_filter_match: bool = False,
     residuals=None,
 ) -> list[tuple[float, Document]]:
+    predicate = partial(
+        _lazy_filter_predicate,
+        dialect=operation_context.dialect
+        if operation_context is not None
+        else MONGODB_DIALECT_70,
+        collation=operation_context.collation
+        if operation_context is not None
+        else None,
+        variables=operation_context.expressions
+        if operation_context is not None
+        else None,
+    )
     query_matches, downstream_matches = residuals or (
-        _operation_filter_predicate(query.filter_spec, operation_context),
-        _operation_filter_predicate(downstream_filter_spec, operation_context),
+        predicate(query.filter_spec),
+        predicate(downstream_filter_spec),
     )
     vector_hits: list[tuple[float, Document]] = []
     if candidate_storage_keys is not None:
@@ -1661,6 +1618,18 @@ def _sqlite_vector_candidate_documents(
     operation_context: OperationContext | None = None,
     residuals=None,
 ) -> tuple[list[Document], int, int, int, int, str | None]:
+    predicate = partial(
+        _lazy_filter_predicate,
+        dialect=operation_context.dialect
+        if operation_context is not None
+        else MONGODB_DIALECT_70,
+        collation=operation_context.collation
+        if operation_context is not None
+        else None,
+        variables=operation_context.expressions
+        if operation_context is not None
+        else None,
+    )
     if query_filter_spec is None:
         query_filter_spec = query.filter_spec
     if query_prefilter_exact is None:
@@ -1693,8 +1662,8 @@ def _sqlite_vector_candidate_documents(
     current_request = requested
 
     query_matches, downstream_matches = residuals or (
-        _operation_filter_predicate(query_filter_spec, operation_context),
-        _operation_filter_predicate(downstream_filter_spec, operation_context),
+        predicate(query_filter_spec),
+        predicate(downstream_filter_spec),
     )
 
     while current_request > 0:
@@ -1794,6 +1763,19 @@ def execute_sqlite_search_query(
     downstream_filter_spec: dict[str, object] | None,
     operation_context: OperationContext | None = None,
 ) -> list[Document]:
+    predicate = partial(
+        _lazy_filter_predicate,
+        dialect=operation_context.dialect
+        if operation_context is not None
+        else MONGODB_DIALECT_70,
+        collation=operation_context.collation
+        if operation_context is not None
+        else None,
+        variables=operation_context.expressions
+        if operation_context is not None
+        else None,
+    )
+    downstream_matches = predicate(downstream_filter_spec)
     resolved_physical_name = ensure_search_backend_sync(
         engine,
         conn,
@@ -1804,8 +1786,8 @@ def execute_sqlite_search_query(
     )
     if isinstance(query, SearchVectorQuery):
         residuals = (
-            _operation_filter_predicate(query.filter_spec, operation_context),
-            _operation_filter_predicate(downstream_filter_spec, operation_context),
+            predicate(query.filter_spec),
+            downstream_matches,
         )
         vector_filter_storage_keys: list[str] | None = None
         vector_filter_description: dict[str, object] | None = None
@@ -2086,10 +2068,8 @@ def execute_sqlite_search_query(
                             if storage_key in ranked_documents_by_key
                             and (
                                 downstream_filter_spec is None
-                                or _matches_operation_filter(
-                                    ranked_documents_by_key[storage_key],
-                                    downstream_filter_spec,
-                                    operation_context,
+                                or downstream_matches(
+                                    ranked_documents_by_key[storage_key]
                                 )
                             )
                         ]
@@ -2106,12 +2086,7 @@ def execute_sqlite_search_query(
                         materialize_search_document(document, definition),
                     )
                     for _storage_key, document in candidate_documents
-                    if downstream_filter_spec is None
-                    or _matches_operation_filter(
-                        document,
-                        downstream_filter_spec,
-                        operation_context,
-                    )
+                    if downstream_filter_spec is None or downstream_matches(document)
                 ]
                 sorted_documents = _sort_search_documents_for_query(
                     exact_documents,
@@ -2135,12 +2110,7 @@ def execute_sqlite_search_query(
                     materialize_search_document(document, definition),
                 )
                 for _storage_key, document in candidate_documents
-                if downstream_filter_spec is None
-                or _matches_operation_filter(
-                    document,
-                    downstream_filter_spec,
-                    operation_context,
-                )
+                if downstream_filter_spec is None or downstream_matches(document)
             ]
             sorted_documents = _sort_search_documents_for_query(
                 exact_documents,
@@ -2160,12 +2130,7 @@ def execute_sqlite_search_query(
         filtered_documents = [
             (document, definition, materialized_search_document)
             for _storage_key, document in candidate_documents
-            if downstream_filter_spec is None
-            or _matches_operation_filter(
-                document,
-                downstream_filter_spec,
-                operation_context,
-            )
+            if downstream_filter_spec is None or downstream_matches(document)
             if (
                 materialized_search_document := materialize_search_document(
                     document,
@@ -2194,12 +2159,7 @@ def execute_sqlite_search_query(
     documents = [
         (document, definition, materialized_search_document)
         for _, document in engine._load_documents(db_name, coll_name)
-        if downstream_filter_spec is None
-        or _matches_operation_filter(
-            document,
-            downstream_filter_spec,
-            operation_context,
-        )
+        if downstream_filter_spec is None or downstream_matches(document)
         if (
             materialized_search_document := materialize_search_document(
                 document,

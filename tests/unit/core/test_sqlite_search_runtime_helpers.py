@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import patch
 
 from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.core import filtering as filtering_module
 from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.search import compile_search_stage
 from mongoeco.engines import _sqlite_search_runtime as search_runtime_module
@@ -17,6 +18,15 @@ from tests.unit.core._sqlite_helper_test_cases import (
 
 
 _BaseSQLiteHelperTests.__test__ = False
+
+
+def _predicate(spec, context=None):
+    return filtering_module._lazy_filter_predicate(
+        spec,
+        dialect=context.dialect if context is not None else MONGODB_DIALECT_70,
+        collation=context.collation if context is not None else None,
+        variables=context.expressions if context is not None else None,
+    )
 
 
 async def _insert_document(engine, db_name, coll_name, document) -> None:
@@ -57,20 +67,18 @@ class SQLiteSearchRuntimeDirectCoverageTests(unittest.TestCase):
     def test_vector_residual_is_prepared_once_at_first_candidate(self):
         context = OperationContext.create(dialect=MONGODB_DIALECT_70)
         with patch.object(
-            search_runtime_module,
+            filtering_module,
             "compile_filter",
-            wraps=search_runtime_module.compile_filter,
+            wraps=filtering_module.compile_filter,
         ) as prepare:
-            matches = search_runtime_module._operation_filter_predicate(
-                {"v": Binary(b"x", 5)}, context
-            )
+            matches = _predicate({"v": Binary(b"x", 5)}, context)
             self.assertEqual(prepare.call_count, 0)
             self.assertTrue(matches({"v": Binary(b"x", 5)}))
             self.assertFalse(matches({"v": Binary(b"x", 0)}))
             self.assertFalse(matches({"v": None}))
             self.assertFalse(matches({}))
             self.assertEqual(prepare.call_count, 1)
-            other = search_runtime_module._operation_filter_predicate({"v": b"x"}, None)
+            other = _predicate({"v": b"x"}, None)
             self.assertTrue(other({"v": Binary(b"x", 0)}))
             self.assertEqual(prepare.call_count, 2)
 
@@ -79,9 +87,7 @@ class SQLiteSearchRuntimeDirectCoverageTests(unittest.TestCase):
             context = OperationContext.create(
                 dialect=MONGODB_DIALECT_70, bindings={"needle": needle}
             )
-            predicate = search_runtime_module._operation_filter_predicate(
-                {"$expr": {"$eq": ["$v", "$$needle"]}}, context
-            )
+            predicate = _predicate({"$expr": {"$eq": ["$v", "$$needle"]}}, context)
             self.assertTrue(predicate({"v": needle}))
             self.assertFalse(predicate({"v": needle + 1}))
 
@@ -89,17 +95,15 @@ class SQLiteSearchRuntimeDirectCoverageTests(unittest.TestCase):
         context = OperationContext.create(
             dialect=MONGODB_DIALECT_70, collation={"locale": "en", "strength": 2}
         )
-        matches = search_runtime_module._operation_filter_predicate({"v": "A"}, context)
+        matches = _predicate({"v": "A"}, context)
         self.assertTrue(matches({"v": "a"}))
         self.assertFalse(matches({"v": "b"}))
         with patch.object(
-            search_runtime_module,
+            filtering_module,
             "compile_filter",
-            wraps=search_runtime_module.compile_filter,
+            wraps=filtering_module.compile_filter,
         ) as prepare:
-            invalid = search_runtime_module._operation_filter_predicate(
-                {"$unknown": 1}, context
-            )
+            invalid = _predicate({"$unknown": 1}, context)
             self.assertEqual(prepare.call_count, 0)
             with self.assertRaises(OperationFailure):
                 invalid({})

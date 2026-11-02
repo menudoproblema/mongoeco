@@ -4,11 +4,12 @@ import math
 
 from copy import deepcopy
 from dataclasses import replace
+from functools import partial
 from typing import TYPE_CHECKING, Protocol
 
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.bson_ordering import bson_engine_key
-from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.filtering import _lazy_filter_predicate
 from mongoeco.core.runtime_metadata import RuntimeDocumentState
 from mongoeco.core.search import (
     SearchCompoundQuery,
@@ -370,33 +371,6 @@ def _memory_vector_backend_document(
     }
 
 
-def _matches_vector_postfilter(
-    document: Document,
-    *,
-    filter_spec: dict[str, object] | None,
-    operation_context: OperationContext | None = None,
-) -> bool:
-    if filter_spec is None:
-        return True
-    return bool(
-        QueryEngine.match(
-            document,
-            filter_spec,
-            dialect=(
-                operation_context.dialect
-                if operation_context is not None
-                else MONGODB_DIALECT_70
-            ),
-            collation=(
-                operation_context.collation if operation_context is not None else None
-            ),
-            variables=(
-                operation_context.expressions if operation_context is not None else None
-            ),
-        ),
-    )
-
-
 async def execute_search_documents(
     engine: _MemorySearchRuntimeEngine,
     db_name: str,
@@ -411,6 +385,22 @@ async def execute_search_documents(
     downstream_filter_spec: dict[str, object] | None = None,
 ) -> list[Document]:
     query = query or compile_search_stage(operator, spec)
+    predicate = partial(
+        _lazy_filter_predicate,
+        dialect=operation_context.dialect
+        if operation_context is not None
+        else MONGODB_DIALECT_70,
+        collation=operation_context.collation
+        if operation_context is not None
+        else None,
+        variables=operation_context.expressions
+        if operation_context is not None
+        else None,
+    )
+    downstream_matches = predicate(downstream_filter_spec)
+    query_matches = predicate(
+        query.filter_spec if isinstance(query, SearchVectorQuery) else None
+    )
     if operation_context is not None:
         context = operation_context.session
     effective_limit = (
@@ -462,13 +452,8 @@ async def execute_search_documents(
         if isinstance(query, SearchNearQuery):
             distance_hits: list[tuple[float, str, Document]] = []
             for document, materialized in materialized_documents:
-                if (
-                    downstream_filter_spec is not None
-                    and not _matches_vector_postfilter(
-                        document,
-                        filter_spec=downstream_filter_spec,
-                        operation_context=operation_context,
-                    )
+                if downstream_filter_spec is not None and not downstream_matches(
+                    document
                 ):
                     continue
                 if not matches_search_query(
@@ -499,13 +484,8 @@ async def execute_search_documents(
         if isinstance(query, SearchCompoundQuery) and query.should:
             ranked_documents: list[tuple[tuple[int, float, float], str, Document]] = []
             for document, materialized in materialized_documents:
-                if (
-                    downstream_filter_spec is not None
-                    and not _matches_vector_postfilter(
-                        document,
-                        filter_spec=downstream_filter_spec,
-                        operation_context=operation_context,
-                    )
+                if downstream_filter_spec is not None and not downstream_matches(
+                    document
                 ):
                     continue
                 if not matches_search_query(
@@ -556,11 +536,7 @@ async def execute_search_documents(
             ]
         ranked_matches: list[tuple[float, str, Document]] = []
         for document, materialized in materialized_documents:
-            if downstream_filter_spec is not None and not _matches_vector_postfilter(
-                document,
-                filter_spec=downstream_filter_spec,
-                operation_context=operation_context,
-            ):
+            if downstream_filter_spec is not None and not downstream_matches(document):
                 continue
             matched, clause_score, _near_distance = search_clause_ranking(
                 document,
@@ -656,17 +632,9 @@ async def execute_search_documents(
     vector_hits: list[tuple[float, int]] = []
     for score, row_index in scored_rows:
         prepared = vector_index.documents[path_positions[row_index]]
-        if downstream_requires_postfilter and not _matches_vector_postfilter(
-            prepared.document,
-            filter_spec=downstream_filter_spec,
-            operation_context=operation_context,
-        ):
+        if downstream_requires_postfilter and not downstream_matches(prepared.document):
             continue
-        if query_requires_postfilter and not _matches_vector_postfilter(
-            prepared.document,
-            filter_spec=query.filter_spec,
-            operation_context=operation_context,
-        ):
+        if query_requires_postfilter and not query_matches(prepared.document):
             continue
         vector_hits.append((score, row_index))
     selected_hits = top_scored_rows(
@@ -697,6 +665,22 @@ async def explain_search_documents(
     downstream_filter_spec: dict[str, object] | None = None,
 ) -> QueryPlanExplanation:
     query = compile_search_stage(operator, spec)
+    predicate = partial(
+        _lazy_filter_predicate,
+        dialect=operation_context.dialect
+        if operation_context is not None
+        else MONGODB_DIALECT_70,
+        collation=operation_context.collation
+        if operation_context is not None
+        else None,
+        variables=operation_context.expressions
+        if operation_context is not None
+        else None,
+    )
+    downstream_matches = predicate(downstream_filter_spec)
+    query_matches = predicate(
+        query.filter_spec if isinstance(query, SearchVectorQuery) else None
+    )
     if operation_context is not None:
         context = operation_context.session
     async with engine._get_lock(db_name, coll_name):
@@ -848,18 +832,10 @@ async def explain_search_documents(
         rejected_hits = 0
         for _score, row_index in scored_rows:
             document = vector_index.documents[path_positions[row_index]].document
-            if downstream_requires_postfilter and not _matches_vector_postfilter(
-                document,
-                filter_spec=downstream_filter_spec,
-                operation_context=operation_context,
-            ):
+            if downstream_requires_postfilter and not downstream_matches(document):
                 rejected_hits += 1
                 continue
-            if query_requires_postfilter and not _matches_vector_postfilter(
-                document,
-                filter_spec=query.filter_spec,
-                operation_context=operation_context,
-            ):
+            if query_requires_postfilter and not query_matches(document):
                 rejected_hits += 1
                 continue
             passing_hits += 1
