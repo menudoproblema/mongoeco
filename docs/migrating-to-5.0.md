@@ -1,85 +1,72 @@
-# Guia de migracion hacia MongoEco 5.0
+# Migración a Mongoeco 5.0
 
-## Estado
+Estado: candidato en preparación, no publicado. Comparación con 4.11.0.
 
-MongoEco 5.0 y sus contratos no se han publicado. La linea actual 4.10.1 expone SPI v2
-como unico engine SPI estable y mantiene `search-v1`. Los engines anteriores se
-migran mediante la [guia de 4.7](migrating-to-4.7.md), no mediante una futura
-release.
+## UUID: elegir representación explícita
 
-La [decisión posterior a T1–T6 y S1/S2](architecture/engine-spi-v3-proposal.md)
-mantiene SPI v2 y aparca v3. No hay migración a un sucesor, retirada de v2 ni
-cambio SQLite aprobados. Esta guía conserva material futuro e histórico, sin
-una migración SPI que deba preparar el usuario actual.
-
-## Inventario previo
+CodecOptions usa UNSPECIFIED por defecto, como PyMongo. Un UUID Python sin
+representación elegida se rechaza; el fallo de una lectura diferida puede aparecer
+al consumir el cursor. Selecciona STANDARD para el comportamiento habitual:
 
 ```python
-from mongoeco.compat import deprecation_entries, public_api_manifest
+from mongoeco import MongoClient
+from mongoeco.types import CodecOptions, UuidRepresentation
 
-for entry in deprecation_entries():
-    print(entry.identifier, entry.status, entry.replacement)
-
-print(public_api_manifest()["contracts"])
+client = MongoClient(codec_options=CodecOptions(
+    uuid_representation=UuidRepresentation.STANDARD,
+))
 ```
 
-Conserva el manifest de tu version actual y comparalo durante la actualizacion:
+Usa la representación legacy correspondiente si necesitas ese formato. Los
+subtipos BSON almacenados no se reescriben al leer o reabrir SQLite.
 
-```bash
-python scripts/update_public_api_manifest.py --compare path/to/baseline.json
-```
+## Consultas y expresiones
 
-No anticipes contratos de engine no publicados. Una evolucion posterior debe
-tener decision, tipos, conformance y ventana de migracion propios sin cambiar
-silenciosamente el significado de SPI v2.
+$exists, $elemMatch, $all y $nin conservan su función de consulta, pero dejan
+de aceptarse como expresiones de agregación dentro de $expr. Separa el
+predicado de consulta de la expresión o usa una expresión válida equivalente;
+no hay una reescritura universal. $not y $last sí tienen soporte de expresión.
+Las comparaciones MQL respetan type bracketing; la agregación conserva su orden
+BSON. Ausencia y null ya no se confunden en expresiones. Ajusta expectativas
+que dependiesen de estas divergencias del mock y comprueba los casos de aplicación
+contra MongoDB real.
 
-## Search v1 a v2
+## Frontera BSON, resultados y errores
 
-Esta sección conserva los cambios contemplados por la
-[propuesta Search v2](architecture/search-contract-v2-proposal.md), no una
-receta ejecutable. `search-v1` sigue siendo el único contrato disponible;
-no existe actualmente una opción pública para activar v2.
+Las entradas pasan por admisión BSON y los resultados por los codecs efectivos.
+No dependas de aceptar object(), Decimal Python crudo u otros valores no BSON;
+convierte decimales a Decimal128. Se preservan anchuras Int64, subtipos Binary,
+cohortes Decimal128 y efectos de decoders/document factories. Los contadores
+de actualización distinguen identidad BSON de igualdad de consulta.
 
-- solicita highlight con `$meta: "searchHighlights"`;
-- sustituye previews por collectors estables;
-- usa `queryMatchedCount`, no `matchedCount`;
-- lee metricas por dominio y disponibilidad;
-- exige `contractVersion` en explain;
-- elimina normalizadores que mezclen shapes v1/v2.
+La validación puede fallar antes de leer filas o producir efectos. Las operaciones
+por lote conservan los prefijos y errores parciales de su contrato. No reintentes
+una escritura por un cambio de excepción sin comprobar qué efectos se confirmaron.
+Los resultados de filtros, enum/uniqueItems, fechas, índices y joins pueden cambiar
+porque se han corregido comparaciones y contextos compartidos.
 
-Si se aprueba y publica ese contrato, su guía deberá activar v2 primero en un
-entorno de test y conservar fixtures separadas. Comparará documentos, metadata,
-collectors, orden y explain, no solo el numero de hits.
+## CXP: adoptar catálogo 2.0.0
 
-## SQLite
+CXP permanece en 5.0.0. La identidad org.mongoeco:mongodb pasa a 2.0.0 con hash
+nuevo; adopta coherentemente catálogo, perfiles, tiers, snapshot y contexto.
+No cambies solo el número ni conserves el hash anterior. Las referencias
+históricas 1.2.0 no se reinterpretan. Véase [CXP exchange](cxp-exchange.md).
 
-Haz una copia antes de migrar. Abre la copia con la nueva version y ejecuta
-lectura, indices, Search y outbox antes de promoverla. MongoEco rechaza schemas
-futuros y no debe rebajarlos. La fixture oficial 4.5 del repositorio cubre BSON,
-indices, Search, checkpoint y replay del sufijo pendiente.
+## Nuevas capacidades opcionales
 
-No exportes/reimportes JSON para migrar: perderia precision BSON y estado de
-outbox. Si 5.0 requiere un cambio de schema, debe usar una migracion
-transaccional versionada.
+El backend Python regex sigue por defecto. Para PCRE2 instala el extra pcre2
+y fija MONGOECO_REGEX_BACKEND=pcre2 antes de importar mongoeco; cambia de proceso
+para cambiar la selección. Una dependencia ausente o selección inválida no usa
+fallback. Search-v1 y Regex.compile() siguen Python. Soporte PCRE2 acotado:
+macOS arm64 comprobado; Python 3.15 requiere el build desde fuente verificado.
+No se promete paridad PCRE universal ni disponibilidad binaria multiplataforma.
 
-## Typing y artefacto instalado
+$bucketAuto admite trece series de granularity, con sus restricciones numéricas
+y errores nativos; no equivale a redondear etiquetas después de repartir filas.
 
-Ejecuta mypy contra el wheel, no contra un checkout accidental:
+## Contratos conservados
 
-```bash
-MONGOECO_TEST_INSTALLED_ARTIFACT=1 python scripts/check_public_typing.py
-```
-
-Ejecuta tambien el canario y el CLI desde un directorio ajeno al proyecto. Una
-migracion no esta cerrada si solo funciona con imports privados o editable
-installs.
-
-## Checklist de salida
-
-- catalogo revisado sin elementos `decision-pending` relevantes;
-- conformance de cada contrato declarado;
-- diff de API aprobado;
-- base SQLite copiada y verificada;
-- ausencia de warnings deprecados durante la suite consumidora;
-- rollback documentado;
-- ningun adapter local en el consumidor para ocultar diferencias.
+Se conserva Engine SPI v2, Python >=3.13 (3.13 hasta octubre de 2028), las
+fachadas sync/async, los perfiles PyMongo y la lectura de archivos SQLite previos.
+No hay una migración obligatoria del formato de archivo ni transacciones
+distribuidas nuevas. La major del paquete no cambia la versión del SPI.

@@ -7,11 +7,14 @@ Test application queries and writes locally, using a fresh in-memory database
 or SQLite. Start with the direct Python API, or keep real PyMongo clients and
 point them at an isolated local server with the optional pytest kit.
 
-**4.11.0** adds optional wire diagnostics to pytest, validates wire framing and
-checksums, and consolidates internal engine preparation and reads. See the
-[release notes](https://github.com/menudoproblema/mongoeco/blob/main/docs/release-4.11.0.md)
-for changes, compatibility limits and validation. The pytest kit is available
-since 4.10.0; wire diagnostics require 4.11.0 or later.
+**5.0.0 is being prepared; it has not been published yet.** It aligns BSON,
+queries, writes and cursor behavior with the retained MongoDB dialects, adds an
+explicit optional PCRE2 backend and preferred bucket boundaries, and adopts CXP
+catalog 2.0.0. Read the
+[migration guide](https://github.com/menudoproblema/mongoeco/blob/main/docs/migrating-to-5.0.md)
+and [candidate release notes](https://github.com/menudoproblema/mongoeco/blob/main/docs/release-5.0.0.md)
+before upgrading. The pytest kit remains available since 4.10.0; wire diagnostics
+require 4.11.0 or later.
 
 ## Install and try it
 
@@ -28,7 +31,7 @@ with MongoClient() as client:
     assert users.find_one({"_id": "ada"})["name"] == "Ada"
 ```
 
-The default engine is in memory. Mongoeco 4.11 supports CPython **3.13,
+The default engine is in memory. Mongoeco 5.0 supports CPython **3.13,
 3.14 and 3.15**, with Python 3.13 support through **October 2028**.
 See the [support policy](https://github.com/menudoproblema/mongoeco/blob/main/docs/python-support.md).
 

@@ -8,6 +8,10 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [5.0.0] - 2026-11-02
+
+Preparación del candidato; todavía no publicada.
+
 ### Added
 
 - Add an explicit optional PCRE2 backend for query, aggregation and schema regex

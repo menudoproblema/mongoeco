@@ -1,6 +1,8 @@
 # Mongoeco documentation
 
 Start with application tests, then choose local persistence or search as needed.
+The [5.0.0 candidate](release-5.0.0.md) and [migration guide](migrating-to-5.0.md)
+cover the upcoming major; it is not published yet.
 The [4.11.0 release notes](release-4.11.0.md) describe optional wire diagnostics,
 protocol fixes and engine simplification, with migration and delivery evidence.
 The [4.10.1 release notes](release-4.10.1.md) cover error and BSON fixes; the
