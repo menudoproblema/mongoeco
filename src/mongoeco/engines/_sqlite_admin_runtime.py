@@ -8,6 +8,7 @@ from mongoeco.engines._sqlite_catalog import (
     list_database_names as _sqlite_list_database_names,
     load_collection_options as _sqlite_load_collection_options,
 )
+from mongoeco.engines._sqlite_connection import SQLiteConnection
 from mongoeco.engines._sqlite_namespace_admin import (
     collection_options as _sqlite_collection_options,
     drop_database as _sqlite_drop_database,
@@ -20,6 +21,33 @@ from mongoeco.types import Document  # noqa: TC001 - introspectable helper signa
 class SQLiteAdminRuntime:
     def __init__(self, engine):
         self._engine = engine
+
+    def has_current_empty_options(self, db_name, coll_name, *, context=None) -> bool:
+        """Reuse only an unchanged, nontransactional in-memory observation.
+
+        No SQL or waiting is allowed here: file databases, lock contention and
+        every unsupported state retain the ordinary executor path.
+        """
+        engine = self._engine
+        connection = engine._connection
+        if (
+            type(connection) is not SQLiteConnection
+            or connection.empty_options_observation is None
+            or engine._path != ":memory:"
+            or self.is_profile_namespace(coll_name)
+            or not engine._lock.acquire(blocking=False)
+        ):
+            return False
+        try:
+            conn = engine._require_connection(context)
+            return (
+                conn is connection
+                and not conn.in_transaction
+                and conn.empty_options_observation
+                == (conn.total_changes, db_name, coll_name)
+            )
+        finally:
+            engine._lock.release()
 
     def collection_exists(self, conn: sqlite3.Connection, db_name: str, coll_name: str) -> bool:
         row = conn.execute(
@@ -47,7 +75,7 @@ class SQLiteAdminRuntime:
 
     def collection_options(self, db_name: str, coll_name: str, *, context=None) -> dict[str, object]:
         conn = self._engine._require_connection(context)
-        return _sqlite_collection_options(
+        options = _sqlite_collection_options(
             db_name=db_name,
             coll_name=coll_name,
             profiler=self._engine._profiler,
@@ -56,6 +84,18 @@ class SQLiteAdminRuntime:
             collection_exists=self.collection_exists,
             conn=conn,
         )
+        if (
+            self._engine._path == ":memory:"
+            and type(conn) is SQLiteConnection
+            and conn is self._engine._connection
+            and not conn.in_transaction
+            and not self.is_profile_namespace(coll_name)
+            and options == {}
+        ):
+            # total_changes is monotonic, including rolled-back writes. It
+            # conservatively invalidates this single observation on any write.
+            conn.empty_options_observation = (conn.total_changes, db_name, coll_name)
+        return options
 
     def collection_options_or_empty(
         self,

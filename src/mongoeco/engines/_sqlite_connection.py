@@ -23,6 +23,7 @@ class SQLiteConnection(sqlite3.Connection):
             tuple[str, str], tuple[int, list[EngineIndexRecord]]
         ] = {}
         self._catalog_data_version: int | None = None
+        self.empty_options_observation: tuple[int, str, str] | None = None
 
     def refresh_catalog_validity(self) -> None:
         if self.in_transaction:
@@ -40,6 +41,7 @@ class SQLiteConnection(sqlite3.Connection):
         finally:
             self.index_catalogs.clear()
             self._catalog_data_version = None
+            self.empty_options_observation = None
 
 
 @contextmanager

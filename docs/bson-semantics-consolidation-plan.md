@@ -2411,6 +2411,29 @@ Coste sin otras cargas propias; gates compatibles agrupados después. El intento
 segundo sólo procede por primera evaluación inconcluyente, no por regresión
 confirmada o fallo técnico que deba conservarse y resolverse causalmente.
 
+#### Corrección acotada del viaje de metadatos SQLite
+
+Autorización posterior del owner: «Corrígelo», sobre el coste residual de
+resolución de contexto. Se implementa en rama perf/sqlite-empty-options desde
+afcf3990; e4eb17cc y b93681b7/artefactos permanecen congelados. No se reinicia
+ninguna campaña ni se alteran límites, muestras o decisiones de coste.
+
+S1: mantener el contrato de collection_options y su autoridad de sesión y
+namespace. S2: evitar sólo el viaje redundante de opciones vacías ya observadas
+en SQLite :memory:, sin SQL ni espera de locks en el event loop. Reutilizar el
+owner SQLiteConnection: una observación acotada (total_changes, db, collection),
+fuera de transacciones y ligada a la conexión primaria. Una escritura invalida
+conservadoramente por contador monotónico, incluso tras rollback; close libera
+la observación. Archivo, opciones no vacías, perfil virtual, conexión no estándar,
+conexión/contexto diferente o lock ocupado conservan el executor. No hay caché
+por colección en API, invalidaciones DDL dispersas, nuevo SPI ni formato persistido.
+
+S3: pruebas focales de ausencia de job/SQL en caliente, frescura en cambios,
+sesiones/rollback/reconexión/contención y archivo externo; tres Python y replay
+7/8/9 alcanzado, lint, revisión y commits semánticos. No repetir los gates F11
+globales ni ejecutar perfiles/coste dentro de esta corrección. El resultado es
+una corrección comprobada focalmente; no acredita el +5% ni aceptación de entrega.
+
 ### 9.3. Parte II — Capacidades o cambios de contrato con decisión propia
 
 No es una segunda tanda implícitamente autorizada. Cada bloque requiere una

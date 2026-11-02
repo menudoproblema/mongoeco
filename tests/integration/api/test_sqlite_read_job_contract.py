@@ -8,9 +8,11 @@ from contextlib import AsyncExitStack
 
 import pytest
 
-from mongoeco import AsyncMongoClient
+from mongoeco import AsyncMongoClient, SearchIndexModel
 from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.sqlite import SQLiteEngine
+from mongoeco.errors import CollectionInvalid, InvalidOperation
+from mongoeco.session import ClientSession
 
 
 @pytest.mark.parametrize("workers", [1, 4])
@@ -280,6 +282,357 @@ def test_repeated_cancellation_keeps_close_owned_until_fetch_finishes(
             await source.aclose()
         finally:
             release.set()
+            await engine.disconnect()
+
+    asyncio.run(exercise())
+
+
+def test_unchanged_empty_options_do_not_submit_another_executor_job(monkeypatch):
+    async def exercise():
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_collection("test", "records")
+            jobs = []
+            run = engine._run_blocking
+
+            async def observe(function, *args, **kwargs):
+                jobs.append(function.__name__)
+                return await run(function, *args, **kwargs)
+
+            monkeypatch.setattr(engine, "_run_blocking", observe)
+            assert await engine.collection_options("test", "records") == {}
+            jobs.clear()
+            sql = []
+            engine._connection.set_trace_callback(sql.append)
+            try:
+                options = await engine.collection_options("test", "records")
+                options["validator"] = {"required": ["poison"]}
+                assert await engine.collection_options("test", "records") == {}
+            finally:
+                engine._connection.set_trace_callback(None)
+            assert jobs == []
+            assert sql == []
+        finally:
+            await engine.disconnect()
+
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize("operation", ["find", "aggregate", "vector"])
+def test_read_context_reuses_only_unchanged_empty_metadata(monkeypatch, operation):
+    async def exercise():
+        engine = SQLiteEngine()
+        async with AsyncMongoClient(engine) as client:
+            collection = client.test.records
+            document = {"_id": 1, "v": "A"}
+            if operation == "vector":
+                document["embedding"] = [1.0, 0.0]
+            await collection.insert_one(document)
+            if operation == "vector":
+                await collection.create_search_index(
+                    SearchIndexModel(
+                        {"fields": [{
+                            "type": "vector", "path": "embedding",
+                            "numDimensions": 2, "similarity": "cosine",
+                        }]},
+                        name="vectors", type="vectorSearch",
+                    )
+                )
+
+            async def read():
+                if operation == "vector":
+                    return await collection.aggregate([{"$vectorSearch": {
+                        "index": "vectors", "path": "embedding",
+                        "queryVector": [1.0, 0.0], "numCandidates": 2, "limit": 1,
+                    }}]).to_list()
+                cursor = (
+                    collection.find({"v": "A"}) if operation == "find"
+                    else collection.aggregate([{"$match": {"v": "A"}}])
+                )
+                return await cursor.to_list()
+
+            assert await read() == [document]
+            assert await engine.collection_options("test", "records") == {}
+            jobs = []
+            run = engine._run_blocking
+
+            async def observe(function, *args, **kwargs):
+                jobs.append(function.__name__)
+                return await run(function, *args, **kwargs)
+
+            monkeypatch.setattr(engine, "_run_blocking", observe)
+            assert await read() == [document]
+            assert await read() == [document]
+            assert "_collection_options_sync" not in jobs
+
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize("mutation", ["write", "collMod", "drop", "rename", "drop_db"])
+def test_empty_options_observation_is_invalid_after_each_storage_change(mutation):
+    async def exercise():
+        engine = SQLiteEngine()
+        async with AsyncMongoClient(engine) as client:
+            await client.test.create_collection("records")
+            await client.test.create_collection(
+                "replacement", collation={"locale": "en", "strength": 2}
+            )
+            assert await engine.collection_options("test", "records") == {}
+            if mutation == "write":
+                await client.test.records.insert_one({"_id": 1})
+                # A data write invalidates conservatively, even without DDL.
+                calls = []
+                run = engine._run_blocking
+
+                async def observe(function, *args, **kwargs):
+                    calls.append(function.__name__)
+                    return await run(function, *args, **kwargs)
+
+                engine._run_blocking = observe
+                assert await engine.collection_options("test", "records") == {}
+                assert calls == ["_collection_options_sync"]
+                return
+            if mutation == "collMod":
+                await client.test.command(
+                    {"collMod": "records", "validator": {"required": ["v"]}}
+                )
+                options = await engine.collection_options("test", "records")
+                assert options["validator"] == {"required": ["v"]}
+                return
+            if mutation == "rename":
+                await client.test.replacement.rename("records", dropTarget=True)
+            else:
+                if mutation == "drop_db":
+                    await client.drop_database("test")
+                else:
+                    await client.test.records.drop()
+                with pytest.raises(CollectionInvalid):
+                    await engine.collection_options("test", "records")
+                await client.test.create_collection(
+                    "records", collation={"locale": "en", "strength": 2}
+                )
+            options = await engine.collection_options("test", "records")
+            expected_strength = 2
+            assert options["collation"]["strength"] == expected_strength
+            await client.test.records.insert_many(
+                [{"_id": 1, "v": "A"}, {"_id": 2, "v": "a"}]
+            )
+            assert await client.test.records.find(
+                {"v": "A"}, {"_id": 1}, sort=[("_id", 1)]
+            ).to_list() == [{"_id": 1}, {"_id": 2}]
+
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize("commit", [False, True])
+def test_empty_options_observation_never_crosses_a_transaction(commit):
+    async def exercise():
+        engine = SQLiteEngine()
+        async with AsyncMongoClient(engine) as client:
+            await client.test.create_collection("records")
+            assert await engine.collection_options("test", "records") == {}
+            session = client.start_session()
+            session.start_transaction()
+            try:
+                await engine.drop_collection("test", "records", context=session)
+                await engine.create_collection(
+                    "test", "records", options={"capped": True}, context=session
+                )
+                assert await engine.collection_options(
+                    "test", "records", context=session
+                ) == {"capped": True}
+                with pytest.raises(InvalidOperation, match="another session"):
+                    await engine.collection_options("test", "records")
+                if commit:
+                    session.commit_transaction()
+                else:
+                    session.abort_transaction()
+                assert await engine.collection_options("test", "records") == (
+                    {"capped": True} if commit else {}
+                )
+            finally:
+                if session.in_transaction:
+                    session.abort_transaction()
+                session.close()
+
+    asyncio.run(exercise())
+
+
+def test_hot_empty_options_still_reject_a_foreign_session():
+    async def exercise():
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_collection("test", "records")
+            assert await engine.collection_options("test", "records") == {}
+            with pytest.raises(InvalidOperation, match="not created"):
+                await engine.collection_options(
+                    "test", "records", context=ClientSession()
+                )
+        finally:
+            await engine.disconnect()
+
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize("file_backed", [False, True])
+def test_nonempty_and_file_options_retain_the_executor_path(
+    tmp_path, monkeypatch, file_backed
+):
+    async def exercise():
+        engine = SQLiteEngine(
+            str(tmp_path / "options.sqlite") if file_backed else ":memory:"
+        )
+        await engine.connect()
+        try:
+            await engine.create_collection(
+                "test", "records", options={} if file_backed else {"capped": True}
+            )
+            await engine.collection_options("test", "records")
+            calls = []
+            run = engine._run_blocking
+
+            async def observe(function, *args, **kwargs):
+                calls.append(function.__name__)
+                return await run(function, *args, **kwargs)
+
+            monkeypatch.setattr(engine, "_run_blocking", observe)
+            await engine.collection_options("test", "records")
+            await engine.collection_options("test", "records")
+            assert calls == ["_collection_options_sync", "_collection_options_sync"]
+        finally:
+            await engine.disconnect()
+
+    asyncio.run(exercise())
+
+
+def test_file_options_observe_a_second_engine_without_local_changes(tmp_path):
+    async def exercise():
+        first = SQLiteEngine(str(tmp_path / "shared.sqlite"))
+        second = SQLiteEngine(str(tmp_path / "shared.sqlite"))
+        await first.connect()
+        await second.connect()
+        try:
+            await first.create_collection("test", "records")
+            assert await first.collection_options("test", "records") == {}
+            changes = first._connection.total_changes
+            await second._modify_collection_options(
+                "test", "records", options={"validator": {"required": ["v"]}}
+            )
+            assert first._connection.total_changes == changes
+            options = await first.collection_options("test", "records")
+            assert options["validator"] == {"required": ["v"]}
+        finally:
+            await second.disconnect()
+            await first.disconnect()
+
+    asyncio.run(exercise())
+
+
+def test_empty_options_observation_is_released_with_its_connection():
+    async def exercise():
+        engine = SQLiteEngine()
+        await engine.connect()
+        await engine.create_collection("test", "records")
+        assert await engine.collection_options("test", "records") == {}
+        connection = engine._connection
+        assert connection.empty_options_observation is not None
+        await engine.disconnect()
+        assert connection.empty_options_observation is None
+        await engine.connect()
+        try:
+            with pytest.raises(CollectionInvalid):
+                await engine.collection_options("test", "records")
+        finally:
+            await engine.disconnect()
+
+    asyncio.run(exercise())
+
+
+def test_empty_options_are_not_reused_inside_an_active_transaction(monkeypatch):
+    async def exercise():
+        engine = SQLiteEngine()
+        async with AsyncMongoClient(engine) as client:
+            await client.test.create_collection("records")
+            assert await engine.collection_options("test", "records") == {}
+            session = client.start_session()
+            session.start_transaction()
+            calls = []
+            run = engine._run_blocking
+
+            async def observe(function, *args, **kwargs):
+                calls.append(function.__name__)
+                return await run(function, *args, **kwargs)
+
+            monkeypatch.setattr(engine, "_run_blocking", observe)
+            try:
+                for _ in range(2):
+                    assert await engine.collection_options(
+                        "test", "records", context=session
+                    ) == {}
+                assert calls == ["_collection_options_sync", "_collection_options_sync"]
+                with pytest.raises(InvalidOperation, match="another session"):
+                    await engine.collection_options("test", "records")
+            finally:
+                session.abort_transaction()
+                session.close()
+
+    asyncio.run(exercise())
+
+
+def test_virtual_profile_options_never_reuse_a_storage_observation():
+    async def exercise():
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            engine._profiler.set_level("test", 1)
+            assert await engine.collection_options("test", "system.profile") == {}
+            changes = engine._connection.total_changes
+            engine._profiler.set_level("test", 0)
+            engine._profiler.clear("test")
+            assert engine._connection.total_changes == changes
+            with pytest.raises(CollectionInvalid):
+                await engine.collection_options("test", "system.profile")
+        finally:
+            await engine.disconnect()
+
+    asyncio.run(exercise())
+
+
+def test_hot_options_with_a_contended_lock_yield_to_the_executor():
+    async def exercise():
+        engine = SQLiteEngine()
+        await engine.connect()
+        entered, release = threading.Event(), threading.Event()
+        thread = None
+        try:
+            await engine.create_collection("test", "records")
+            assert await engine.collection_options("test", "records") == {}
+
+            def hold_lock():
+                with engine._lock:
+                    entered.set()
+                    release.wait(5)
+
+            thread = threading.Thread(target=hold_lock)
+            thread.start()
+            assert await asyncio.to_thread(entered.wait, 2)
+            observed = []
+            task = asyncio.create_task(engine.collection_options("test", "records"))
+
+            def release_from_loop():
+                observed.append(not task.done())
+                release.set()
+
+            asyncio.get_running_loop().call_soon(release_from_loop)
+            assert await asyncio.wait_for(task, 2) == {}
+            assert observed == [True]
+        finally:
+            release.set()
+            if thread is not None:
+                thread.join(2)
+                assert not thread.is_alive()
             await engine.disconnect()
 
     asyncio.run(exercise())

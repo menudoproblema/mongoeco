@@ -25,6 +25,7 @@ def test_new_operation_resolves_recreated_namespace_collation(engine_factory):
             db = client.context_refresh
             collection = db.rows
             cases = (
+                ({}, [{"_id": 1}]),
                 ({"locale": "en", "strength": 2}, [{"_id": 1}, {"_id": 2}]),
                 ({"locale": "simple"}, [{"_id": 1}]),
             )

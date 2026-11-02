@@ -3714,3 +3714,61 @@ ninguna medición, se cambia el umbral ni se concede cierre por ausencia de
 regresión confirmada. Para avanzar hace falta disposición explícita del owner
 sobre entorno/evaluación, conservando el contrato vigente. F11 no está cerrado,
 ni para el candidato histórico ni por asociación al nuevo artefacto.
+
+### Corrección del coste fijo de opciones vacías SQLite
+
+Encargo «Corrígelo» tras el análisis de los 14 controles: se corrige el viaje
+redundante, no el umbral ni la incertidumbre mediante una nueva medición. Rama
+perf/sqlite-empty-options desde afcf3990; candidatos e4eb17cc y b93681b7,
+respectivos wheels y campañas agotadas intactos. Parte II y cierres anteriores
+conservados. El censo alcanza SQLiteAdminRuntime.collection_options,
+SQLiteEngine.collection_options, el ciclo de vida SQLiteConnection y sus
+consumidores de resolución de contexto; sin nuevos callers públicos ni SPI.
+
+S1/S2 implementados y comprobados focalmente: las tres reproducciones de job/SQL
+redundante son rojas antes del cambio y verdes después. Una única observación
+vacía vive en SQLiteConnection, junto al owner de metadatos ya existente; se
+libera en close. Mismo objeto de conexión primaria, total_changes intacto y sin
+transacción son necesarios para reutilizarla; el lock se intenta sin esperar.
+La ruta caliente no ejecuta SQL. No se memoriza archivo, perfil virtual ni
+opciones no vacías. La comprobación original de sesión precede a todo hit.
+No se cambia la lectura de opciones ni se incorporan invalidaciones por DDL.
+
+Pasan 34 pruebas del contrato de jobs incluyendo find/aggregate/vector. El grupo
+de frescura/materialización pasa 56 antes de añadir el control vectorial y las
+últimas comprobaciones. El primer prototipo restringía al tipo sqlite3.Connection
+base y no alcanzaba el tipo propietario real SQLiteConnection; las tres pruebas
+lo detectaron y se retiró ese estado provisional en favor del owner correcto.
+S3 (tres Python/replay/review) pendiente; no se atribuyen resultados de coste.
+
+S3 aceptado focalmente: selección prevalidada de 301 pruebas aprobadas en cada
+Python 3.13/3.14/3.15, con contratos de jobs, materialización/contexto, transacción,
+compatibilidad SQLite 4.5/4.10 y tests del engine. Replay prevalidado de 960 casos
+verde contra capturas MongoDB 7/8/9 existentes: materialized_context, command_let,
+find_projection y cursor_consumption, ambos motores y superficies registradas
+sync/async/wire-sync/wire-async. Ratchet de lint verde en cinco archivos Python;
+diff revisado y git diff --check verde. Se conservan los rojos y el prototipo
+fallido: no se oculta su resultado como verde ni se atribuyen a la versión final.
+
+Se comprueban ausencia de SQL/job en caliente y aislamiento del dict devuelto;
+invalidez conservadora tras escritura de datos y collMod, drop/recreación,
+rename/dropTarget y dropDatabase; lectura actual tras commit/abort y rechazo de
+sesión ajena, sin reutilizar dentro de transacción; archivo actualizado por otro
+engine sin cambiar total_changes local; perfil virtual que desaparece sin
+escritura SQL; conexión/reconexión y contención con progreso del event loop.
+El caso de namespace recreado empieza ahora por metadata vacía antes de pasar
+a collation en/strength2 y simple, sin reutilización stale entre operaciones.
+
+Implementación y verificación focal S1–S3 completas. Son tres archivos productivos,
+un único valor acotado por conexión y dos archivos de tests; no hay gestor,
+generación de invalidación nueva, hook DDL, SQL en event loop ni dependencia/SPI
+nuevos. SQLiteConnection sigue siendo propietario y libera la observación aun
+si close falla. El camino de fallback mantiene la autoridad original.
+
+Congelación comprobada: ambas distribuciones wheel e4eb17cc/a10cd637 y
+b93681b7/b36a7ec8, sus manifests instalados y diez registros de ambas campañas
+/config/muestras/looks/resumen siguen idénticos; main y la rama de evaluación
+anterior no se mueven. Ninguna medición de coste, perfil, build o suite global
+F11 se ha ejecutado en esta corrección. El presupuesto del +5% queda sin
+verificar para el nuevo producto; no se transfiere aceptación de runtime de
+b93681b7 ni se resetean sus dos intentos agotados. F11 sigue pendiente.

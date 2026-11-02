@@ -8269,6 +8269,10 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> dict[str, object]:
+        if self._admin_runtime.has_current_empty_options(
+            db_name, coll_name, context=context
+        ):
+            return {}
         return await self._run_blocking(
             self._collection_options_sync,
             db_name,
