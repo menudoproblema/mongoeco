@@ -2938,7 +2938,7 @@ Pruebas focales por bloque; suites globales reservadas a F11.
 | F08 | Implementado y comprobado focalmente | Claves contextuales/natural, inicializadores y acumulación, materialización/spill real; aceptación integrada en F11. |
 | F09 | Implementado y comprobado focalmente | Tres unidades y perfiles nativos; aceptación integrada y conservación CXP en F11. |
 | F10 | Implementado y comprobado focalmente | Fachadas/metadata nativas y rechazos sin efectos; aceptación integrada en F11. |
-| F11 | Bloqueado por coste | Gates funcionales y matriz comprobados; tres calibraciones A/A inválidas, sin ABBA ni aceptación de entrega. |
+| F11 | En ejecución: coste reformulado | Gates funcionales y matriz comprobados; tres calibraciones A/A inválidas, sin ABBA ni aceptación de entrega. |
 
 F00: se reutiliza el runner y se registran 135 testigos focales de familias
 F02–F10 más el caso de límites en semantic_response_frontier. Capturas físicas
@@ -3237,3 +3237,16 @@ Revisión independiente completada: diff y documentación de comportamiento alin
 Estado separado: contrato vigente y entrada satisfecha; F00–F10 implementados/comprobados, sin corrección productiva pendiente identificada; entrega F11 bloqueada por precisión de medición y comparación de coste aún no ejecutada. Suites completas con sus recuperaciones explícitas, cobertura real >=99%, deep, matriz 12/12, API/typing/SPI, snapshots, lint, instalaciones/distribuciones reproducibles, SDK-free, conformance, persistencia y diferenciales están registrados sobre el payload final. Permanecen pendientes exclusivamente la aceptación del coste y el registro final de entrega que depende de ella. No hay revisión de diff/documentación pendiente ni ampliación a parte II.
 
 Evaluación del criterio solicitada por el usuario (propuesta, no cambio aprobado): exigir buena evidencia de rendimiento es razonable; hacer del máximo A/A <=5% en cada uno de 44 casos una precondición universal no está demostrado viable en este equipo compartido. El máximo de cuatro valores es sensible a picos, y la tolerancia de regresión ligada al ruido mezcla calidad de medida con presupuesto admisible. Las guías primarias de pyperf separan advertencias de estabilidad y comparación estadística (https://pyperf.readthedocs.io/en/latest/analyze.html y https://pyperf.readthedocs.io/en/latest/cli.html). Se propone mantener las garantías deterministas y BSON, definir por separado un presupuesto de regresión explícito y clasificar la comparación como aceptada/regresión/inconcluyente con un número acotado de intentos, reutilizando workers y ABBA. Declarar inconcluyente no acredita rendimiento. Aplazar su aceptación o cambiar el presupuesto exige disposición explícita del owner; esta nota no modifica el plan aprobado ni cierra F11.
+
+
+2026-11-02: el usuario autoriza reformular únicamente el coste F11 y continuar.
+Se materializa el presupuesto fijo +5% por cada uno de los 44 casos, dos intentos
+máximos de tres ABBA, acumulación de todos los bloques y decisión con límites de
+Student sobre log-razones pareadas (97,5% unilateral por evaluación, dos evaluaciones).
+Aceptación sólo con las 44 cotas superiores <=1,05; una cota inferior >1,05 señala
+regresión por investigar; el resto es inconcluyente y no acredita rendimiento.
+Se documentan supuestos y límites del modelo. Se conservan identidad BSON,
+presupuestos deterministas, workers y agregación, Python 3.14.5/GC/política/semilla.
+Se fijan 500/1.000 operaciones antes de medir A/B; no se repiten A/A ni los gates
+aceptados. Los rojos anteriores conservan su significado histórico. No se añade
+runner, documento ni capa productiva; sólo cambia el contrato de coste autorizado.

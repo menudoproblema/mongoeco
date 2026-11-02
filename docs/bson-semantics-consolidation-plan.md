@@ -2310,24 +2310,61 @@ reproducción negativa; no obliga a reescribir materialización que ya es correc
   esa salida errónea no es oráculo ni control de rendimiento equivalente:
   validar la salida nueva contra MongoDB y medir el coste correcto por separado.
   No exigir otra mejora sobre el P2 ya aceptado ni sumar ratios con bases distintas.
-  Para los dos workloads P2 retenidos, A/A y tres ABBA con workers existentes:
-  conservar identidad BSON de resultados y, para cada uno de los 44 casos,
-  razón agrupada candidato/base <= 1 + ruido A/A. Ruido: máxima desviación
-  relativa de los cuatro valores A/A respecto a su mediana. Para este nuevo
-  incremento se fija antes de medir un máximo admisible de ruido A/A de 0,05
-  (5%) en cada caso. Si cualquiera lo supera, la calibración no es válida:
-  se registra, estabiliza el entorno o alarga la muestra y se repite el
-  protocolo completo; no se compara para aceptar ni se recorta el ruido a 5%.
-  El umbral no se eleva a la vista de resultados ni reevalúa receipts históricos.
-  Es un criterio nuevo de calidad de medición de esta propuesta, no un SLA
-  universal ni un requisito histórico de CI.
-  Razón agrupada:
-  mediana de los seis B dividida por mediana de los seis A de las tres ABBA.
-  Las repeticiones internas y agregación por worker se conservan. No se exige
-  razón <1 ni mejora mayor que ruido. Un caso fuera del criterio deja el gate
-  pendiente: investigar/repetir causalmente o alargar muestras, conservando
-  intentos rojos; no escoger solo tandas favorables ni elevar el margen.
-  Una decisión distinta de presupuesto sería cambio de contrato explícito.
+  Reformulación del gate de coste autorizada el 2026-11-02: se separan
+  presupuesto, precisión de medida y decisión. No reabre O1–O8/D05/P2 ni
+  modifica los demás gates de F11 o la parte II.
+  Presupuesto explícito: aumento máximo de CPU del 5% respecto a 2fa637f6
+  en cada uno de los 44 controles retenidos, sin compensar casos entre sí.
+  Sustituye expresamente la tolerancia variable `1 + ruido A/A`; conserva
+  su techo anterior de 5%, pero ahora es un presupuesto de regresión decidido,
+  no una afirmación de ausencia de cualquier incremento detectable.
+  Identidad BSON, datasets, tipos, contadores y presupuestos deterministas
+  siguen siendo requisitos duros. Una divergencia funcional no es ruido.
+
+  Reutilizar los dos workers existentes sin modificarlos, incluidos sus
+  calentamientos y agregación interna: CPU por operación en consumo y mediana
+  de tres muestras en búsqueda. Python 3.14.5, GC activo, PYTHONHASHSEED=0 y
+  taskpolicy -a idénticos para A/base y B/candidato. Fijar 500 operaciones
+  de consumo y 1.000 de búsqueda por muestra antes de observar A/B. Los tres
+  intentos A/A ya conservados son diagnóstico de inestabilidad; no se ejecutan
+  más calibraciones ni se usan sus tiempos para aceptar al candidato. Cada
+  worker ya calienta su lectura antes de medir; no añadir calentamientos externos.
+
+  Máximo dos intentos por candidato material y configuración fijada, cada uno
+  con tres bloques ABBA completos y secuenciales. El segundo añade tres bloques
+  al primero: se conservan y usan todos los seis, sin escoger rondas, descartar
+  valores ni elevar el presupuesto. No reiniciar el contador sin una corrección
+  material causal o una nueva disposición explícita del owner. Los datos anteriores
+  al cambio de protocolo nunca se mezclan con esta comparación.
+
+  Para cada caso y bloque i, x_i = (log B1 + log B2 - log A1 - log A2)/2,
+  con la agregación propia del worker aplicada antes de los logs. ABBA cancela
+  deriva temporal lineal en esa escala; no garantiza eliminar interferencias.
+  La razón estimada es exp(media(x)). Tras n=3 bloques, y sólo si hace falta
+  tras n=6, calcular límites exp(media(x) +/- t*s(x)/sqrt(n)), con desviación
+  muestral y t=4,303 (n=3) o 2,571 (n=6), redondeados conservadoramente desde
+  la tabla de Student de NIST (https://itl.nist.gov/div898/handbook/eda/section3/eda3672.htm).
+  Son límites unilaterales del 97,5% en cada una de las dos evaluaciones,
+  repartiendo alfa 0,05 entre ambas. La aceptación exige que todos los casos
+  cumplan, una prueba de intersección-unión; no se promete cobertura simultánea
+  de todos los intervalos ni una garantía universal fuera de este experimento.
+  La inferencia es condicional a bloques independientes y log-razones
+  aproximadamente normales; no es una cota libre de supuestos con tres muestras.
+  Valores no finitos, tiempos no positivos, varianza cero por resolución,
+  bloques incompletos o interferencias que invaliden esos supuestos dejan
+  el caso inconcluyente, nunca verde. Conservar datos y rangos para revisión.
+
+  Decisiones observables: aceptado sólo si el límite superior <=1,05 en los
+  44 casos; regresión observada si algún límite inferior >1,05 (investigar
+  causalmente ese caso); en los demás casos, inconcluyente. Una regresión
+  observada es evidencia por caso, no una afirmación familiar de significación.
+  Si la primera evaluación es inconcluyente, ejecutar el único intento adicional
+  y evaluar los seis bloques acumulados. Si la segunda sigue inconcluyente,
+  detener medición automática y conservar F11 pendiente: falta otro entorno
+  adecuado o disposición explícita del owner; no es aceptación de rendimiento
+  ni cierre de entrega. Un fallo técnico/funcional se conserva y se corrige
+  según su causa, sin convertirlo en inconcluyente para ocultarlo. Los demás
+  gates ya aceptados no se repiten salvo invalidación causal.
 - Cierre: todos los criterios exigidos de F00–F10 comprobados, gates aplicables
   terminales verdes, revisión final, docs de comportamiento/migración alineadas,
   commits semánticos por corrección/familia y árbol limpio. No basta el
