@@ -1,0 +1,286 @@
+{
+  "accepted": true,
+  "pending": null,
+  "inventory": {
+    "memory-sync": {
+      "secondary_lookup_indexed": [
+        "secondary_lookup_indexed_1k"
+      ],
+      "cursor_consumption": [
+        "cursor_consumption_first_200",
+        "cursor_consumption_materialized_200"
+      ],
+      "simple_aggregation": [
+        "simple_aggregation_topk"
+      ],
+      "sort_limit": [
+        "sort_limit_indexed_200",
+        "sort_limit_unindexed_200"
+      ],
+      "search_diagnostics": [
+        "search_text_topk_100",
+        "search_autocomplete_topk_100",
+        "search_wildcard_topk_100",
+        "search_regex_topk_100",
+        "search_compound_hybrid_topk_100",
+        "search_compound_should_near_topk_100",
+        "search_compound_candidateable_should_topk_100",
+        "search_compound_candidateable_should_matched_topk_100",
+        "search_compound_candidateable_should_title_topk_100",
+        "search_compound_candidateable_should_msm2_topk_100",
+        "search_compound_candidateable_should_tie_heavy_topk_100"
+      ],
+      "vector_search_diagnostics": [
+        "vector_search_ann_topk_100",
+        "vector_search_cosine_low_candidates_topk_100",
+        "vector_search_cosine_high_candidates_topk_100",
+        "vector_search_dot_product_topk_100",
+        "vector_search_euclidean_topk_100",
+        "vector_search_filtered_topk_100",
+        "vector_search_filtered_boolean_topk_100",
+        "vector_search_filtered_underflow_topk_100",
+        "vector_search_filtered_min_score_topk_100"
+      ]
+    },
+    "memory-async": {
+      "secondary_lookup_indexed": [
+        "secondary_lookup_indexed_1k"
+      ],
+      "cursor_consumption": [
+        "cursor_consumption_first_200",
+        "cursor_consumption_materialized_200"
+      ],
+      "simple_aggregation": [
+        "simple_aggregation_topk"
+      ],
+      "sort_limit": [
+        "sort_limit_indexed_200",
+        "sort_limit_unindexed_200"
+      ],
+      "search_diagnostics": [
+        "search_text_topk_100",
+        "search_autocomplete_topk_100",
+        "search_wildcard_topk_100",
+        "search_regex_topk_100",
+        "search_compound_hybrid_topk_100",
+        "search_compound_should_near_topk_100",
+        "search_compound_candidateable_should_topk_100",
+        "search_compound_candidateable_should_matched_topk_100",
+        "search_compound_candidateable_should_title_topk_100",
+        "search_compound_candidateable_should_msm2_topk_100",
+        "search_compound_candidateable_should_tie_heavy_topk_100"
+      ],
+      "vector_search_diagnostics": [
+        "vector_search_ann_topk_100",
+        "vector_search_cosine_low_candidates_topk_100",
+        "vector_search_cosine_high_candidates_topk_100",
+        "vector_search_dot_product_topk_100",
+        "vector_search_euclidean_topk_100",
+        "vector_search_filtered_topk_100",
+        "vector_search_filtered_boolean_topk_100",
+        "vector_search_filtered_underflow_topk_100",
+        "vector_search_filtered_min_score_topk_100"
+      ]
+    },
+    "sqlite-sync": {
+      "secondary_lookup_indexed": [
+        "secondary_lookup_indexed_1k"
+      ],
+      "cursor_consumption": [
+        "cursor_consumption_first_200",
+        "cursor_consumption_materialized_200"
+      ],
+      "simple_aggregation": [
+        "simple_aggregation_topk"
+      ],
+      "sort_limit": [
+        "sort_limit_indexed_200",
+        "sort_limit_unindexed_200"
+      ],
+      "search_diagnostics": [
+        "search_text_topk_100",
+        "search_autocomplete_topk_100",
+        "search_wildcard_topk_100",
+        "search_regex_topk_100",
+        "search_compound_hybrid_topk_100",
+        "search_compound_should_near_topk_100",
+        "search_compound_candidateable_should_topk_100",
+        "search_compound_candidateable_should_matched_topk_100",
+        "search_compound_candidateable_should_title_topk_100",
+        "search_compound_candidateable_should_msm2_topk_100",
+        "search_compound_candidateable_should_tie_heavy_topk_100"
+      ],
+      "vector_search_diagnostics": [
+        "vector_search_ann_topk_100",
+        "vector_search_cosine_low_candidates_topk_100",
+        "vector_search_cosine_high_candidates_topk_100",
+        "vector_search_dot_product_topk_100",
+        "vector_search_euclidean_topk_100",
+        "vector_search_filtered_topk_100",
+        "vector_search_filtered_boolean_topk_100",
+        "vector_search_filtered_underflow_topk_100",
+        "vector_search_filtered_min_score_topk_100"
+      ]
+    },
+    "sqlite-async": {
+      "secondary_lookup_indexed": [
+        "secondary_lookup_indexed_1k"
+      ],
+      "cursor_consumption": [
+        "cursor_consumption_first_200",
+        "cursor_consumption_materialized_200"
+      ],
+      "simple_aggregation": [
+        "simple_aggregation_topk"
+      ],
+      "sort_limit": [
+        "sort_limit_indexed_200",
+        "sort_limit_unindexed_200"
+      ],
+      "search_diagnostics": [
+        "search_text_topk_100",
+        "search_autocomplete_topk_100",
+        "search_wildcard_topk_100",
+        "search_regex_topk_100",
+        "search_compound_hybrid_topk_100",
+        "search_compound_should_near_topk_100",
+        "search_compound_candidateable_should_topk_100",
+        "search_compound_candidateable_should_matched_topk_100",
+        "search_compound_candidateable_should_title_topk_100",
+        "search_compound_candidateable_should_msm2_topk_100",
+        "search_compound_candidateable_should_tie_heavy_topk_100"
+      ],
+      "vector_search_diagnostics": [
+        "vector_search_ann_topk_100",
+        "vector_search_cosine_low_candidates_topk_100",
+        "vector_search_cosine_high_candidates_topk_100",
+        "vector_search_dot_product_topk_100",
+        "vector_search_euclidean_topk_100",
+        "vector_search_filtered_topk_100",
+        "vector_search_filtered_boolean_topk_100",
+        "vector_search_filtered_underflow_topk_100",
+        "vector_search_filtered_min_score_topk_100"
+      ]
+    }
+  },
+  "output": "/Users/uve/Proyectos/mongoeco/.tmp/q06-5ac014b1",
+  "harness_sha256": "sha256:df42746bcc2361660d2498b901fd308006d07ab0a40254147146e1b1533ca552",
+  "dataset_sha256": "sha256:c2b95c2ef946b1eee07d3311fedac30f6712de6ff7668d0f095f4ba705f4df63",
+  "controller_sha256": "9270036f954b2744ecca51a2562d2655bff93e9831cceedfab05298ac4844a1c",
+  "attempts_started": 0,
+  "executable": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/env314/bin/python",
+  "prefix": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/env314",
+  "python": "3.14.5",
+  "gc_enabled": true,
+  "dependencies": {
+    "pip": "26.1.1",
+    "ast_serialize": "0.8.0",
+    "mongoeco": "5.0.0",
+    "rfc3986": "2.0.0",
+    "rpds-py": "2026.6.3",
+    "jaraco.classes": "3.4.0",
+    "mypy": "2.3.1",
+    "packaging": "26.3",
+    "readme_renderer": "45.0",
+    "iniconfig": "2.3.0",
+    "jaraco.context": "6.1.2",
+    "nodeenv": "1.10.0",
+    "cxp": "5.0.0",
+    "msgspec": "0.21.1",
+    "cfgv": "3.5.0",
+    "jsonschema-specifications": "2025.9.1",
+    "mongomock": "4.3.0",
+    "requests": "2.34.2",
+    "rich": "15.0.0",
+    "pyuca": "1.2",
+    "pytz": "2026.3.post1",
+    "pytest-cov": "7.1.0",
+    "jsonschema": "4.26.0",
+    "numpy": "2.5.2",
+    "orjson": "3.13.0",
+    "build": "1.5.0",
+    "pytest-xdist": "3.8.0",
+    "platformdirs": "4.11.2",
+    "pre_commit": "4.6.2",
+    "charset-normalizer": "3.5.0",
+    "dnspython": "2.8.0",
+    "pytest-asyncio": "1.4.0",
+    "jaraco.functools": "4.6.0",
+    "coverage": "7.15.4",
+    "pytest": "9.1.1",
+    "Pygments": "2.20.0",
+    "usearch": "2.26.4",
+    "mdurl": "0.1.2",
+    "distlib": "0.4.3",
+    "PyYAML": "6.0.3",
+    "pymongo": "4.19.0",
+    "sortedcontainers": "2.4.0",
+    "id": "1.6.1",
+    "sentinels": "1.1.1",
+    "twine": "7.0.0",
+    "rfc8785": "0.1.4",
+    "certifi": "2026.7.22",
+    "shapely": "2.2.0",
+    "execnet": "2.1.2",
+    "librt": "0.15.0",
+    "virtualenv": "21.7.4",
+    "referencing": "0.37.0",
+    "filelock": "3.32.2",
+    "markdown-it-py": "4.2.0",
+    "numkong": "7.8.0",
+    "ruff": "0.16.2",
+    "tabulate": "0.10.0",
+    "tqdm": "4.70.0",
+    "pluggy": "1.6.0",
+    "pcre2": "0.7.1",
+    "attrs": "26.1.0",
+    "pathspec": "1.1.1",
+    "requests-toolbelt": "1.0.0",
+    "identify": "2.6.19",
+    "urllib3": "2.7.0",
+    "typing_extensions": "4.16.0",
+    "hypothesis": "6.165.9",
+    "psutil": "7.2.2",
+    "pyproject_hooks": "1.2.0",
+    "idna": "3.18",
+    "keyring": "25.7.0",
+    "docutils": "0.23",
+    "anyio": "4.15.1",
+    "mypy_extensions": "1.1.0",
+    "python-discovery": "1.5.2",
+    "more-itertools": "11.1.0",
+    "nh3": "0.3.6"
+  },
+  "environment": {
+    "MONGOECO_JSON_BACKEND": "stdlib",
+    "MONGOECO_REGEX_BACKEND": "python"
+  },
+  "subjects": [
+    {
+      "label": "A",
+      "wheel_sha256": "2ed1bd93385d759d7a7a61ebc7409ab74c544ba7d8cf58590f56405325974d2f",
+      "wheel": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/distributions-a/mongoeco-5.0.0-py3-none-any.whl",
+      "revision": "7dcb9df2087c4e8d0cad091bfdce1ad9d45c3699",
+      "subject": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/subjects/A",
+      "package_files": 310
+    },
+    {
+      "label": "B",
+      "wheel_sha256": "5ac014b1643e5230d1e894828859f372b8e8870a4337dbe91c5c92044d45bb76",
+      "wheel": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/distributions-a/mongoeco-5.0.0-py3-none-any.whl",
+      "revision": "95fa38c549051398225c6c90ce90c28989594c94",
+      "subject": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/subjects/B",
+      "package_files": 310
+    }
+  ],
+  "help_command": [
+    "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/env314/bin/python",
+    "-m",
+    "benchmarks.report",
+    "--subject-root",
+    "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-q06-0jvd54p2/subjects/A",
+    "--help"
+  ],
+  "own_functional_sessions_terminal": true,
+  "policy": "reuse original constrained release environment; all prior dependency versions unchanged; optional pcre2 retained but disabled for measurements"
+}
