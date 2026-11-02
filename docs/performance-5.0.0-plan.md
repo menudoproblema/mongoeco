@@ -1,6 +1,7 @@
 # Optimización previa a 5.0.0: análisis y plan acotado
 
-Estado: propuesta, 2 de noviembre de 2026. No implementada ni medida como mejora.
+Estado: propuesta revisada, 2 de noviembre de 2026.
+No implementada ni medida como mejora.
 Este documento posee las decisiones propuestas para este incremento; la
 [preparación de release](release-5.0.0.md) conserva sus resultados históricos.
 Normas vigentes: [testing y compatibilidad](architecture/testing-and-compatibility.md)
@@ -134,12 +135,44 @@ scores y empates de los candidatos no evaluados. No se elimina ese guard.
 Un posting puede servir como evidencia positiva sólo tras acreditar path,
 versión y mantenimiento; su ausencia nunca demuestra ausencia del campo.
 
+## Simplificaciones de esta revisión
+
+- Q04 no depende funcionalmente de Q02: constructor/caché textual y residual
+  MQL resuelven trabajos distintos. Se conserva el orden propuesto para revisar
+  cambios pequeños, sin convertirlo en una dependencia artificial.
+- Q01 mantiene intacta la clasificación de enteros de `bson_scalars`; Q02 usa
+  una función/cierre en el módulo existente de filtrado; Q03 usa una tabla finita,
+  sin LRU ni factory. Ningún bloque crea una autoridad, protocolo o capa nuevos.
+- Q04 se limita inicialmente a documentos originales del namespace y una vista
+  corriente sin sesión. Los demás dominios conservan el fallback. Ampliar la
+  caché a transacciones/snapshots no es requisito para optimizar el caso habitual.
+- Q05 es una decisión acotada, no una obligación de cambiar el lifecycle. Si la
+  reducción exige otro estado/owner o desplaza errores, se difiere sin código.
+- Cada bloque tiene una verificación agrupada y un commit coherente por defecto;
+  no se exigen dos commits ni dos tandas sólo por separar extracción y consumo.
+- El control A/A y ABBA comparten una observación: `A0,A1,B1,B2,A2` sustituye
+  `A,A,A,B,B,A`. Son veinte invocaciones máximas en vez de veinticuatro, con ambos
+  contrastes presentes. El control compartido no es una calibración independiente.
+
 ## Incremento recomendado, por bloques
 
 Cada bloque termina con diff revisado, evidencia focal y commit semántico.
 «Implementado y comprobado focalmente» no significa «aceptado en la entrega».
 Se agrupan verificaciones después de un cambio coherente, no tras cada edición.
 No se añaden runners, almacenes, jerarquías genéricas ni interfaces públicas.
+El único registro de avance es este plan y su evidencia existente: por bloque,
+revisión/diff, selección focal, resultado/oráculo y contador objetivo antes/después.
+No se crean fichas o documentos adicionales por criterio.
+
+**Condición común de cierre focal:** todos los casos exigidos del bloque verdes
+(o un skip permitido y justificado por el contrato, nunca por falta de setup),
+sin cambio en observables salvo metadata física veraz declarada, y sin dependencia
+productiva de los contadores de prueba. Se comparan valores/tipos BSON, orden,
+metadata semántica, errores/fases y recursos con los oráculos ya establecidos;
+no se introduce un normalizador que borre diferencias. El diff debe retirar
+trabajo o duplicación concretos sin añadir otra autoridad semántica. Las
+comprobaciones globales se reservan a Q06. Sólo Q05 permite descarte sin cambio
+como disposición prevista; los objetivos incumplidos de Q01–Q04 siguen abiertos.
 
 | Bloque | Prioridad | Depende de | Resultado exigible |
 | --- | --- | --- | --- |
@@ -147,18 +180,20 @@ No se añaden runners, almacenes, jerarquías genéricas ni interfaces públicas
 | Q01: tamaño BSON nativo | P1 | Q00 | Menos dispatch genérico, mismo tamaño y errores |
 | Q02: predicado residual por operación | P1 | Q00 | Preparación perezosa reutilizada, mismo evaluador semántico |
 | Q03: configuración SDK finita | P2 | Q00 | Configuración construida una vez, admisión BSON conservada |
-| Q04: materialización Search única y reutilizada | P1 | Q02 | Constructor único y ausencia de retokenización caliente elegible |
+| Q04: materialización Search única y reutilizada | P1 | Q00 | Constructor único y ausencia de retokenización caliente elegible |
 | Q05: tránsitos de cierre sin trabajo | P2, condicionado | Q00; medir junto al resto | Reducir sólo tránsitos vacíos demostrados o documentar descarte sin cambio |
 | Q06: aceptación del nuevo candidato | Obligatorio | Disposición de Q00–Q05 | Artefacto nuevo probado y coste caracterizado con límites explícitos |
 
 Orden de ejecución: **Q00 → Q01 → Q02 → Q03 → Q04 → Q05 → Q06**.
-Q01/Q02/Q03 son independientes funcionalmente. No exige ejecuciones paralelas:
-la secuencia permite atribución y evita cargas propias durante mediciones.
+Q01–Q04 son independientes funcionalmente después de Q00. No exige ejecuciones
+paralelas: la secuencia permite atribuir cambios de trabajo por diff/conteos.
+La medición final sólo atribuye tiempos al incremento conjunto, no un porcentaje
+a cada commit.
 
 ### Q00 — Fijar la base y corregir el explain del harness
 
 Congelar cc2d07d7 y su wheel, comprobar intérprete, dependencias constrained,
-USearch >=2.26.4, SDK, imports, GC, hashes de harness/dataset y archivo de salida.
+USearch 2.26.4, SDK, imports, GC, hashes de harness/dataset y archivo de salida.
 Preservar los datos inválidos anteriores como diagnóstico, separados.
 Crear el índice antes de obtener el explain indexed de `sort_limit`; obtener el
 unindexed en su colección sin índice. No afirmar uso físico de índice Memory
@@ -168,17 +203,22 @@ Prueba focal: el adaptador de benchmark observa el índice creado al pedir el
 explain indexed; los hashes del resultado medido no cambian. Usar los tests de
 contratos de benchmarks existentes. Si cambia el hash del harness, aplicar ese
 mismo harness nuevo a ambos sujetos; no comparar planes de harness distintos.
-**Cierre:** comandos/selección válidos y diagnóstico veraz; no se exige una
-mejora de tiempo por corregir metadata.
+**Cierre:** `tests/unit/core/test_benchmark_harness.py` y el test de orden
+create-index/explain verdes; mismos resultados medidos antes/después de la
+corrección; inventario fijo de seis workloads y 26 tareas por motor derivado de
+la tanda válida anterior. Preflight documentado, comandos válidos y destino nuevo
+sin sobrescribir evidencia. No se exige una mejora de tiempo por corregir metadata.
+Este inventario se fija antes de ver resultados B; un skip simétrico no lo reduce.
 
 ### Q01 — Abaratar la autoridad existente de tamaño
 
 Atajos por tipo **exacto** para los nativos frecuentes en `core/bson_size.py`.
 Subclases, SON, Code, Int64, Binary y wrappers internos conservan el fallback.
 Preservar UTF-8, NUL en claves/cstrings, rangos int32/int64, overflow y todos los
-consumidores de la función. La clasificación numérica sigue teniendo owner en
-`bson_scalars`: reutilizarla o extraer allí una primitiva local compartida si
-hace falta, sin duplicar reglas numéricas en un segundo clasificador.
+consumidores de la función. El dispatch temprano se limita a `str`, `dict`,
+`list`, `bool`, `None` y `float` exactos. Los enteros siguen pasando por
+`bson_numeric_alias`; no se extrae otro helper numérico ni se duplican rangos.
+Optimizar también ese clasificador queda fuera de Q01.
 
 No aproximar tamaños, dimensionar sólo cerca del límite, usar la longitud del
 JSON ni sustituir por serializar/copiar documentos con el SDK en producción.
@@ -193,14 +233,18 @@ Pruebas focales y diferenciales:
   transform de MongoDB 7/8/9, más `test_response_boundaries.py`. Mantener tamaño
   exacto, lotes, pendiente, 10334, `batch_size`, callbacks y fase del decoder.
 
-**Cierre:** mismas observaciones, menos visitas a helpers genéricos para los
-nativos elegibles; sin documentos copiados ni codificados adicionales. Tiempos
-de `cursor_consumption` y lookup se caracterizan al final, en los cuatro motores.
+**Cierre:** propiedad de bytes y replays verdes en las vistas indicadas; cada
+familia nativa optimizada evita el dispatch genérico anterior, mientras wrappers,
+subclases e enteros mantienen su tratamiento. El contador focal distingue raíz,
+recursión y tipos; no cuenta una visita como un documento. Cero copias o encodes
+adicionales en producción, sin modificar `ResponseBatchReader`. Tiempos de
+`cursor_consumption` y lookup se caracterizan al final, en los cuatro motores.
 
 ### Q02 — Compilar el residual una vez, sin una caché nueva
 
-Generalizar mínimamente el patrón perezoso SQLite existente a un helper interno
-en el owner de filtrado. Recibe dialecto/collation/variables explícitos, usa
+Generalizar mínimamente el patrón perezoso SQLite existente a una función que
+devuelve un cierre, en el módulo existente de filtrado; sin clase, módulo nuevo
+ni interfaz adicional. Recibe dialecto/collation/variables explícitos, usa
 `compile_filter` y `QueryEngine.match_plan`; el core no importa `OperationContext`
 de la API. Memory y los fallbacks SQLite lo consumen. Eliminar el helper local
 sustituido, sin crear una segunda autoridad de matching.
@@ -221,13 +265,18 @@ ejecuta trabajo, más `test_search_candidate_context.py`.
 **Cierre:** cero compilaciones si no se invoca el residual y una preparación
 raíz por residual realmente usado; no exigir que desaparezca toda llamada
 recursiva del compilador. Mismos matches, errores/fases, candidatos y metadata
-semántica. Ningún plan se comparte entre operaciones.
+semántica. Ningún plan se comparte entre operaciones. Un caso con N candidatos
+acredita N decisiones MQL y una preparación raíz; cero candidatos acredita cero
+preparaciones. El filtro que falla conserva la misma primera observación de
+error que la base. Se comprueban dos operaciones sucesivas con contextos distintos;
+los contadores van en pruebas/sonda, no en una nueva instrumentación productiva.
 
 ### Q03 — Precalcular sólo configuración SDK inmutable
 
 Mover a ámbito privado de módulo la correspondencia de las cinco representaciones
-y sus `DriverCodecOptions`, únicamente cuando el SDK existe. No cachear opciones
-arbitrarias del usuario, peticiones ni documentos. Mantener la ruta sin SDK,
+y sus cinco `DriverCodecOptions`, únicamente cuando el SDK existe. Es una tabla
+privada completa construida al importar, sin estado de misses ni invalidación.
+No cachear opciones arbitrarias del usuario, peticiones ni documentos. Mantener la ruta sin SDK,
 type registries/decoders y los errores de UNSPECIFIED.
 
 Pruebas: frontera BSON de entrada y UUID, las cinco representaciones contra
@@ -236,12 +285,15 @@ de imports mínimos sin BSON/SDK. No eliminar encode/decode ni reutilizar un
 contexto de ejecución por este motivo.
 
 **Cierre:** mismo roundtrip y errores; desaparece la construcción por petición
-del mapa/configuración finita. Es una simplificación aceptable sin atribuirle
-los 38 µs íntegros que un informe asigna a toda la frontera BSON.
+del mapa/configuración finita. El contador agrupa las cinco modalidades y
+comprueba cero construcciones adicionales tras el import; los tests prueban
+bytes/errores, no sólo identidad de objetos. Es una simplificación aceptable
+sin atribuirle los 38 µs íntegros que un informe asigna a toda la frontera BSON.
 
 ### Q04 — Una materialización textual, reutilizada donde es válida
 
-Dos commits revisables dentro del bloque, con verificaciones agrupadas:
+Un cambio coherente en dos pasos lógicos, verificado conjuntamente. Separar
+commits sólo si la extracción es útil para revisar o revertir de forma independiente:
 
 1. Una función pura en `core/search.py` construye `MaterializedSearchDocument`
    desde entradas. La materialización desde documento y el loader SQLite la
@@ -251,7 +303,11 @@ Dos commits revisables dentro del bloque, con verificaciones agrupadas:
    la misma vista. Validar nombre físico, versión del backend, cambios de
    definición/recreación del índice, sesión y snapshot. Si esa identidad no
    basta, conservar evaluación documental en ese dominio; no ampliar la caché
-   con claves ad hoc. El documento original sigue gobernando `exists` y MQL.
+   con claves ad hoc. La nueva reutilización se habilita sólo para documentos
+   originales del namespace, vista corriente y `session is None`, con identidad
+   backend/índice acreditada. Sesiones, snapshots o fuentes transformadas conservan
+   fallback, sin ampliar el ámbito de cachés de otras rutas. El documento original
+   sigue gobernando `exists` y MQL; una entrada textual vacía no prueba ausencia.
 
 No cambia la selección de candidatos, la exactitud declarada ni la poda top-k.
 No crea un índice persistente de presencia. La caché fría puede construir una
@@ -269,7 +325,16 @@ fichero deben evitar materialización obsoleta. Mantener deadlines y fallbacks.
 
 **Cierre:** un constructor propietario; en la consulta caliente elegible,
 ninguna tokenización de contenido por documento sin cambios; resultados y
-observables equivalentes. No se exige bajar candidatos a O(limit), ni se promete
+observables equivalentes. El testigo obligatorio es el compound candidateable
+should del benchmark, repetido sobre el mismo engine: la segunda consulta sin
+cambios tiene cero retokenizaciones de contenido. Después de una mutación válida
+no se conserva la versión obsoleta y el resultado equivale al oráculo. La primera
+consulta de la nueva versión puede reconstruir el bucket completo: no se exige
+invalidación por documento ni un mecanismo nuevo. Un miss no resuelto usa fallback; no se confunde con una materialización vacía válida.
+Los dominios excluidos prueban equivalencia por fallback y no tienen objetivo de
+hit. Si ni el caso corriente puede acreditar identidad, la reutilización sigue
+pendiente: el constructor único no cierra por sí solo Q04.
+No se exige bajar candidatos a O(limit), ni se promete
 recuperar los 11,64×: aún puede ser necesario leer 1.000 documentos por presencia.
 Los campos de explain que describen una estrategia física pueden cambiar sólo
 si son veraces; su schema y los flags de exactitud no se falsean para comparar.
@@ -294,6 +359,15 @@ No exigir un único tránsito para toda operación. **Cierre por descarte:** si 
 ahorro exige ownership nuevo, diferirlo con el contraejemplo y retirar el bloque
 del workset; esa disposición no acredita una mejora. Se toma una decisión,
 no se abre una investigación indefinida antes de la release.
+
+La decisión reutiliza primero la traza aceptada y el mecanismo idle existente;
+como máximo usa la sonda de 60 s prevista para Q05. Si implementa, al menos un
+shape EOF elegible reduce un tránsito vacío respecto a su base; los demás shapes
+controlados no añaden tránsitos ni trabajo físico. Debe pasar el test negativo
+con cleanup que falla y conserva retry, y el de entrega del último documento.
+Si exige un estado nuevo, mover cleanup entre respuestas o cambiar SPI, se
+registra «diferido sin cambio», motivo y superficie afectada; no se fuerza un fix
+para alcanzar un número de tránsitos.
 
 ## Propuestas reservadas: no forman parte de la implementación inicial
 
@@ -350,8 +424,9 @@ Una sonda fallida consume presupuesto; no se reinicia por no favorecer la idea.
 No repetir ablaciones que omiten garantías. Sin necesidad causal, no medir en
 cada bloque: llevar los tiempos a la evaluación integrada.
 
-La revisión actual consumió una única sonda de seis lecturas en menos de un
-segundo; no pertenece al futuro gate ni inicia un intento de medición temporal.
+El estudio inicial consumió una única sonda de seis lecturas en menos de un
+segundo. Esta revisión del plan reutiliza esa evidencia, sin otra sonda ni
+medición; ninguna inicia el futuro intento temporal.
 
 ### Candidato final y gates afectados
 
@@ -374,62 +449,160 @@ la evidencia afectada por su corrección, salvo requisito explícito de ejecuci�
 global del candidato final. Las tareas compatibles se agrupan; los tiempos se
 miden cuando hayan acabado tests, builds y otras cargas propias.
 
-### Protocolo temporal propuesto, distinto de F11
+### Protocolo temporal revisado, distinto de F11
 
-Un solo intento sobre candidato final. Presupuesto **1.800 s de pared** para la
-campaña completa, máximo **180 s por invocación**, sin reposición automática.
-Dos sujetos: A=cc2d07d7 congelado, B=runtime optimizado. Mismo harness posterior a
-Q00 para ambos, dataset/seed 1000, warmup 1, **repetitions 1**. Conservar cada
-JSON v2 por separado: así hay observaciones individuales usando el runner
-existente, sin otro schema/runner ni reconstruir muestras desde medianas.
+Este apartado sustituye la secuencia anterior de seis invocaciones por motor.
+No se inicia ninguna medición al revisar/aprobar el plan.
 
-En cada motor, en orden fijo memory-sync, memory-async, sqlite-sync, sqlite-async:
-**A, A (control), A, B, B, A (contraste ABBA)**. Repetir los seis workloads
-históricos, 26 tareas/motor: lookup, cursor, simple aggregation, sort-limit,
-Search y vector. Máximo 24 informes; no una familia de intentos por cada una de
-las 104 tareas. Una invocación agotada queda incompleta; conservarla y continuar
-sólo mientras quede presupuesto. Nada permite completar A2 histórico ni F11.
+**Preflight, antes del intento:**
 
-Registrar wall, CPU user/sys y RSS disponibles, hashes y trabajo, configuración,
-versiones, orden y tiempos totales. Mantener todos los datos, incluidos fallos;
-los resúmenes redondeados del harness limitan especialmente tareas pequeñas.
-Separar los conteos de caché fría/caliente de la medición normal con warmup.
-No derivar porcentajes de cProfile ni sumar sus tiempos acumulados superpuestos.
+1. Q00–Q05 tienen disposición y el runtime B está congelado. Las pruebas
+   funcionales finales y builds han terminado; no hay otra carga propia en marcha.
+2. A corresponde al wheel 2ed1bd93 y cc2d07d7; B al wheel nuevo con su SHA-256 y
+   revisión. Verificar todos los archivos empaquetados de los sujetos importados,
+   no sólo `__version__`. El harness posterior a Q00 es idéntico para ambos.
+3. Un mismo intérprete CPython 3.14.5 y entorno constrained para todas las
+   invocaciones: PyMongo 4.19.0 y USearch 2.26.4. Comprobar `pip check`, inventario
+   de dependencias completo, paths e imports antes de lanzar. Si se reconstruye
+   el entorno, usar las versiones registradas en la preparación, sin actualizarlas
+   durante la campaña. Mismo host/SQLite/SDK/RSS sampler para A y B.
+4. Fijar `MONGOECO_JSON_BACKEND=stdlib`, `MONGOECO_REGEX_BACKEND=python` y GC
+   activo, sin profiler, monkeypatches ni variables de cobertura. Mantener la
+   política de ejecución de la preparación; no añadir afinidad o GC-off para
+   favorecer un sujeto. Los perfiles opcionales conservan sus tests funcionales.
+5. Verificar los argumentos de la CLI existente por lectura/`--help`, las rutas
+   de sujeto y salida, y el inventario Q00. Usar un destino nuevo bajo `.tmp/`
+   identificado por candidato. No escribir `benchmarks/execution.json` ni
+   sobrescribir informes anteriores. Un fallo aquí se corrige antes del intento.
 
-Disposición, fijada antes de medir:
+**Comando de una invocación**, lanzado desde el checkout del harness fijado:
 
-- **Aceptación funcional/estructural:** oráculos verdes, fronteras conservadas y
-  el trabajo objetivo realmente eliminado; una simplificación debe retirar una
-  duplicación concreta y no añadir estados/cachés sin necesidad.
-- **Mejora temporal observada:** las dos observaciones B son más rápidas que las
-  cuatro A para la tarea, con identidades/oráculos iguales y sin una incidencia de
-  entorno registrada que invalide el contraste. Es evidencia descriptiva del
-  entorno, no intervalo de confianza ni garantía de
-  un porcentaje universal. Informar además las diferencias absolutas y controles.
-- **Empeoramiento observado:** las dos B son más lentas que las cuatro A. Revisar
-  causalmente la tarea afectada antes de aceptar esa optimización; no compensar
-  un empeoramiento ocultándolo en la mediana de los 104 cocientes.
-- **Fallo obligatorio:** cualquier divergencia contractual, oráculo rojo o
-  evidencia funcional exigida ausente bloquea la aceptación; no se clasifica
-  como ruido ni se compensa con tiempos menores.
-- **Inconcluyente en tiempo:** rangos solapados, control con diferencias de
-  equivalencia o incidencias de entorno, resolución insuficiente, timeout o
-  presupuesto agotado. No convertir
-  «sin regresión confirmada» en aceptación de rendimiento. Una simplificación
-  puede aceptarse por mantenimiento y trabajo reducido con tiempo inconcluyente,
-  si no se afirma una mejora temporal ni queda una discrepancia obligatoria.
+```sh
+MONGOECO_JSON_BACKEND=stdlib MONGOECO_REGEX_BACKEND=python \
+  "$PYTHON" -m benchmarks.report \
+  --subject-root "$SUBJECT_ROOT" --engine "$ENGINE" \
+  --size 1000 --warmup 1 --repetitions 1 \
+  --workload secondary_lookup_indexed --workload cursor_consumption \
+  --workload simple_aggregation --workload sort_limit \
+  --workload search_diagnostics --workload vector_search_diagnostics \
+  --output-json "$OUT/$ENGINE-$SLOT.json" \
+  --output-markdown "$OUT/$ENGINE-$SLOT.md"
+```
 
-La amplitud de los cuatro A se informa por tarea; no se impone al control A/A
-un porcentaje máximo de ruido ni se convierte su rango en intervalo de confianza.
-No hay umbral global nuevo de +5 %, ni objetivo 0,55 s, ni calibración indefinida.
-Si hace falta otro intento, proponer la tarea mínima, causa, coste y criterio de
-resolución; requiere autorización adicional. Una corrección material delimita
-qué evidencia deja de ser válida, pero no repone automáticamente el presupuesto.
-Los efectos temporales pequeños que el diseño no distingue se reconocen así.
+Las variables se resuelven y registran en el preflight, no se dejan al azar en
+un shell anterior. `SUBJECT_ROOT` es un árbol congelado que contiene `src/mongoeco`,
+como exige `_subject.py`, con bytes contrastados contra el wheel correspondiente.
+Cada invocación es un proceso nuevo. El paquete medido procede de ese sujeto y
+el harness del checkout común; no alternar instalaciones ni reutilizar un proceso
+que ya haya importado el otro sujeto. Si el árbol exportado no tiene `.git`,
+registrar la revisión y el SHA del wheel en la evidencia existente: no inventar
+`gitRevision` ni atribuir al sujeto el HEAD del harness.
 
-**Cierre de Q06:** todos los gates reales del artefacto final comprobados,
-disposición de Q05 explícita y cada medición clasificada con sus límites. Lista
-breve de garantías verificadas y seguimientos reservados; ningún hallazgo nuevo
-amplía el trabajo salvo regresión del incremento o garantía obligatoria rota.
-No declarar una optimización temporal cerrada con evidencia inconcluyente ni
-publicar/etiquetar la release como consecuencia automática de este plan.
+No pasar `--max-wall-regression-percent` ni introducir un umbral CLI. Validar y
+comparar después los JSON mediante `validate_report`/`compare_reports`, sin
+umbral temporal. No modificar el runner ni su schema.
+
+**Tamaño y estado de la carga:** `size=1000`, semillas actuales del harness sin
+cambios (usuarios: 42), seis workloads, 26 tareas/motor y cero workloads omitidos.
+La única repetición da una observación individual por tarea en cada JSON v2;
+no se reconstruyen muestras desde medias ni se aumenta la repetición tras ver B.
+`warmup=1` se conserva para ambos sujetos, pero los workloads hacen setup/teardown
+entre ejecuciones: no garantiza reutilizar la caché del warmup. Se mide la carga
+actual, incluidas sus consultas/explain de preparación según el harness. La
+propiedad fría/caliente de Q04 se prueba aparte, con consultas consecutivas en
+el mismo engine. No requiere un segundo benchmark ni más knobs de warmup.
+
+Los tiempos por tarea abarcan el callback que ya delimita el harness, no todos
+los imports/setup/índices. La duración externa de cada proceso sirve para el
+presupuesto; no se presenta como latencia de cada consulta ni mejora end-to-end.
+
+**Orden, unidad y límites, fijados antes de ejecutar:**
+
+- Orden de motores: memory-sync, memory-async, sqlite-sync, sqlite-async.
+- En cada motor: **A0, A1, B1, B2, A2**. A/A = A0–A1; ABBA = A1–B1–B2–A2.
+  A1 se reutiliza: el control no es independiente del contraste. No se promete
+  independencia entre invocaciones ni entre las 26 tareas del mismo proceso.
+- Máximo **20 invocaciones**, un solo intento. **1.800 s de pared** desde el
+  lanzamiento de A0 del primer motor, incluyendo warmups, setup, controles,
+  comprobaciones intermedias y cleanup; máximo **180 s por proceso**. El límite
+  efectivo de cada proceso es el menor entre 180 s y el saldo de campaña.
+- Ejecución secuencial, sin tests/builds/perfiles propios concurrentes. Usar los
+  límites externos y la recogida terminal existentes; no un runner adicional.
+  El proceso/sus recursos propios deben quedar terminados antes del siguiente.
+- Tras cada invocación, conservar stdout/stderr, JSON/Markdown disponibles,
+  duración monotónica externa, salida y configuración/identidades. Validar su
+  inventario y oráculos antes de continuar. No usar una tarea truncada como muestra.
+- **Primera salida no cero, timeout, equivalencia rota o presupuesto agotado:**
+  detener nuevas invocaciones. Recoger/cerrar sólo recursos propios y conservar
+  toda la evidencia parcial. No saltar a otro motor ni completar huecos con datos
+  históricos. El resto queda «no ejecutado por parada del intento», sin convertirlo
+  en éxito. No eliminar muestras por ruido, outlier o carga externa.
+
+Si una incidencia de entorno se registra después de empezar, se conserva su
+traza y se trata el contraste afectado como inconcluyente. No se inventa un
+umbral de load average ni se añade un monitor; se registran las incidencias
+conocidas y la amplitud A/A. La ausencia de incidencia registrada no demuestra
+que el host estuviera libre de interferencias.
+
+### Interpretación y criterios observables de Q06
+
+Las observaciones son descriptivas. La unidad de repetición es la invocación;
+las 104 tareas/motores no son 104 repeticiones independientes de una misma carga.
+Por tarea completa se informan las cinco observaciones, rango A, diferencia
+absoluta `mediana(B) - mediana(A)` y cociente `mediana(B) / mediana(A)` cuando
+el denominador tiene resolución útil. CPU user/sys y RSS se conservan como
+contexto; no son un gate adicional, ni se atribuyen porcentajes de cProfile.
+
+El JSON redondea wall time a cuatro decimales. Fijar **q = 0,0001 s** como
+margen de redondeo entre extremos: `A={a0,a1,a2}`, `B={b1,b2}`. Usar unidades
+decimales; las diferencias iguales a q no bastan para separar observaciones.
+Este margen cubre el redondeo, no el ruido estadístico. Valores cero no acreditan
+coste cero ni un porcentaje de mejora.
+
+| Disposición por tarea | Criterio observable | Consecuencia |
+| --- | --- | --- |
+| Mejora temporal observada | Cinco observaciones comparables y `max(B) + q < min(A)` | Afirmación limitada a esta carga/host; sin CI, p-valor o porcentaje universal |
+| Empeoramiento observado | Cinco observaciones comparables y `min(B) > max(A) + q` | Discrepancia por resolver antes de aceptar el candidato; no se compensa con otra tarea |
+| Inconcluyente en tiempo | Ninguna separación anterior, contraste incompleto o incidencia que invalida comparabilidad | No afirmar mejora/ausencia de regresión; no repetir automáticamente |
+| Fallo funcional/estructural | Oráculo rojo, cambio contractual, falta de evidencia exigida, mayor trabajo incompatible con el objetivo | Bloquea aceptación, aunque el tiempo baje |
+
+`compare_reports` debe devolver cero diferencias de configuración/oráculo/resultado
+para comparaciones A/A y B/A. Comprobar además las 26 tareas esperadas y cero skips:
+la validación permite skips simétricos, que aquí no satisfacen la cobertura fijada.
+Los hashes ANN no se convierten en prueba de recall. Las diferencias físicas de
+plan admitidas por Q04 requieren el test específico, schema conservado y metadata
+veraz; no se ignoran diferencias semánticas bajo esa excepción.
+
+Una diferencia semántica no se reclasifica como ruido: tiene prioridad como fallo
+obligatorio. Un empeoramiento temporal observado sigue abierto hasta resolver la
+causa, retirar el cambio causante o autorizar expresamente el tradeoff; no basta
+llamarlo ruido. Una tarea temporal inconcluyente puede acompañar un cambio
+aceptado por mantenimiento/trabajo reducido, con esa etiqueta y sus límites,
+si los gates obligatorios están verdes y no queda una discrepancia abierta.
+
+**Cierre completo de Q06** exige simultáneamente:
+
+1. Q00–Q04 implementados y comprobados focalmente, Q05 con disposición explícita,
+   y revisión final sin nueva autoridad semántica, caché o protocolo innecesarios.
+2. Gates de artefacto, globales y consumidores de la tabla R1–R6 comprobados sobre
+   el nuevo runtime, usando la evidencia válida y los oráculos nativos vigentes.
+   La selección de replay tiene casos efectivos; los golden no se regeneran para
+   hacer coincidir la implementación. Ningún criterio funcional queda pendiente.
+3. Intento temporal terminal y registrado: máximo veinte informes, cobertura
+   completa o parada explícita con tareas afectadas/no ejecutadas. Cada tarea
+   tiene una disposición; no quedan empeoramientos observados sin resolver.
+   Un cierre por mantenimiento con coste inconcluyente no se anuncia como
+   «optimización temporal verificada» ni «sin regresiones de rendimiento».
+4. Diff y docs alineados, commits semánticos y limpieza de recursos/auxiliares
+   propios. Conservar el archivo ajeno que ya estaba sin seguimiento; «árbol
+   limpio» se refiere al workset propio, sin borrar trabajo preexistente.
+
+No hay nuevo umbral de +5 %, objetivo 0,55 s ni calibración indefinida. Otro
+intento necesita una propuesta focal con causa, coste y criterio de resolución,
+y autorización adicional. Una corrección material invalida sólo evidencia
+alcanzada por ella; no repone automáticamente presupuesto ni permite volver a
+medir para seleccionar el resultado más favorable.
+
+La entrega conserva las garantías previas y enumera las reservas fuera de
+alcance. Ningún hallazgo nuevo amplía el trabajo salvo regresión del incremento
+o incumplimiento obligatorio. El plan no autoriza tags ni publicación.
