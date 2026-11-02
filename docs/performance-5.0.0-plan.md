@@ -620,8 +620,8 @@ Se conserva `benchmarks/execution.json` preexistente, sin modificar.
 | Q02 | Implementado y comprobado focalmente | 30 tests unit/contexto y 234 replays verdes; lint ratchet conforme. [Conteos productivos](evidence/mongoeco-5.0.0/q02-counts.json): dos operaciones por engine, dos preparaciones raíz y veinte decisiones MQL. Los tests conservan preparación vacía/error perezosos, bindings, collation y relojes separados. Diff revisado, sin formatter ajeno; logs q02-* en el mismo directorio |
 | Q03 | Implementado y comprobado focalmente | 67 tests + 12 subtests y 99 replays UUID 7/8/9 verdes; lint conforme. [Conteos](evidence/mongoeco-5.0.0/q03-counts.json): cinco modalidades × dos requests, cero nuevas construcciones tras importar y bytes/tamaños equivalentes al SDK. Ruta sin SDK, rechazo UNSPECIFIED y raw BSON conservados; logs q03-* |
 | Q04 | Implementado y comprobado focalmente | [Registro](evidence/mongoeco-5.0.0/q04-counts.json): 285 casos únicos comprobados en tandas focales y 16 comparaciones del constructor congelado. Cero retokenizaciones calientes sobre 1.000 documentos con mappings explicit/dynamic; cambios externos, valores mixtos, commit/rollback, índice, reopen/backup restore conformes. Los doce mocks retirados se corrigieron en el addendum Q02; los otros 144 casos de esa tanda se reutilizan. Logs q04-* |
-| Q05 | Pendiente de decisión | Implementación acotada o diferido motivado |
-| Q06 | Pendiente | Artefacto final, gates globales y único intento temporal; cero intentos iniciados |
+| Q05 | Diferido sin cambio productivo | [Decisión](evidence/mongoeco-5.0.0/q05-decision.json): hook idle de cursor no equivale a cerrar iterador EOF; reusarlo rompe rewind. Requiere otro predicado/estado de lifecycle y tratamiento de retries/contexto, no una reutilización suficiente |
+| Q06 | En preparación | Runtime congelado desde b5d9e803; pendiente nuevo artefacto, gates finales y único intento temporal. Cero intentos temporales iniciados |
 
 Q01 conserva la ruta genérica de subclases/wrappers y la clasificación de enteros.
 El helper local de arrays evita duplicar la regla de framing entre lista nativa
@@ -653,3 +653,19 @@ construye en la rama vectorial. Lint ratchet conforme; diff revisado sin cambios
 funcionales de candidatos, scores, top-k o protocolos. No hay mediciones temporales.
 La sonda única Q04 (16 comparaciones de campos con el constructor congelado)
 usa GC activo y límite 60 s; fuente y resultado se conservan en q04-constructor-*.
+
+Q05, disposición conforme al contrato: `AsyncCursor._close_nowait_if_idle` cierra
+el cursor completo, mientras `_AsyncCursorIterator.close` conserva la posibilidad
+de rewind y coordina fuentes/batches/retired sources. La sonda de tres lecturas
+(límite 60 s, GC activo) conserva un documento tras rewind ordinario y devuelve
+vacío si se intercala el hook de cursor. No es un reemplazo correcto del cierre
+EOF. Saltar directamente el close duplicaría en sync las condiciones y estados
+del owner async; avanzar el cleanup dentro de la respuesta podría adelantar un
+fallo y ocultar el último documento. La vía inline existente del runner tampoco
+concede una capacidad genérica de cierre: contexto, task factory y suspensión
+siguen siendo condiciones del owner. Se difiere esta optimización, sin otro
+estado/protocolo ni modificación productiva. No se acredita ahorro de tránsitos.
+
+Q00–Q04 están comprobados focalmente; Q05 tiene disposición explícita. Q06 es la
+única aceptación de entrega pendiente. Se congela el código productivo al iniciar
+sus builds y se reutiliza la evidencia anterior sólo donde siga siendo válida.

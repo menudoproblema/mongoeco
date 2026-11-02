@@ -1,0 +1,20 @@
+{
+  "gc_enabled": true,
+  "limit_seconds": 60,
+  "queries": 3,
+  "existing_hook": "AsyncCursor._close_nowait_if_idle",
+  "initial": [
+    {
+      "_id": 1
+    }
+  ],
+  "ordinary_rewind": [
+    {
+      "_id": 1
+    }
+  ],
+  "hook_applied": true,
+  "rewind_after_hook": [],
+  "decision": "defer: cursor idle-close is not iterator EOF-close; reusing it changes rewind",
+  "temporal_measurements": 0
+}
