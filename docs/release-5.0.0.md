@@ -37,8 +37,9 @@ equivalente en 4.11 usan su evidencia focal aceptada, no un ratio inventado.
 
 ## Estado
 
-R1 en preparación; R2–R6 pendientes. Los cierres de implementación son válidos,
-pero no acreditan todavía las distribuciones versionadas 5.0.0 de esta release.
+R1 y R2 comprobados. R3 registrado con los límites indicados abajo; R4 pendiente
+del resultado terminal de la matriz; R5 comprobado con el corpus consumidor
+sustitutivo autorizado; R6 pendiente de integración y limpieza. No publicada.
 
 ## Comparación de tiempos registrada
 
@@ -71,3 +72,21 @@ versiones e imports aislados, y ejecutar una secuencia nueva con USearch 2.26.4.
 Ambas secuencias respetaron el máximo de 20 minutos. La segunda terminó A1 y B
 en los cuatro motores y A2 en tres; no se reinicia la fase inconcluyente.
 El presupuesto y resultado de F11 histórico no se alteran.
+
+## Consumidor autocontenido de esta preparación
+
+La fuente privada del canario histórico no se ha localizado por fingerprint ni
+por inventario en los checkouts disponibles. Tras autorización expresa para
+buscarlo o prepararlo, esta preparación usa
+[`pytest_business_canary.py`](../tests/consumers/pytest_business_canary.py):
+31 escenarios async de cuentas, pedidos y saldo, y siete de construcción SDK.
+No reconstruye ni acredita la ejecución de las aserciones privadas históricas.
+Su código queda conservado para evitar depender de una fuente irrecuperable.
+
+El runner existente `run_pytest_consumer_canary.py` sustituye sólo `open_client`,
+verifica el wheel y los hashes antes/después, y exige inventario íntegro sin skips.
+Los 38 casos pasan contra Memory y SQLite en Python 3.13/3.14/3.15 y workers 0/2/4:
+684 ejecuciones. SHA-256 de fuente:
+`2e013f063ec8bbd0974f92db16e2f78a0506ee7257546d2ceeeb8c7475a3e61b`.
+El límite histórico se conserva; el nuevo corpus no promete compatibilidad de
+una aplicación privada no disponible.
