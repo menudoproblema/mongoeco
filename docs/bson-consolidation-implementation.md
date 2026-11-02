@@ -1,11 +1,16 @@
 # Implementación de consolidación BSON
 
+**Estado vigente: parte I F00–F11 cerrada, 12/12 bloques aceptados.**
+Véase la [aceptación final del candidato b83789bc](#aceptación-final-f11-del-candidato-b83789bc).
+El cierre técnico es independiente del cierre de versión, aplazado por el owner.
+
 Contrato autorizado por el usuario: implementar el
 [plan refinado](bson-semantics-consolidation-plan.md), revisando cada bloque y
 commiteando semánticamente. Base: `eef9c09`. Estado: alcance O1–O8 y D05 completado.
-No cambia SPI v2 ni declara implementados los pilotos opcionales. La única
-lista vigente es [O1–O8](#obligaciones-de-cierre-vigentes); los estados por corte
-que siguen conservan historia. Véase el [cierre integrado](#cierre-integrado--o8-y-d05).
+No cambia SPI v2 ni declara implementados los pilotos opcionales. La lista del
+alcance original es [O1–O8](#obligaciones-de-cierre-vigentes); el incremento
+posterior F00–F11 tiene su estado vigente más abajo. Los estados por corte
+conservan historia. Véase el [cierre integrado](#cierre-integrado--o8-y-d05).
 
 ## D00 — Activo
 
@@ -2934,11 +2939,11 @@ Pruebas focales por bloque; suites globales reservadas a F11.
 | F04 | Cerrado | 1.179 diferenciales/metadatos, 44 controles focales y ratchet. |
 | F05 | Cerrado | 492 diferenciales/contexto/metadatos, 54 spill y fronteras focales. |
 | F06 | Cerrado | Catálogo/unique/hashed, cuatro superficies, eventos RS 7/8/9, archivos previos e inventarios CXP. |
-| F07 | Comprobado focal e integrado | Escrituras/identidad/campos, 7/8/9, contadores/eventos y validadores; aceptación integrada en F11. |
-| F08 | Comprobado focal e integrado | Claves contextuales/natural, inicializadores y acumulación, materialización/spill real; aceptación integrada en F11. |
-| F09 | Comprobado focal e integrado | Tres unidades y perfiles nativos; aceptación integrada y conservación CXP en F11. |
-| F10 | Comprobado focal e integrado | Fachadas/metadata nativas y rechazos sin efectos; aceptación integrada en F11. |
-| F11 | Pendiente de aceptación del coste | Wheel a10cd637: gates funcionales, matrices y distribución comprobados; coste terminal 32/44 aceptados y 12 inconcluyentes. Sin aceptación de entrega. |
+| F07 | Cerrado | Escrituras/identidad/campos, 7/8/9, contadores/eventos y validadores; aceptación integrada en F11. |
+| F08 | Cerrado | Claves contextuales/natural, inicializadores y acumulación, materialización/spill real; aceptación integrada en F11. |
+| F09 | Cerrado | Tres unidades y perfiles nativos; aceptación integrada y conservación CXP en F11. |
+| F10 | Cerrado | Fachadas/metadata nativas y rechazos sin efectos; aceptación integrada en F11. |
+| F11 | Cerrado | Producto b83789bc / wheel 176a9857: G1–G6 aceptados; 44/44 controles de coste. Véase la aceptación final; las campañas anteriores conservan su disposición histórica. |
 
 F00: se reutiliza el runner y se registran 135 testigos focales de familias
 F02–F10 más el caso de límites en semantic_response_frontier. Capturas físicas
@@ -4034,3 +4039,23 @@ b837-eval-final-review/all-import-proofs/evaluation, dentro de la carpeta existe
 No hay nuevas capas de validación ni cambios de producto para forzar el gate.
 F11 queda aceptado para este candidato al completar el commit y árbol limpio;
 no quedan obligaciones técnicas de la parte I por comprobar.
+
+### Cierre administrativo de parte I sin cierre de versión
+
+Por encargo del owner se reconcilian las entradas vigentes del plan, este receipt,
+el índice documental y las notas Unreleased. La tabla F00–F11 queda en 12/12
+cerrados; no hay otra implementación, prueba o aceptación técnica pendiente.
+Se conserva el detalle histórico de focales, fallos, campañas y composiciones;
+no se reabren gates ni se repiten suites por cambios exclusivamente documentales.
+
+Integración local preparada como fast-forward desde main fb7c4a9a hacia la rama
+perf/sqlite-empty-options, que lo contiene como ancestro. No hay conflictos ni
+nuevos cambios productivos: src sigue idéntico al payload b83789bc aceptado.
+La integración no reconstruye ni sustituye los wheels congelados, no reescribe
+commits y no elimina ramas. Su efectividad se comprueba al terminar la operación.
+La conservación de main durante los gates anteriores permanece como hecho
+histórico; su promoción local se realiza ahora, después de la aceptación.
+
+Versión 4.11.0 sin cambios; changelog permanece en Unreleased, sin fecha de nueva
+release ni tags nuevos. No se publica, hace push ni abre parte II. El cierre de
+versión queda aplazado explícitamente y separado de la parte I ya completada.

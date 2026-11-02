@@ -10,6 +10,11 @@ usa Semantic Versioning.
 
 ### Fixed
 
+- Avoid redundant SQLite metadata reads when empty collection options remain valid;
+  preserve session, namespace and storage identity and refresh options after writes.
+- Reuse prepared aggregation context and close every owned cursor source after
+  cleanup failures, preserving the original error and secondary cleanup diagnostics.
+
 - Align bounded cursor windows, nullable window operators, aggregation paths,
   query grammar and inherited collation with the retained MongoDB dialects.
 - Preserve native index/write invariants, root identity and BSON numeric widths;

@@ -1,5 +1,11 @@
 # Consolidación BSON: contraste de informes y plan integrado
 
+**Estado vigente (2 de noviembre de 2026): parte I F00–F11 cerrada, 12/12 bloques.**
+La [aceptación integrada](bson-consolidation-implementation.md#aceptación-final-f11-del-candidato-b83789bc)
+corresponde al producto b83789bc y conserva los cierres anteriores. Parte II
+X01–X06 excluida. El cierre de versión, tag y publicación quedan aplazados
+por instrucción del owner; no son pendientes técnicos de esta parte I.
+
 **Propuesta posterior al cierre (1 de noviembre de 2026):**
 [plan en dos partes: correcciones acotadas y ampliaciones](#incremento-propuesto-20261101).
 Base 2fa637f6. Esta propuesta no reabre O1–O8 ni B1–B4 de los dos P2,
@@ -1975,7 +1981,9 @@ Prioridades: P1, pérdida/alteración de filas o valores, selección/aceptación
 de escrituras y fallos públicos no tipados; P2, firmas de conveniencia,
 metadatos y diagnósticos que no alteren esas garantías. F09b/F09c son P1
 por resultados incorrectos; los detalles solo diagnósticos pueden ser P2.
-Todos los bloques empiezan pendientes. F00 fija los casos antes de editar.
+Estado inicial del incremento: todos los bloques empiezan pendientes. F00 fija
+los casos antes de editar. El estado vigente y la evidencia de cierre de los
+12 bloques se mantienen en el receipt de implementación.
 F11 es el cierre integrado; un bloque focal verde no acepta toda la entrega.
 
 | Bloque | Prioridad | Entregable | Dependencias |
