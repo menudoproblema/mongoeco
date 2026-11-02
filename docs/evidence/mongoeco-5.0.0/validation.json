@@ -1,0 +1,328 @@
+{
+  "status": "local_preparation_verified_not_published",
+  "runtime_revision": "7dcb9df2087c4e8d0cad091bfdce1ad9d45c3699",
+  "integration_commit": "c4859f8f",
+  "source_date_epoch": 1793647280,
+  "artifact": {
+    "mongoeco-5.0.0.tar.gz": "4347a1ab421511c9dcbb9ac997ded0dcbb2d396697a3327538482a6569a0f927",
+    "mongoeco-5.0.0-py3-none-any.whl": "2ed1bd93385d759d7a7a61ebc7409ab74c544ba7d8cf58590f56405325974d2f"
+  },
+  "package_files": 310,
+  "sdist_current_tracked_inputs": 318,
+  "coverage": {
+    "covered_lines": 48446,
+    "num_statements": 48935,
+    "percent_covered": 99.00071523449473,
+    "percent_covered_display": "99.00",
+    "missing_lines": 489,
+    "excluded_lines": 1027,
+    "percent_statements_covered": 99.00071523449473,
+    "percent_statements_covered_display": "99.00"
+  },
+  "python": [
+    "3.13.15",
+    "3.14.5",
+    "3.15.0"
+  ],
+  "global_pytest_per_profile": {
+    "passed": 64998,
+    "skipped": 1131,
+    "subtests": 14946
+  },
+  "unittest_per_profile": {
+    "tests": 3684,
+    "skipped": 3
+  },
+  "deep": 66,
+  "optional_pcre2_per_profile": {
+    "adapter": 5,
+    "native_replays": 339,
+    "pcre2": "0.7.1"
+  },
+  "matrix": [
+    {
+      "python": "313",
+      "pytest": "8.4.2",
+      "sdk": "4.9.2",
+      "exit": 0,
+      "root": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/313-8.4.2-4.9.2",
+      "seconds": 223.41339150001295,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/313-8.4.2-4.9.2/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/integration/pytest_kit",
+        "tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection",
+        "tests/integration/wire/test_proxy_lifecycle.py",
+        "tests/integration/wire/test_unacknowledged.py",
+        "tests/integration/wire/test_diagnostics.py",
+        "tests/integration/wire/test_read_reply_parity.py",
+        "tests/integration/api/test_write_preflight_parity.py"
+      ]
+    },
+    {
+      "python": "313",
+      "pytest": "8.4.2",
+      "sdk": "4.19.0",
+      "exit": 0,
+      "root": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/313-8.4.2-4.19.0",
+      "seconds": 226.43567799997982,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/313-8.4.2-4.19.0/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/integration/pytest_kit",
+        "tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection",
+        "tests/integration/wire/test_proxy_lifecycle.py",
+        "tests/integration/wire/test_unacknowledged.py",
+        "tests/integration/wire/test_diagnostics.py",
+        "tests/integration/wire/test_read_reply_parity.py",
+        "tests/integration/api/test_write_preflight_parity.py"
+      ]
+    },
+    {
+      "python": "313",
+      "pytest": "9.1.1",
+      "sdk": "4.9.2",
+      "exit": 0,
+      "root": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/313-9.1.1-4.9.2",
+      "seconds": 221.34285854105838,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/313-9.1.1-4.9.2/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/integration/pytest_kit",
+        "tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection",
+        "tests/integration/wire/test_proxy_lifecycle.py",
+        "tests/integration/wire/test_unacknowledged.py",
+        "tests/integration/wire/test_diagnostics.py",
+        "tests/integration/wire/test_read_reply_parity.py",
+        "tests/integration/api/test_write_preflight_parity.py"
+      ]
+    },
+    {
+      "python": "313",
+      "pytest": "9.1.1",
+      "sdk": "4.19.0",
+      "exit": 0,
+      "root": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/313-9.1.1-4.19.0",
+      "seconds": 223.65439637494273,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/313-9.1.1-4.19.0/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/integration/pytest_kit",
+        "tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection",
+        "tests/integration/wire/test_proxy_lifecycle.py",
+        "tests/integration/wire/test_unacknowledged.py",
+        "tests/integration/wire/test_diagnostics.py",
+        "tests/integration/wire/test_read_reply_parity.py",
+        "tests/integration/api/test_write_preflight_parity.py"
+      ]
+    },
+    {
+      "python": "314",
+      "pytest": "8.4.2",
+      "sdk": "4.9.2",
+      "exit": 0,
+      "root": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/314-8.4.2-4.9.2",
+      "seconds": 240.06427495798562,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/314-8.4.2-4.9.2/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/integration/pytest_kit",
+        "tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection",
+        "tests/integration/wire/test_proxy_lifecycle.py",
+        "tests/integration/wire/test_unacknowledged.py",
+        "tests/integration/wire/test_diagnostics.py",
+        "tests/integration/wire/test_read_reply_parity.py",
+        "tests/integration/api/test_write_preflight_parity.py"
+      ]
+    },
+    {
+      "python": "314",
+      "pytest": "8.4.2",
+      "sdk": "4.19.0",
+      "exit": 0,
+      "root": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/314-8.4.2-4.19.0",
+      "seconds": 247.2879171249224,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/314-8.4.2-4.19.0/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/integration/pytest_kit",
+        "tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection",
+        "tests/integration/wire/test_proxy_lifecycle.py",
+        "tests/integration/wire/test_unacknowledged.py",
+        "tests/integration/wire/test_diagnostics.py",
+        "tests/integration/wire/test_read_reply_parity.py",
+        "tests/integration/api/test_write_preflight_parity.py"
+      ]
+    },
+    {
+      "python": "314",
+      "pytest": "9.1.1",
+      "sdk": "4.9.2",
+      "exit": 0,
+      "root": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/314-9.1.1-4.9.2",
+      "seconds": 236.3513671249384,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/314-9.1.1-4.9.2/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/integration/pytest_kit",
+        "tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection",
+        "tests/integration/wire/test_proxy_lifecycle.py",
+        "tests/integration/wire/test_unacknowledged.py",
+        "tests/integration/wire/test_diagnostics.py",
+        "tests/integration/wire/test_read_reply_parity.py",
+        "tests/integration/api/test_write_preflight_parity.py"
+      ]
+    },
+    {
+      "python": "314",
+      "pytest": "9.1.1",
+      "sdk": "4.19.0",
+      "exit": 0,
+      "root": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/314-9.1.1-4.19.0",
+      "seconds": 236.60879979201127,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/314-9.1.1-4.19.0/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/integration/pytest_kit",
+        "tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection",
+        "tests/integration/wire/test_proxy_lifecycle.py",
+        "tests/integration/wire/test_unacknowledged.py",
+        "tests/integration/wire/test_diagnostics.py",
+        "tests/integration/wire/test_read_reply_parity.py",
+        "tests/integration/api/test_write_preflight_parity.py"
+      ]
+    },
+    {
+      "python": "315",
+      "pytest": "8.4.2",
+      "sdk": "4.9.2",
+      "exit": 0,
+      "root": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/315-8.4.2-4.9.2",
+      "seconds": 227.75115370901767,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/315-8.4.2-4.9.2/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/integration/pytest_kit",
+        "tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection",
+        "tests/integration/wire/test_proxy_lifecycle.py",
+        "tests/integration/wire/test_unacknowledged.py",
+        "tests/integration/wire/test_diagnostics.py",
+        "tests/integration/wire/test_read_reply_parity.py",
+        "tests/integration/api/test_write_preflight_parity.py"
+      ]
+    },
+    {
+      "python": "315",
+      "pytest": "8.4.2",
+      "sdk": "4.19.0",
+      "exit": 0,
+      "root": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/315-8.4.2-4.19.0",
+      "seconds": 230.04964450001717,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/315-8.4.2-4.19.0/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/integration/pytest_kit",
+        "tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection",
+        "tests/integration/wire/test_proxy_lifecycle.py",
+        "tests/integration/wire/test_unacknowledged.py",
+        "tests/integration/wire/test_diagnostics.py",
+        "tests/integration/wire/test_read_reply_parity.py",
+        "tests/integration/api/test_write_preflight_parity.py"
+      ]
+    },
+    {
+      "python": "315",
+      "pytest": "9.1.1",
+      "sdk": "4.9.2",
+      "exit": 0,
+      "root": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/315-9.1.1-4.9.2",
+      "seconds": 224.73843549995217,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/315-9.1.1-4.9.2/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/integration/pytest_kit",
+        "tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection",
+        "tests/integration/wire/test_proxy_lifecycle.py",
+        "tests/integration/wire/test_unacknowledged.py",
+        "tests/integration/wire/test_diagnostics.py",
+        "tests/integration/wire/test_read_reply_parity.py",
+        "tests/integration/api/test_write_preflight_parity.py"
+      ]
+    },
+    {
+      "python": "315",
+      "pytest": "9.1.1",
+      "sdk": "4.19.0",
+      "exit": 0,
+      "root": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/315-9.1.1-4.19.0",
+      "seconds": 228.88636487501208,
+      "command": [
+        "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-release5-5awv86c5/matrix/315-9.1.1-4.19.0/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/integration/pytest_kit",
+        "tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection",
+        "tests/integration/wire/test_proxy_lifecycle.py",
+        "tests/integration/wire/test_unacknowledged.py",
+        "tests/integration/wire/test_diagnostics.py",
+        "tests/integration/wire/test_read_reply_parity.py",
+        "tests/integration/api/test_write_preflight_parity.py"
+      ]
+    }
+  ],
+  "consumer": {
+    "status": "new_standalone_corpus_authorized_replacement",
+    "source_sha256": "2e013f063ec8bbd0974f92db16e2f78a0506ee7257546d2ceeeb8c7475a3e61b",
+    "profiles": 9,
+    "engines": 2,
+    "cases": 38,
+    "executions": 684,
+    "historical_private_source_available": false
+  },
+  "native_recapture": {
+    "cases_per_dialect": 72,
+    "dialects": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "fixtures_unchanged": true
+  },
+  "gates": {
+    "R1": "accepted",
+    "R2": "accepted",
+    "R3": "recorded_with_bounded_inconclusive_A2_sqlite_async",
+    "R4": "accepted",
+    "R5": "accepted_with_authorized_replacement_consumer",
+    "R6": "integrated_reviewed_evidence_recorded"
+  },
+  "limits": [
+    "macOS arm64 only; hosted CI not executed here",
+    "Historical private consumer source not recovered; new corpus does not prove those assertions",
+    "Performance comparisons show overheads; no statistical acceptance or universal performance claim",
+    "No tags, push, publication or Trusted Publisher verification; check before tag"
+  ]
+}

@@ -37,9 +37,9 @@ equivalente en 4.11 usan su evidencia focal aceptada, no un ratio inventado.
 
 ## Estado
 
-R1 y R2 comprobados. R3 registrado con los límites indicados abajo; R4 pendiente
-del resultado terminal de la matriz; R5 comprobado con el corpus consumidor
-sustitutivo autorizado; R6 pendiente de integración y limpieza. No publicada.
+R1–R6 registrados y verificados localmente. R3 conserva su resultado acotado
+y A2 SQLite async inconcluyente; R5 usa el corpus sustitutivo autorizado.
+Integración en main y limpieza propias realizadas. No publicada.
 
 ## Comparación de tiempos registrada
 
@@ -90,3 +90,71 @@ Los 38 casos pasan contra Memory y SQLite en Python 3.13/3.14/3.15 y workers 0/2
 `2e013f063ec8bbd0974f92db16e2f78a0506ee7257546d2ceeeb8c7475a3e61b`.
 El límite histórico se conserva; el nuevo corpus no promete compatibilidad de
 una aplicación privada no disponible.
+
+## Artefacto y garantías locales verificadas
+
+Runtime de distribución: `7dcb9df2087c4e8d0cad091bfdce1ad9d45c3699`.
+Los cambios posteriores sólo afectan a tests, CI, documentación y evidencia;
+los 310 archivos empaquetados siguen siendo idénticos. Las dos construcciones
+con `SOURCE_DATE_EPOCH=1793647280` producen los mismos bytes:
+
+- Wheel: `2ed1bd93385d759d7a7a61ebc7409ab74c544ba7d8cf58590f56405325974d2f`.
+- Sdist: `4347a1ab421511c9dcbb9ac997ded0dcbb2d396697a3327538482a6569a0f927`.
+
+Copias locales: `dist/release-5.0.0/`. Twine, fuentes y metadatos comprobados;
+318 entradas versionadas del sdist conservan sus bytes. Los doce entornos
+constrained de matriz contienen los mismos 310 archivos del wheel.
+
+| Verificación | Evidencia aceptada |
+| --- | --- |
+| Pytest completo por Python 3.13/3.14/3.15 | 64.998 passed, 1.131 skips previstos y 14.946 subtests por perfil |
+| Unittest por intérprete | 3.684 tests, OK, tres skips |
+| Cobertura instalada, 289 módulos | 48.446/48.935 líneas: 99,000715 %, 489 sin cubrir |
+| Matriz pytest 8.4.2/9.1.1 × PyMongo 4.9.2/4.19.0 × tres Python | Doce celdas, 3.587 passed por celda |
+| Propiedades profundas | 66 passed |
+| PCRE2 opcional por intérprete | Cinco tests focales y 339 contrastes con capturas MongoDB 7/8/9 |
+| Consumidor preparado para esta release | 684 ejecuciones; fuente conservada, ningún skip |
+| Captura nativa de revisión | 72 casos por MongoDB 7/8/9, fixtures sin delta; recursos propios cerrados |
+| SDK sin extras y perfiles PyMongo | 14 tests en instalación mínima; seis perfiles SDK sin delta |
+| Typing/API/SPI/snapshots | Gates conformes; comparación de snapshots actuales exacta |
+| Packaging y conformance | Smokes wheel/sdist/pytest-kit y Memory/SQLite/engine externo conformes; conformance desde directorio ajeno |
+| SQLite histórico | Fixtures 4.5/4.10 cubiertas por globales: BSON, índices, Search/outbox y hash conservado |
+| Ruff ratchet | Conforme respecto a v4.11.0; sin ampliar baseline |
+
+La primera cobertura global midió 98,9476 %. Faltaba observar el adaptador
+PCRE2 opcional, ejecutado sólo en subprocess. Se conserva esa medición y se
+completa con un test directo del adaptador nativo y los oráculos existentes,
+acumulando las trazas sobre el mismo runtime instalado. El umbral sigue en
+99,00 %. CI instala el extra únicamente en su celda de cobertura. No se usa
+instrumentación general de subprocess: su prueba recogía copias de fixtures y
+contaminaba el denominador; esa evidencia se conserva como no válida para
+cobertura. No se ha rebajado ni desactivado ningún gate de cobertura.
+
+El entorno reutilizado inicial contenía una instalación antigua física que los
+subprocess aislados podían importar; se sustituyó por instalaciones limpias y
+se conservan sus fallos como diagnóstico, sin acreditarlos para esta release.
+Las dependencias soportadas, los comandos y los resultados están en
+[los logs](evidence/mongoeco-5.0.0/validation-logs.tar.gz).
+
+La integración en `main` incluye `fc9e8cea` y `bb72d17c`; las ramas propias
+`fix/cxp-catalog-v2` y `release/5.0.0` se han retirado tras el fast-forward.
+El worktree temporal de la base comparativa se retiró sin forzar. Se mantienen
+los worktrees ajenos con commits no integrados y los candidatos congelados.
+Se revisaron el diff final, whitespace y la coherencia documental. No hay
+cambios de runtime desde la identidad probada y no se repiten sus suites.
+
+## Límites y pasos posteriores de lanzamiento
+
+La evidencia local corresponde a macOS arm64. No acredita los jobs alojados
+de CI ni la configuración actual de Trusted Publisher en PyPI: comprobarlos
+antes de autorizar el tag, con el protocolo del checklist. No hay autorización
+para publicar, crear tags ni hacer push en esta preparación. La versión sigue
+sin publicarse.
+
+Los tiempos comparativos tienen los límites descritos arriba, incluido A2
+SQLite async inconcluyente y el sobrecoste Search observado. No son el gate F11
+histórico ni permiten afirmar ausencia de regresiones de coste. El canario nuevo
+no demuestra la compatibilidad de la aplicación privada histórica no disponible.
+
+Registro estructurado: [validación](evidence/mongoeco-5.0.0/validation.json).
+[Logs completos de matriz](evidence/mongoeco-5.0.0/matrix-logs.tar.gz).
