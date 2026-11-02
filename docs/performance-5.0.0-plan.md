@@ -1,7 +1,7 @@
 # Optimización previa a 5.0.0: análisis y plan acotado
 
-Estado: propuesta revisada, 2 de noviembre de 2026.
-No implementada ni medida como mejora.
+Estado: implementación autorizada en curso, 2 de noviembre de 2026.
+La aceptación de entrega y los tiempos se reservan para Q06.
 Este documento posee las decisiones propuestas para este incremento; la
 [preparación de release](release-5.0.0.md) conserva sus resultados históricos.
 Normas vigentes: [testing y compatibilidad](architecture/testing-and-compatibility.md)
@@ -606,3 +606,15 @@ medir para seleccionar el resultado más favorable.
 La entrega conserva las garantías previas y enumera las reservas fuera de
 alcance. Ningún hallazgo nuevo amplía el trabajo salvo regresión del incremento
 o incumplimiento obligatorio. El plan no autoriza tags ni publicación.
+
+## Ejecución vigente
+
+Rama `perf/q00-q06`, base 79337a11 (sólo documentación posterior al runtime base).
+Se conserva `benchmarks/execution.json` preexistente, sin modificar.
+
+| Bloque | Estado | Evidencia / siguiente gate |
+| --- | --- | --- |
+| Q00 | Implementado y comprobado focalmente | 28 tests del harness; el nuevo test falla en la base y pasa tras mover el índice. Pip check y CLI conformes, 310 archivos del wheel y 26 tareas/motor verificados. [Registro](evidence/mongoeco-5.0.0/q00-preflight.json), logs comprimidos q00-* en el mismo directorio. Preflight del artefacto B reservado a Q06 |
+| Q01–Q04 | Pendientes | Implementación y pruebas focales por bloque |
+| Q05 | Pendiente de decisión | Implementación acotada o diferido motivado |
+| Q06 | Pendiente | Artefacto final, gates globales y único intento temporal; cero intentos iniciados |

@@ -669,6 +669,7 @@ def sort_limit(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
     db_name, coll_name, _docs = _load_users(engine, count)
     try:
         sort_spec = [("score", -1)]
+        engine.create_index(db_name, coll_name, [("score", -1)])
         indexed_metadata = {
             **_summarize_find_explain(
                 engine.explain_find(
@@ -682,11 +683,6 @@ def sort_limit(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
             "query_shape": "sort score desc + limit 10",
             "index_expected": True,
         }
-        unindexed_metadata = {
-            **indexed_metadata,
-            "index_expected": False,
-        }
-        engine.create_index(db_name, coll_name, [("score", -1)])
         indexed = _measure_single_task(
             indexed_metrics,
             callback=lambda: [

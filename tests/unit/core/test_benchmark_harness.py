@@ -31,10 +31,48 @@ from benchmarks.runners.workloads import (
     _outcome_sha256,
     _summarize_aggregate_explain,
     aggregation_spill_diagnostics,
+    sort_limit,
 )
 
 
 class BenchmarkHarnessTests(unittest.TestCase):
+    def test_sort_diagnostics_observe_the_same_index_state_as_consumption(self):
+        engine = Mock()
+        indexed = False
+
+        def setup():
+            nonlocal indexed
+            indexed = False
+
+        def create_index(*_args):
+            nonlocal indexed
+            indexed = True
+
+        def explain(*_args, **_kwargs):
+            return {"strategy": "indexed" if indexed else "scan"}
+
+        engine.setup.side_effect = setup
+        engine.create_index.side_effect = create_index
+        engine.explain_find.side_effect = explain
+        engine.find.return_value = [{"_id": 1, "score": 5}]
+        observations = []
+
+        def consume(_metrics, callback, *, metadata):
+            outcome = callback()
+            observations.append((indexed, outcome))
+            return {"metadata": metadata, "outcome": outcome}
+
+        with patch("benchmarks.runners.workloads._measure_single_task", consume):
+            results = sort_limit(engine, 3)
+
+        first = results["sort_limit_indexed_200"]
+        second = results["sort_limit_unindexed_200"]
+        self.assertEqual(first["metadata"]["strategy"], "indexed")
+        self.assertEqual(second["metadata"]["strategy"], "scan")
+        self.assertEqual([state for state, _ in observations], [True, False])
+        self.assertEqual(first["outcome"], second["outcome"])
+        self.assertEqual(engine.teardown.call_count, 2)
+
     @staticmethod
     def _report(*, wall_time: float = 1.0) -> dict[str, object]:
         return {
