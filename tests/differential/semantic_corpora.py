@@ -159,6 +159,10 @@ from tests.differential.semantic_followup_cases import (
     SEMANTIC_FOLLOWUP_CASES,
     SEMANTIC_FOLLOWUP_WRITE_CASES,
 )
+from tests.differential.semantic_granularity_cases import (
+    SEED as GRANULARITY_SEED,
+    SEMANTIC_GRANULARITY_CASES,
+)
 from tests.differential.semantic_group_cases import SEMANTIC_GROUP_CASES
 from tests.differential.semantic_index_information_cases import (
     SEED as INDEX_INFORMATION_SEED,
@@ -349,6 +353,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "bucket_granularity": SemanticCorpus(
+        "bucket-granularity", "semantic_granularity_cases",
+        GRANULARITY_SEED, SEMANTIC_GRANULARITY_CASES,
+    ),
     "pcre2_regex": SemanticCorpus(
         "pcre2-regex", "semantic_pcre2_cases", PCRE2_SEED, SEMANTIC_PCRE2_CASES
     ),

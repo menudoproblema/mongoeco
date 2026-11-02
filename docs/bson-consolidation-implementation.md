@@ -4100,3 +4100,19 @@ terminado. Fuente/hash y valores BSON permanecen en fixtures existentes.
 (incluyen regresión del agrupador); lint ratchet, typing/API y SPI verdes. Evidencia
 focal archivada en part2-x01-x04c. Estado: implementado y comprobado focalmente,
 pendiente del gate de entrega común; no se declara parte II completa.
+
+### Implementación focal X04c granularity
+
+Componente privado único de números preferidos y selección de frontera; datos
+de las trece series, sin copiar implementación del servidor. El agrupador existente
+absorbe filas antes de acumular, conserva el camino sin opción y pasa su checkpoint
+al redondeo. Diferenciales: 651 checks (27 casos × 3 dialectos × 2 motores ×
+4 superficies, más 3 metadatos) verdes dentro de la selección integrada de 990.
+Se conservaron tipos/anchuras/cohortes BSON, extremos, fase y errores; los ajustes
+locales de cero, escalas binarias, promoción decimal y anchura POWERSOF2 se validan
+contra esas capturas, sin normalizar el oráculo.
+
+Treinta propiedades focales acreditan partición, fronteras contiguas, contexto
+decimal hostil y checkpoint compartido. La regresión de agrupación pasa también
+en 3.13/3.15; el test de rechazo antiguo usa ahora una serie inválida. Estado:
+implementado y comprobado focalmente; pendiente del gate de entrega común.

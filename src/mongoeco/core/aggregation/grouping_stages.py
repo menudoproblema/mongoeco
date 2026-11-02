@@ -28,6 +28,11 @@ from mongoeco.core.aggregation.accumulators import (
 from mongoeco.core.aggregation.date_expressions import _require_date_unit
 from mongoeco.core.aggregation.evaluation_environment import aggregation_environment
 from mongoeco.core.aggregation.expression_values import null_if_missing
+from mongoeco.core.aggregation.granularity import (
+    round_boundary,
+    validate_boundary,
+    validate_granularity,
+)
 from mongoeco.core.aggregation.numeric_accumulation import RemovableNumericSum
 from mongoeco.core.aggregation.numeric_expressions import _require_integral_numeric
 from mongoeco.core.aggregation.planning import _require_group_spec, _require_sort
@@ -39,7 +44,11 @@ from mongoeco.core.aggregation.runtime import (
     aggregation_equality_key,
     evaluate_expression,
 )
-from mongoeco.core.bson_scalars import bson_datetime_milliseconds, unwrap_bson_numeric
+from mongoeco.core.bson_scalars import (
+    bson_datetime_milliseconds,
+    unwrap_bson_numeric,
+    wrap_bson_numeric,
+)
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import CollationSpec, compare_with_collation
 from mongoeco.core.paths import get_document_value, set_document_value
@@ -899,7 +908,7 @@ def _apply_bucket(  # noqa: PLR0913
     return result
 
 
-def _apply_bucket_auto(  # noqa: PLR0913
+def _apply_bucket_auto(  # noqa: PLR0912, PLR0913 - preserve the existing path without granularity
     documents: list[Document],
     spec: object,
     variables: dict[str, Any] | None = None,
@@ -913,8 +922,9 @@ def _apply_bucket_auto(  # noqa: PLR0913
     buckets = spec["buckets"]
     if not isinstance(buckets, int) or isinstance(buckets, bool) or buckets <= 0:
         raise OperationFailure("$bucketAuto buckets must be a positive integer")
-    if "granularity" in spec:
-        raise OperationFailure("$bucketAuto granularity is not supported")
+    granularity = (
+        validate_granularity(spec["granularity"]) if "granularity" in spec else None
+    )
 
     output = spec.get("output")
     accumulator_runtime = _build_accumulator_runtime(
@@ -936,6 +946,9 @@ def _apply_bucket_auto(  # noqa: PLR0913
         )
         for document in iter_with_deadline(documents, deadline)
     ]
+    if granularity is not None:
+        for value, _ in evaluated:
+            validate_boundary(value)
     if not evaluated:
         return []
 
@@ -958,6 +971,7 @@ def _apply_bucket_auto(  # noqa: PLR0913
 
     result: list[Document] = []
     start = 0
+    previous_boundary = None
     while start < len(evaluated) and len(result) < bucket_count:
         end = (
             len(evaluated)
@@ -969,6 +983,23 @@ def _apply_bucket_auto(  # noqa: PLR0913
             and _compare_bucket_values(evaluated[end - 1][0], evaluated[end][0]) == 0
         ):
             end += 1
+        if granularity is not None:
+            rounded_upper = round_boundary(
+                evaluated[end - 1][0], granularity, upward=True,
+                checkpoint=comparison_checkpoint
+            )
+            if (
+                float(unwrap_bson_numeric(wrap_bson_numeric(rounded_upper))) == 0
+                and end < len(evaluated)
+            ):
+                rounded_upper = round_boundary(
+                    evaluated[end][0], granularity, upward=False,
+                    checkpoint=comparison_checkpoint
+                )
+            while end < len(evaluated) and _compare_bucket_values(
+                evaluated[end][0], rounded_upper
+            ) < 0:
+                end += 1
         chunk = evaluated[start:end]
         start = end
         lower = _copy_if_mutable(chunk[0][0])
@@ -977,6 +1008,15 @@ def _apply_bucket_auto(  # noqa: PLR0913
             if start < len(evaluated)
             else _copy_if_mutable(chunk[-1][0])
         )
+        if granularity is not None:
+            lower = (
+                round_boundary(
+                    lower, granularity, upward=False, checkpoint=comparison_checkpoint
+                )
+                if previous_boundary is None else previous_boundary
+            )
+            upper = rounded_upper
+            previous_boundary = upper
         bucket = _AccumulatorBucket(
             bucket_id={"min": lower, "max": upper},
             values=_create_accumulator_state(prepared_output),

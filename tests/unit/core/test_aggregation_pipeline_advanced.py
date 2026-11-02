@@ -1246,7 +1246,7 @@ class AggregationPipelineAdvancedTests(unittest.TestCase):
                         '$bucketAuto': {
                             'groupBy': '$score',
                             'buckets': 1,
-                            'granularity': 'R5',
+                            'granularity': 'invalid-series',
                         }
                     }
                 ],
