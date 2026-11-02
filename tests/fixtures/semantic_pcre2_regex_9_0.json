@@ -1,0 +1,922 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "semantic_pcre2_branch_reset": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "cd",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": [
+              "d"
+            ]
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "cd",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": [
+                "d"
+              ]
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_casefold": {
+      "$regexMatch": [
+        {
+          "value": false
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": null
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": []
+        }
+      ],
+      "query": [],
+      "schema": {
+        "code": {
+          "$numberInt": "121"
+        }
+      }
+    },
+    "semantic_pcre2_digit_ascii": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "2",
+            "idx": {
+              "$numberInt": "1"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "2",
+              "idx": {
+                "$numberInt": "1"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_digit_ucp": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "\u06612",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "\u06612",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_empty": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": []
+            },
+            {
+              "match": "",
+              "idx": {
+                "$numberInt": "1"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_inline_options": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "ABc",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "ABc",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_keep_reset": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "b",
+            "idx": {
+              "$numberInt": "1"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "b",
+              "idx": {
+                "$numberInt": "1"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_named_group": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "ab",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": [
+              "ab"
+            ]
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "ab",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": [
+                "ab"
+              ]
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_offset": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "ab",
+            "idx": {
+              "$numberInt": "1"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "ab",
+              "idx": {
+                "$numberInt": "1"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_optional_capture": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "b",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": [
+              null
+            ]
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "b",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": [
+                null
+              ]
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_property": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "\u00e1\u03b2",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "\u00e1\u03b2",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_resource_limits": {
+      "query": [],
+      "$regexMatch": {
+        "code": {
+          "$numberInt": "51156"
+        },
+        "phase": "invoke"
+      },
+      "$regexFind": {
+        "code": {
+          "$numberInt": "51156"
+        },
+        "phase": "invoke"
+      },
+      "$regexFindAll": {
+        "code": {
+          "$numberInt": "51156"
+        },
+        "phase": "invoke"
+      },
+      "schema": {
+        "code": {
+          "$numberInt": "121"
+        }
+      }
+    },
+    "semantic_pcre2_word_ascii": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "word",
+            "idx": {
+              "$numberInt": "2"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "word",
+              "idx": {
+                "$numberInt": "2"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_word_ucp": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "\u00e1",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "\u00e1",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": []
+            },
+            {
+              "match": "word",
+              "idx": {
+                "$numberInt": "2"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_pcre2_cases.py",
+    "sha256": "c1eda0259af98b7a72798d928ab1478ef8ce666b1ced313ecf2d5be6e214d961"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_pcre2_keep_reset",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_keep_reset"
+    },
+    {
+      "name": "semantic_pcre2_branch_reset",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_branch_reset"
+    },
+    {
+      "name": "semantic_pcre2_property",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_property"
+    },
+    {
+      "name": "semantic_pcre2_named_group",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_named_group"
+    },
+    {
+      "name": "semantic_pcre2_inline_options",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_inline_options"
+    },
+    {
+      "name": "semantic_pcre2_optional_capture",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_optional_capture"
+    },
+    {
+      "name": "semantic_pcre2_word_ascii",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_word_ascii"
+    },
+    {
+      "name": "semantic_pcre2_word_ucp",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_word_ucp"
+    },
+    {
+      "name": "semantic_pcre2_digit_ascii",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_digit_ascii"
+    },
+    {
+      "name": "semantic_pcre2_digit_ucp",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_digit_ucp"
+    },
+    {
+      "name": "semantic_pcre2_offset",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_offset"
+    },
+    {
+      "name": "semantic_pcre2_casefold",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_casefold"
+    },
+    {
+      "name": "semantic_pcre2_empty",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_empty"
+    },
+    {
+      "name": "semantic_pcre2_resource_limits",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_resource_limits"
+    }
+  ]
+}

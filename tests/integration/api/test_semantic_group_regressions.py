@@ -21,6 +21,7 @@ from bson import BSON, DBRef, Decimal128, Timestamp
 from mongoeco import AsyncMongoClient, MongoClient, SearchIndexModel
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.compat import resolve_mongodb_dialect
+from mongoeco.core._regex_engine import _BACKEND as REGEX_BACKEND
 from mongoeco.core.aggregation.expression_values import MISSING
 from mongoeco.core.aggregation.preparation import prepare_pipeline
 from mongoeco.core.aggregation.runtime_state import apply_pipeline_states
@@ -376,6 +377,8 @@ class _AsyncView:
 def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
     engine_factory, dialect, corpus, name, action, *, surface
 ):
+    if corpus == "pcre2_regex" and REGEX_BACKEND != "pcre2":
+        pytest.skip("explicit optional PCRE2 backend profile required")
     capture = _capture(dialect, corpus)
     seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
     expected = capture["cases"][name]

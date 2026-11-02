@@ -206,6 +206,10 @@ from tests.differential.semantic_p2_read_cost_cases import (
     SEED as P2_READ_COST_SEED,
     SEMANTIC_P2_READ_COST_CASES,
 )
+from tests.differential.semantic_pcre2_cases import (
+    SEED as PCRE2_SEED,
+    SEMANTIC_PCRE2_CASES,
+)
 from tests.differential.semantic_query_batch_callback_cases import (
     SEED as QUERY_BATCH_CALLBACK_SEED,
     SEMANTIC_QUERY_BATCH_CALLBACK_CASES,
@@ -342,7 +346,12 @@ class SemanticCorpus:
     requires_standalone: bool = False
 
 
+
+
 SEMANTIC_CORPORA = {
+    "pcre2_regex": SemanticCorpus(
+        "pcre2-regex", "semantic_pcre2_cases", PCRE2_SEED, SEMANTIC_PCRE2_CASES
+    ),
     "followup_write": SemanticCorpus(
         "bounded-followup-write",
         "semantic_followup_cases",

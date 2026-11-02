@@ -1,0 +1,918 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_pcre2_branch_reset": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "cd",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": [
+              "d"
+            ]
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "cd",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": [
+                "d"
+              ]
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_casefold": {
+      "$regexMatch": [
+        {
+          "value": false
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": null
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": []
+        }
+      ],
+      "query": [],
+      "schema": {
+        "code": {
+          "$numberInt": "121"
+        }
+      }
+    },
+    "semantic_pcre2_digit_ascii": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "2",
+            "idx": {
+              "$numberInt": "1"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "2",
+              "idx": {
+                "$numberInt": "1"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_digit_ucp": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "\u06612",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "\u06612",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_empty": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": []
+            },
+            {
+              "match": "",
+              "idx": {
+                "$numberInt": "1"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_inline_options": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "ABc",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "ABc",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_keep_reset": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "b",
+            "idx": {
+              "$numberInt": "1"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "b",
+              "idx": {
+                "$numberInt": "1"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_named_group": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "ab",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": [
+              "ab"
+            ]
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "ab",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": [
+                "ab"
+              ]
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_offset": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "ab",
+            "idx": {
+              "$numberInt": "1"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "ab",
+              "idx": {
+                "$numberInt": "1"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_optional_capture": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "b",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": [
+              null
+            ]
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "b",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": [
+                null
+              ]
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_property": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "\u00e1\u03b2",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "\u00e1\u03b2",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_resource_limits": {
+      "query": [],
+      "$regexMatch": {
+        "code": {
+          "$numberInt": "51156"
+        },
+        "phase": "invoke"
+      },
+      "$regexFind": {
+        "code": {
+          "$numberInt": "51156"
+        },
+        "phase": "invoke"
+      },
+      "$regexFindAll": {
+        "code": {
+          "$numberInt": "51156"
+        },
+        "phase": "invoke"
+      },
+      "schema": {
+        "code": {
+          "$numberInt": "121"
+        }
+      }
+    },
+    "semantic_pcre2_word_ascii": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "word",
+            "idx": {
+              "$numberInt": "2"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "word",
+              "idx": {
+                "$numberInt": "2"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    },
+    "semantic_pcre2_word_ucp": {
+      "$regexMatch": [
+        {
+          "value": true
+        }
+      ],
+      "$regexFind": [
+        {
+          "value": {
+            "match": "\u00e1",
+            "idx": {
+              "$numberInt": "0"
+            },
+            "captures": []
+          }
+        }
+      ],
+      "$regexFindAll": [
+        {
+          "value": [
+            {
+              "match": "\u00e1",
+              "idx": {
+                "$numberInt": "0"
+              },
+              "captures": []
+            },
+            {
+              "match": "word",
+              "idx": {
+                "$numberInt": "2"
+              },
+              "captures": []
+            }
+          ]
+        }
+      ],
+      "query": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "schema": {
+        "ok": true
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_pcre2_cases.py",
+    "sha256": "c1eda0259af98b7a72798d928ab1478ef8ce666b1ced313ecf2d5be6e214d961"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_pcre2_keep_reset",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_keep_reset"
+    },
+    {
+      "name": "semantic_pcre2_branch_reset",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_branch_reset"
+    },
+    {
+      "name": "semantic_pcre2_property",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_property"
+    },
+    {
+      "name": "semantic_pcre2_named_group",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_named_group"
+    },
+    {
+      "name": "semantic_pcre2_inline_options",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_inline_options"
+    },
+    {
+      "name": "semantic_pcre2_optional_capture",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_optional_capture"
+    },
+    {
+      "name": "semantic_pcre2_word_ascii",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_word_ascii"
+    },
+    {
+      "name": "semantic_pcre2_word_ucp",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_word_ucp"
+    },
+    {
+      "name": "semantic_pcre2_digit_ascii",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_digit_ascii"
+    },
+    {
+      "name": "semantic_pcre2_digit_ucp",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_digit_ucp"
+    },
+    {
+      "name": "semantic_pcre2_offset",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_offset"
+    },
+    {
+      "name": "semantic_pcre2_casefold",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_casefold"
+    },
+    {
+      "name": "semantic_pcre2_empty",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_empty"
+    },
+    {
+      "name": "semantic_pcre2_resource_limits",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "text": "\u00e9ab"
+        }
+      ],
+      "selector": "semantic_pcre2_resource_limits"
+    }
+  ]
+}

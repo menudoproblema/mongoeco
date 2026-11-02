@@ -4080,3 +4080,23 @@ propuesta recomendada: PCRE2 opcional explícito, sin fallback silencioso por pa
 X04c sigue independiente: corpus completo 7/8/9, componente privado de fronteras,
 integración con agrupador existente y aceptación por candidato son sus pendientes.
 Esta etapa de definición/viabilidad no concede cierre de capacidades X01/X04c.
+
+### Implementación focal X01 opcional
+
+El owner autoriza backend PCRE2 opcional explícito. `mongoeco[pcre2]` fija binding
+0.7.1; `MONGOECO_REGEX_BACKEND=pcre2` antes del import selecciona un motor estable,
+sin fallback. La ausencia y el nombre desconocido fallan explícitamente; Python
+sigue por defecto. Adaptador privado de ejecución/caché, validación contextual
+conservada. Search-v1 y Regex.compile() siguen Python.
+
+Corpus de catorce casos, MongoDB 7.0.43/8.0.32/9.0.2, ambas engines y cuatro
+superficies: 339 checks PCRE2 verdes en cada Python 3.13/3.14/3.15 (3.14 como
+parte de la selección integrada de 990). Límite de matching: consulta sin match,
+agregación error 51156, schema 121; sin excepción cruda del binding. Capturas
+7/8 con fixtures propios finalizados y volúmenes eliminados; mongod 9 propio
+terminado. Fuente/hash y valores BSON permanecen en fixtures existentes.
+
+54 pruebas focales combinadas en 3.14; 85 pruebas/95 subtests por perfil 3.13/3.15
+(incluyen regresión del agrupador); lint ratchet, typing/API y SPI verdes. Evidencia
+focal archivada en part2-x01-x04c. Estado: implementado y comprobado focalmente,
+pendiente del gate de entrega común; no se declara parte II completa.

@@ -6,6 +6,7 @@ import re
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
+from mongoeco.core._regex_engine import compile_pattern
 from mongoeco.core.aggregation.expression_values import MISSING
 from mongoeco.core.bson_values import binary_parts, document_mapping as path_mapping
 from mongoeco.core.server_errors import server_error
@@ -30,7 +31,7 @@ def split_path(path: str) -> tuple[str, ...]:
 
 
 @lru_cache(maxsize=256)
-def compile_regex(pattern: str, options: str) -> re.Pattern[str]:
+def compile_regex(pattern: str, options: str) -> Any:
     flags = 0
     supported = {
         "i": re.IGNORECASE,
@@ -48,13 +49,13 @@ def compile_regex(pattern: str, options: str) -> re.Pattern[str]:
         seen.add(option)
         flags |= supported[option]
     try:
-        return re.compile(pattern, flags)
+        return compile_pattern(pattern, flags)
     except re.error as error:
         message = f"Regular expression is invalid: {error}"
         raise server_error(message, code=51091) from error
 
 
-def compile_bson_regex(value: Regex) -> re.Pattern[str]:
+def compile_bson_regex(value: Regex) -> Any:
     # Preserve Regex.compile's treatment of BSON locale/Unicode flags.
     options = "".join(flag for flag in value.flags if flag in "imsx")
     return compile_regex(value.pattern, options)

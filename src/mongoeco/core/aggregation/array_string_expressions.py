@@ -13,6 +13,7 @@ from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.compat._catalog_operators import ARRAY_ACCESS_EXPRESSION_ARGUMENTS
+from mongoeco.core._regex_engine import compile_pattern
 from mongoeco.core.aggregation.evaluation_environment import (
     scoped_environment,
 )
@@ -1003,7 +1004,7 @@ def _trim_string(value: str, chars: str | None, *, mode: str) -> str:
 
 def _compile_aggregation_regex(
     regex_value: Any, options_value: Any, *, operator: str
-) -> re.Pattern[str]:
+) -> Any:
     supported = {"i": re.IGNORECASE, "m": re.MULTILINE, "s": re.DOTALL, "x": re.VERBOSE}
     flags = 0
     pattern: str
@@ -1014,8 +1015,11 @@ def _compile_aggregation_regex(
             raise OperationFailure(
                 f"{operator} cannot specify options in both regex and options"
             )
-        return regex_value.compile()
-    if isinstance(regex_value, re.Pattern):
+        flags = sum(
+            value for option, value in supported.items() if option in regex_value.flags
+        )
+        pattern = regex_value.pattern
+    elif isinstance(regex_value, re.Pattern):
         if options_value not in {None, ""}:
             raise OperationFailure(
                 f"{operator} cannot specify options in both regex and options"
@@ -1039,7 +1043,7 @@ def _compile_aggregation_regex(
                 raise OperationFailure(f"Unsupported regex option: {option}")
             flags |= supported[option]
     try:
-        return re.compile(pattern, flags)
+        return compile_pattern(pattern, flags, operator=operator)
     except re.error as error:
         message = f"Invalid Regex in {operator}: {error}"
         raise server_error(message, code=51111) from error
