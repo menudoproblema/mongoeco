@@ -23,6 +23,8 @@ Preparación del candidato; todavía no publicada.
 
 - Preserve Decimal128 intermediates and remainders with Python's pure Decimal
   backend, without changing the process-wide integer conversion limit.
+- Complete exhaustive SQLite vector candidate budgets through the existing exact
+  fallback when ANN omits candidates; keep smaller budgets approximate.
 - Avoid redundant SQLite metadata reads when empty collection options remain valid;
   preserve session, namespace and storage identity and refresh options after writes.
 - Reuse prepared aggregation context and close every owned cursor source after

@@ -4,6 +4,7 @@ import asyncio
 import math
 
 from functools import partial
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -16,6 +17,7 @@ from mongoeco.engines import (
     MemoryEngine,
     SQLiteEngine,
     _sqlite_search_runtime as sqlite_runtime,
+    _sqlite_vector_backend as vector_backend,
 )
 from mongoeco.types import SearchIndexDefinition
 
@@ -46,6 +48,71 @@ TEXT_DEFINITION = {
 ROUTES = ("vector", "vector-downstream", "text", "compound")
 _TOP_K = 2
 _SUBTYPE_BOUNDARY = 32
+_EXHAUSTIVE_CANDIDATE_COUNT = 100
+
+
+@pytest.mark.parametrize("dialect", ["7.0", "8.0", "9.0"])
+@pytest.mark.parametrize("route", ["vector", "vector-downstream"])
+@pytest.mark.parametrize(
+    ["candidate_count", "limit"], [(16, _TOP_K), (100, _TOP_K), (100, 100)]
+)
+def test_exhaustive_vector_budget_survives_incomplete_ann(
+    dialect, route, candidate_count, limit
+):
+    search = vector_backend.Index.search
+    modes = []
+
+    def incomplete(index, query, *, count, exact=False):
+        modes.append(exact)
+        matches = search(index, query, count=count, exact=True)
+        if exact:
+            return matches
+        # A permitted approximate result can omit even a tied neighbour. A
+        # request for the entire population must not depend on ANN recall.
+        return SimpleNamespace(keys=matches.keys[:-1], distances=matches.distances[:-1])
+
+    expected = _capture(dialect, "search_bson")["cases"]["semantic_search_bson_vector"][
+        "seed"
+    ]["all"]
+    with MongoClient(SQLiteEngine(), mongodb_dialect=dialect) as client:
+        collection = client.exhaustive.rows
+        reset(collection)
+        indexes(collection)
+        stages = pipeline({}, route, limit=limit)
+        stages[0]["$vectorSearch"]["numCandidates"] = candidate_count
+        with (
+            patch.object(vector_backend.Index, "search", new=incomplete),
+            patch.object(
+                sqlite_runtime,
+                "exact_vector_hits_sync",
+                wraps=sqlite_runtime.exact_vector_hits_sync,
+            ) as fallback,
+        ):
+            actual = ids(collection, stages)
+            if candidate_count == _EXHAUSTIVE_CANDIDATE_COUNT:
+                explanation = collection.database.command(
+                    {
+                        "explain": {
+                            "aggregate": collection.name,
+                            "pipeline": stages,
+                            "cursor": {},
+                        },
+                        "verbosity": "executionStats",
+                    }
+                )
+                assert (
+                    explanation["engine_plan"]["details"]["exactFallbackReason"]
+                    == "candidate-underflow"
+                )
+                assert fallback.called
+            else:
+                fallback.assert_not_called()
+    assert modes
+    if candidate_count == _EXHAUSTIVE_CANDIDATE_COUNT:
+        assert actual == expected[:limit]
+    else:
+        assert len(actual) == _TOP_K
+    assert not any(modes)
 
 
 def indexes(collection):

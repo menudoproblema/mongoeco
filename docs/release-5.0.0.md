@@ -462,3 +462,38 @@ el segundo corrige esa causa compartida. Los tests de precisión usan también
 cotas racionales independientes y comparación de tuplas con C cuando está
 disponible. El ratchet y la revisión del diff pasan. Son comprobaciones focales;
 el wheel corregido aún exige el gate global final.
+
+Los cuatro desacuerdos de Vector Search afectaban a peticiones que cubren toda
+la población: ANN puede omitir un vecino empatado. El control determinista pierde
+un candidato y reproduce seis fallos antes del arreglo. La corrección final
+reutiliza el fallback exacto existente desde el consumidor compartido, incluso
+si el lote incompleto ya llena el limit. Conserva los predicados y el contexto
+de la operación y expone `candidate-underflow` en `exactFallbackReason`.
+No fuerza otro modo de búsqueda en el proveedor ni cambia sus llamadas.
+
+Pasan 18 controles con proveedor incompleto, incluidos límites pequeños y
+grandes, los tres dialectos, filtros previos y posteriores y la metadata de
+explain. Los presupuestos menores permanecen aproximados y no activan el
+fallback por esta condición. La suite focal completa, con backend decimal
+Python, pasa 152 tests de elegibilidad BSON, APIs/transporte, ventanas, escrituras
+y reapertura SQLite. La prueba previa de 146 casos con otra estrategia queda
+como antecedente; el cierre focal corresponde a esta implementación de 152.
+
+El run fuente 41559396076, con el orden de CI corregido, termina verde en 7/8/9:
+728 casos standalone y 64 de replica set por servidor, sin errores, fallos ni
+skips. Los informes y capturas se conservan junto al candidato f0a4367c. Esto
+acredita la reparación del circuito, no la aceptación del wheel con las nuevas
+correcciones numéricas y de Search.
+
+No se reinicia F11 ni la campaña R3. Se conservan sus datos e identidades
+históricos y sus reservas. El perfil comparativo usa 1.000 vectores válidos y
+presupuestos de 10/24/48 (expansión acotada por 40/48); no entra en el nuevo
+fallback exhaustivo ni ejercita las funciones BID o el resto Decimal128.
+No se atribuyen a las nuevas rutas tiempos que no se hayan medido.
+
+Tras integrar los commits semánticos se fija un nuevo SHA S y una nueva pareja
+de CI. Frente a Q06 cambian cuatro módulos productivos: scalar_expressions,
+decimal_math, bson_scalars y _sqlite_search_runtime. No se reutiliza la igualdad
+completa del payload. Se repiten los globales, cobertura exacta, matriz y nativos
+que el circuito exige expresamente sobre ese wheel final; se conservan los
+resultados anteriores y sus ejecuciones en curso. L02/L04 siguen pendientes.

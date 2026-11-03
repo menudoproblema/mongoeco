@@ -1660,6 +1660,7 @@ def _sqlite_vector_candidate_documents(
         set(prefilter_storage_keys) if prefilter_storage_keys is not None else None
     )
     current_request = requested
+    exhaustive_underflow = False
 
     query_matches, downstream_matches = residuals or (
         predicate(query_filter_spec),
@@ -1671,6 +1672,12 @@ def _sqlite_vector_candidate_documents(
             backend_state,
             query_vector=query.query_vector,
             count=current_request,
+        )
+        # A request for the entire population cannot rely on ANN recall, even
+        # if the incomplete batch already contains enough hits for the limit.
+        exhaustive_underflow = (
+            current_request >= backend_state.valid_vectors
+            and len(ann_hits) < backend_state.valid_vectors
         )
         new_storage_keys = [
             storage_key
@@ -1728,11 +1735,14 @@ def _sqlite_vector_candidate_documents(
             max_requested=max_requested,
         )
 
-    if (query_filter_spec is not None or downstream_filter_spec is not None) and len(
-        matched_hits,
-    ) < query.limit:
+    if exhaustive_underflow or (
+        (query_filter_spec is not None or downstream_filter_spec is not None)
+        and len(matched_hits) < query.limit
+    ):
         exact_fallback_reason = (
-            "candidate-prefilter-underflow"
+            "candidate-underflow"
+            if exhaustive_underflow
+            else "candidate-prefilter-underflow"
             if prefilter_exact
             else "post-filter-underflow"
         )
