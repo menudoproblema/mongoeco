@@ -1,6 +1,7 @@
 # Candidato Mongoeco 5.0.0
 
-Preparación iniciada el 2 de noviembre de 2026. No publicada, sin tag ni push.
+Preparación iniciada el 2 de noviembre de 2026. No publicada ni etiquetada;
+la integración y las ejecuciones actuales se registran al final.
 Base publicada: v4.11.0. Guía: [migración](migrating-to-5.0.md).
 
 Major por el cambio público del default UUID y la retirada de expresiones
@@ -424,3 +425,16 @@ Missing Features y en el owner de errores: no cubre un standalone cuyo reloj
 lógico ya se haya inicializado. Implementar ese estado queda como seguimiento,
 fuera de esta preparación; no se reabren los cierres aceptados ni se presenta
 el aislamiento del oráculo como una ampliación de paridad productiva.
+
+El global final de pytest reutiliza `-n 2`, igual que las tres ejecuciones
+aceptadas de Q06, incluida la cobertura (`q06-globals.json`). pytest-xdist ya
+forma parte de sus dependencias y de la matriz CI. No se cambian tests,
+selecciones, exclusiones ni umbral exacto; unittest sigue siendo serial.
+El harness corregido pasa sus 116 tests y 3 subtests también con dos workers
+(5,43 s); actionlint valida ambos workflows. Los globales seriales que ya
+estaban en curso se conservan y no se interrumpen. El ajuste no exige otra
+campaña de coste ni otra sonda nativa: no altera sus entradas causales.
+
+Los globales finales incluyen `-ra` para conservar los motivos de skip y poder
+comprobarlos sin repetir una suite. Es sólo presentación de resultados: no
+altera selección, ejecución ni aceptación.

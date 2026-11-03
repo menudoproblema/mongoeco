@@ -226,7 +226,7 @@ jobs:
 
       - name: Run complete pytest suite
         if: matrix.python-version != '3.14'
-        run: python -m pytest -q
+        run: python -m pytest -q -n 2 -ra
 
       - name: Enable the existing optional backend consumer in coverage tests
         if: matrix.python-version == '3.14'
@@ -238,7 +238,7 @@ jobs:
       - name: Enforce installed package coverage floor
         if: matrix.python-version == '3.14'
         run: |
-          python -m pytest --cov=mongoeco --cov-report=term --cov-report=json:coverage.json -q
+          python -m pytest --cov=mongoeco --cov-report=term --cov-report=json:coverage.json -q -n 2 -ra
           python - <<'PYCODE'
           import json
           from pathlib import Path
