@@ -355,8 +355,11 @@ def test_sqlite_ranks_all_received_ann_candidates_before_truncating(tied):
 @pytest.mark.parametrize("dialect", ["7.0", "8.0", "9.0"])
 @pytest.mark.parametrize("subtype", [0, 5])
 @pytest.mark.parametrize("limit", [2, 64])
+@pytest.mark.parametrize(
+    "ann_complete", [True, False], ids=["complete-ann", "incomplete-ann"]
+)
 def test_vector_residual_preparation_is_shared_with_exact_fallback(
-    dialect, subtype, limit
+    dialect, subtype, limit, ann_complete
 ):
     expected_ids = _capture(dialect, "p2_read_cost")["cases"][
         "semantic_p2_vector_filter_eligibility"
@@ -364,6 +367,14 @@ def test_vector_residual_preparation_is_shared_with_exact_fallback(
     expected = sorted(
         expected_ids, key=lambda n: (-1 / math.sqrt(1 + (int(n) / 64) ** 2), n)
     )[:limit]
+
+    def candidates(state, **options):
+        # Control completeness instead of depending on the native ANN graph.
+        options["exact"] = True
+        hits = vector_backend.search_sqlite_vector_backend(state, **options)
+        assert len(hits) == min(options["count"], state.valid_vectors)
+        return hits if ann_complete else hits[1:]
+
     with MongoClient(SQLiteEngine(), mongodb_dialect=dialect) as client:
         collection = client.p2.records
         collection.insert_many(
@@ -381,6 +392,9 @@ def test_vector_residual_preparation_is_shared_with_exact_fallback(
         )
         with (
             patch.object(
+                sqlite_runtime, "search_sqlite_vector_backend", side_effect=candidates
+            ),
+            patch.object(
                 filtering_module,
                 "compile_filter",
                 wraps=filtering_module.compile_filter,
@@ -396,7 +410,7 @@ def test_vector_residual_preparation_is_shared_with_exact_fallback(
                 pipeline({"v": Binary(b"x", subtype)}, "vector", limit=limit),
             )
         assert actual == expected
-        assert exact.call_count == int(limit > len(expected_ids))
+        assert exact.call_count == int(not ann_complete or limit > len(expected_ids))
         residual_calls = [
             call for call in repeated.call_args_list
             if call.args and set(call.args[0]) == {"v"}

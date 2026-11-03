@@ -512,3 +512,16 @@ para agrupar cualquier fallo adicional. La corrección sólo cambia el test y
 esta nota; el próximo wheel debe conservar todo su payload y metadata frente
 al de 10d85550. La CI del SHA final sigue siendo exigida por el circuito; no
 se sustituye su rojo 3.13 por una declaración de aceptación ni se publica.
+
+El mismo run cierra los tres diferenciales del wheel y toda la matriz. Python
+3.14 completa la suite con tres fallos de aserción en el test de preparación
+compartida: los resultados son correctos, pero el test suponía que el fallback
+sólo dependía del limit y no de un lote ANN incompleto. La cobertura sí cumple:
+48.499/48.988 = 99,00179635829183 %, 489 líneas ausentes y 1.027 excluidas.
+
+El test ahora controla lotes completos e incompletos usando el proveedor exacto
+existente como generador de datos. Mantiene las aserciones de resultados y exige
+un único fallback cuando corresponde, además de una sola preparación del
+predicado. Pasa sus 24 casos por cada Python 3.13/3.14/3.15. No se relaja el
+conteo a un rango ni se cambia el runtime. Queda recoger el global 3.15 de
+10d85550 antes de impulsar juntas las dos correcciones de pruebas.
