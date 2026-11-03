@@ -318,10 +318,15 @@ def main():  # noqa: PLR0915 - native capture owns setup, facade comparison and 
         ):
             if args.check_dir is not None:
                 expected = json.loads((args.check_dir / filename).read_text())
+                rejected = args.output_dir / ("rejected-" + filename)
+                rejected.write_text(
+                    json.dumps({**meta, "observations": data}, indent=2) + "\n"
+                )
                 require(
                     data == expected["observations"],
                     f"native capture differs: {filename}",
                 )
+                rejected.unlink()
             capture = {**meta, "observations": data}
             if data is collation_keys:
                 capture["collation_catalog_sha256"] = hashlib.sha256(
