@@ -306,3 +306,37 @@ No queda trabajo productivo conocido exigido para este cierre: quedan gates de
 entrega externa y estas mejoras mínimas de su circuito de validación. Si aparece
 un fallo del candidato en L02, pasa a ser una corrección obligatoria, con impacto
 focal; no autoriza una auditoría general ni ampliar el alcance de la versión.
+
+
+### Ejecución de L00–L04 iniciada el 3 de noviembre
+
+El usuario autoriza ejecutar el plan con el modo de publicación más seguro,
+conservando el límite sin tags/publicación. L00 comprobado: la pareja Q06 se
+conserva también en `dist/release-5.0.0-q06/`, con SHA256SUMS verificado. El
+directorio histórico `dist/release-5.0.0/` no se sobrescribe.
+
+L01 implementado: diferencial del wheel también en push a main; publish sigue
+siendo exclusivo de tags y ahora comprueba el manifiesto; cobertura JSON con
+cociente exacto ≥99 y denominador no vacío, conservada como artifact. actionlint
+1.7.12 del release oficial, checksum verificado, valida el workflow. El cálculo
+inline acepta 48.459/48.948 y rechaza tanto 48.458/48.948 (99,00 redondeado) como
+el denominador vacío. No cambian runtime, metadata empaquetada ni fixtures.
+
+Protección GitHub L03 aplicada y reconsultada: `pypi` exige aprobación manual
+del propietario `menudoproblema` (id 976187) y sólo permite deployments de tags
+`v*`. Se permite que el propietario apruebe su propio job: es el control manual
+de publicación del mantenedor, no una garantía de revisión por dos personas.
+No se conceden nuevas credenciales ni se crean publishers. El futuro tag no
+liberará automáticamente el paso protegido en el flujo normal.
+
+La configuración privada del Trusted Publisher de PyPI sigue pendiente de
+confirmación del propietario. El control del equipo no autorizó Firefox y el
+usuario indica continuar por CLI; no se vuelve a intentar el navegador. La
+protección GitHub no se presenta como prueba de la configuración PyPI.
+
+L02 se acredita con la ejecución alojada del commit que contiene estos ajustes:
+se conservan los artifacts/manifiestos/run de Actions y se descargan al destino
+`dist/release-5.0.0-final/`. La evidencia terminal de ese run, con head SHA y
+conclusiones, determina L02/L04; escribir un recibo no debe cambiar el candidato
+ni provocar otra suite completa. La comprobación privada L03 permanece separada
+hasta recibir su evidencia. Esta nota registra el inicio, no adelanta un verde.

@@ -237,7 +237,23 @@ jobs:
 
       - name: Enforce installed package coverage floor
         if: matrix.python-version == '3.14'
-        run: python -m pytest --cov=mongoeco --cov-report=term -q
+        run: |
+          python -m pytest --cov=mongoeco --cov-report=term --cov-report=json:coverage.json -q
+          python - <<'PYCODE'
+          import json
+          from pathlib import Path
+          totals = json.loads(Path("coverage.json").read_text())["totals"]
+          assert totals["num_statements"] > 0, totals
+          assert totals["covered_lines"] * 100 >= totals["num_statements"] * 99, totals
+          PYCODE
+
+      - name: Preserve exact coverage evidence
+        if: always() && matrix.python-version == '3.14'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: installed-package-coverage
+          path: coverage.json
+          if-no-files-found: error
 
       - name: Exercise deep property profile
         if: matrix.python-version == '3.14'
@@ -339,7 +355,7 @@ jobs:
 
   release-differential:
     name: Required MongoDB release differential
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     needs:
       - build
     uses: ./.github/workflows/mongodb-differential.yml
@@ -382,6 +398,15 @@ jobs:
         with:
           name: release-distributions
           path: dist
+
+      - name: Download tested distribution manifest
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: release-distribution-manifest
+          path: artifact-manifest
+
+      - name: Verify tested distribution hashes before publishing
+        run: sha256sum -c artifact-manifest/SHA256SUMS
 
       - name: Publish distributions to PyPI
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
