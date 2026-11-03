@@ -769,7 +769,9 @@ def _parse_decimal128_string(operator: str, text: str) -> decimal.Decimal:
             context.clamp = 1
             context.traps[decimal.Underflow] = True
             return context.create_decimal(text)
-    except decimal.DecimalException as error:
+    except (decimal.DecimalException, ValueError) as error:
+        # The pure Python decimal backend can hit Python's integer-string limit
+        # before reporting Decimal128 overflow. Keep conversion errors in BSON.
         raise server_error(message, code=241) from error
 
 

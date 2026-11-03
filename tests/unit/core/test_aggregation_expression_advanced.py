@@ -1,5 +1,6 @@
 import datetime
 import decimal
+import importlib
 import math
 import re
 import unittest
@@ -947,6 +948,36 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
             evaluate_expression(document, {"$toUUID": "$bad_uuid"})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$toDecimal": "$huge_decimal"})
+
+    def test_decimal_string_overflow_has_bson_error_with_each_decimal_backend(self):
+        huge_decimal = "9" * 7000
+        for module in ("decimal", "_pydecimal"):
+            backend = importlib.import_module(module)
+            context = backend.Context(prec=34, Emin=-6143, Emax=6144)
+            with (
+                self.subTest(backend=module),
+                patch.multiple(
+                    "mongoeco.core.aggregation.scalar_expressions",
+                    decimal=backend,
+                    DECIMAL128_CONTEXT=context,
+                ),
+            ):
+                with self.assertRaises(OperationFailure) as raised:
+                    evaluate_expression({}, {"$toDecimal": huge_decimal})
+                self.assertEqual(raised.exception.code, 241)
+                self.assertEqual(
+                    evaluate_expression(
+                        {},
+                        {
+                            "$convert": {
+                                "input": huge_decimal,
+                                "to": "decimal",
+                                "onError": "fallback",
+                            }
+                        },
+                    ),
+                    "fallback",
+                )
 
     def test_evaluate_expression_scalar_conversion_additional_type_and_error_paths(self):
         class CustomValue:

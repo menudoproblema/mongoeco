@@ -380,3 +380,19 @@ comparador; otros 363 replays PCRE2/capped pasan. Las pruebas negativas exigen
 que diferencias de código, fase, estado y tipo fuera de la exclusión fallen.
 actionlint y el ratchet de lint pasan. La aceptación nativa alojada sigue
 pendiente del SHA final; estas comprobaciones no sustituyen MongoDB real.
+
+El mismo run demuestra un fallo productivo acotado en Python 3.15.1/Linux:
+el backend `_pydecimal` lanza `ValueError` por el límite de conversión de
+enteros al leer la cadena decimal de 7.000 nueves, en vez de `DecimalException`.
+Se traduce esa excepción en la misma frontera a error BSON 241, conservando
+`$convert.onError`. No se modifica el límite global del intérprete. El test
+reproduce ambos backends explícitamente sin depender del build de Python;
+la clase focal completa pasa: 28 tests y 2 subtests. El ratchet pasa.
+
+Este único cambio productivo invalida la igualdad completa del payload Q06:
+la comparación del nuevo wheel debe identificar sólo
+`core/aggregation/scalar_expressions.py` y el RECORD derivado. Se conservan
+las pruebas históricas del resto y las reservas de coste aceptadas; no hay
+nueva campaña de rendimiento. El circuito CI exige construir y probar de
+nuevo la pareja del SHA final, incluidos los tres Python y MongoDB 7/8/9.
+No se declara cerrado L02/L04 hasta disponer de sus resultados terminales.
