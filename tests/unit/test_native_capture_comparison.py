@@ -16,7 +16,11 @@ from scripts.capture_differential_replay_golden import _capture_expectation
 
 from mongoeco.core import bson_identity, bson_scalars, identity, paths
 
-from tests.differential._real_parity_base import _decode_capture, _normalize
+from tests.differential._real_parity_base import (
+    _assert_native_observation,
+    _decode_capture,
+    _normalize,
+)
 from tests.differential.semantic_expression_grammar_cases import _observe
 
 
@@ -203,3 +207,45 @@ def test_grammar_observation_normalizes_only_its_actual_namespace(namespace):
     assert _observe(lambda: {"message": message}, "actual.records")["result"] == {
         "message": message
     }
+
+
+@pytest.mark.parametrize("change", ["code", "phase", "state", "supported-type"])
+def test_capped_contract_exception_does_not_hide_other_differences(change):
+    native = {
+        key: {"ok": True, "aux_exists": True, "state": {"count": 0}}
+        for key in ("capped-size-string", "capped-max-zero")
+    }
+    actual = {
+        key: {
+            "ok": False,
+            "phase": "invoke",
+            "exception": "OperationFailure",
+            "code": 115,
+            "state": {"count": 0},
+            "aux_exists": False,
+            "indexes": [],
+        }
+        for key in native
+    }
+    native["supported"] = {"value": 1}
+    actual["supported"] = {"value": 1}
+    before = copy.deepcopy((actual, native))
+    _assert_native_observation(
+        actual, native, corpus="bson_catalog", name="semantic_catalog_create_options"
+    )
+    assert (actual, native) == before
+    if change == "code":
+        actual["capped-size-string"]["code"] = 9
+    elif change == "phase":
+        actual["capped-size-string"]["phase"] = "iterate"
+    elif change == "state":
+        actual["capped-size-string"]["state"] = {"count": 1}
+    else:
+        actual["supported"]["value"] = True
+    with pytest.raises(AssertionError):
+        _assert_native_observation(
+            actual,
+            native,
+            corpus="bson_catalog",
+            name="semantic_catalog_create_options",
+        )

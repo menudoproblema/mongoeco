@@ -36,7 +36,11 @@ from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.wire import AsyncMongoEcoProxyServer
 
-from tests.differential._real_parity_base import _decode_capture, _normalize
+from tests.differential._real_parity_base import (
+    _assert_native_observation,
+    _decode_capture,
+    _normalize,
+)
 from tests.differential.semantic_average_route_cases import GROUP, SEED as AVERAGE_SEED
 from tests.differential.semantic_command_let_cases import VALID as COMMAND_LET_VALID
 from tests.differential.semantic_corpora import SEMANTIC_CORPORA
@@ -384,25 +388,7 @@ def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest a
     expected = capture["cases"][name]
 
     def check(actual):
-        if corpus == "bson_catalog" and name == "semantic_catalog_create_options":
-            # Native success is evidence of the excluded capability, not local parity.
-            actual, native = deepcopy(actual), deepcopy(expected)
-            for key in ("capped-size-string", "capped-max-zero"):
-                observed, supported = actual.pop(key), native.pop(key)
-                assert supported["ok"]
-                assert supported["aux_exists"]
-                assert observed == {
-                    "ok": False,
-                    "phase": "invoke",
-                    "exception": "OperationFailure",
-                    "code": 115,
-                    "state": supported["state"],
-                    "aux_exists": False,
-                    "indexes": [],
-                }
-            assert _normalize(actual) == _normalize(native)
-        else:
-            assert _normalize(actual) == _normalize(expected)
+        _assert_native_observation(actual, expected, corpus=corpus, name=name)
 
     if surface == "sync":
         with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:

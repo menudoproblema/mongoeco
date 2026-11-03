@@ -364,3 +364,19 @@ Publisher en PyPI. Su procedencia es confirmación expresa del usuario, no
 lectura automatizada del agente; queda junto a la evidencia del entorno en
 `dist/release-5.0.0-final/d8b3aa2c/publisher-verification.json`. L03 queda comprobado
 con ese límite de procedencia. No se han creado tags ni autorizado publicación.
+
+Incidencias L02 del run 41552282381 (ff5fba9d): los servidores ya inician con
+el kernel compatible. Sus tres particiones standalone detectan las mismas 36
+observaciones fallidas: PCRE2 no seleccionado, dos corpus registrados como
+wire-only ejecutados por API directa y la exclusión capped comparada como
+paridad completa. Se corrige el harness usando `SemanticCorpus.surfaces`, el
+proxy existente y el mismo contrato capped explícito de los replays; el
+comparador BSON estricto permanece. El perfil nativo instala y selecciona
+PCRE2 explícitamente; el perfil público por defecto sigue siendo Python.
+No se cambian corpus, capturas ni excepciones aceptadas.
+
+Comprobación focal sobre el wheel Q06: 116 tests y 3 subtests del harness y
+comparador; otros 363 replays PCRE2/capped pasan. Las pruebas negativas exigen
+que diferencias de código, fase, estado y tipo fuera de la exclusión fallen.
+actionlint y el ratchet de lint pasan. La aceptación nativa alojada sigue
+pendiente del SHA final; estas comprobaciones no sustituyen MongoDB real.

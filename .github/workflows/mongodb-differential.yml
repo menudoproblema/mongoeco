@@ -59,6 +59,7 @@ jobs:
       MONGOECO_REAL_MONGODB_URI: mongodb://localhost:27017
       MONGOECO_REAL_MONGODB_TARGET: ${{ matrix.target }}
       MONGOECO_DIFFERENTIAL_SEED: "42"
+      MONGOECO_REGEX_BACKEND: pcre2
       MONGOECO_TEST_INSTALLED_ARTIFACT: ${{ inputs.distribution_artifact != '' && '1' || '0' }}
     steps:
       - name: Checkout
@@ -72,7 +73,7 @@ jobs:
       - name: Install differential dependencies
         if: inputs.distribution_artifact == ''
         run: |
-          python -m pip install -c requirements/ci-constraints.txt ".[mongodb-real]" unittest-xml-reporting pytest hypothesis
+          python -m pip install -c requirements/ci-constraints.txt ".[mongodb-real,pcre2]" unittest-xml-reporting pytest hypothesis
 
       - name: Download immutable release distributions
         if: inputs.distribution_artifact != ''
@@ -93,7 +94,7 @@ jobs:
         run: |
           sha256sum -c artifact-manifest/SHA256SUMS
           WHEEL="$(find dist -name 'mongoeco-*.whl' -print -quit)"
-          python -m pip install -c requirements/ci-constraints.txt "${WHEEL}[mongodb-real]" unittest-xml-reporting pytest hypothesis
+          python -m pip install -c requirements/ci-constraints.txt "${WHEEL}[mongodb-real,pcre2]" unittest-xml-reporting pytest hypothesis
           python - <<'PY'
           from pathlib import Path
           import mongoeco

@@ -7,19 +7,28 @@ from pathlib import Path
 from typing import ClassVar
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from scripts.capture_differential_replay_golden import _capture_expectation
 from scripts.run_mongodb_real_differential import (
     inspect_server_runtime,
     main as differential_main,
 )
 
-from tests.differential._real_parity_base import MongoRealParityBase
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+
+from tests.differential._real_parity_base import (
+    MongoRealParityBase,
+    _assert_native_observation,
+    _decode_capture,
+)
 from tests.differential.cases import (
     REAL_CAPTURE_PENDING_CASES,
     REAL_PARITY_CASES,
     RealParityCase,
 )
 from tests.differential.runner import available_case_names, build_suite
+from tests.differential.semantic_corpora import SEMANTIC_CORPORA
 
 
 def test_native_capture_normalizes_only_generated_error_namespaces():
@@ -321,3 +330,36 @@ def test_index_scan_duration_is_normalized_without_hiding_scan_or_document_data(
         assert _capture_expectation(original) != _capture_expectation(
             {**original, "message": changed_message}
         )
+
+
+@pytest.mark.skipif(
+    importlib.util.find_spec("pymongo") is None, reason="optional PyMongo required"
+)
+@pytest.mark.parametrize("dialect", ["7.0", "8.0", "9.0"])
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize(
+    ["corpus_name", "name"],
+    [
+        (corpus_name, name)
+        for corpus_name in ("command_batch", "response_command", "bson_catalog")
+        for name, _action in SEMANTIC_CORPORA[corpus_name].cases
+        if corpus_name != "bson_catalog" or name == "semantic_catalog_create_options"
+    ],
+)
+def test_real_parity_harness_uses_registered_surface_and_native_contract(
+    dialect, engine_factory, corpus_name, name
+):
+    import pymongo  # noqa: PLC0415 - optional native SDK for the wire-only cases
+
+    harness = MongoRealParityBase(methodName="runTest")
+    harness.TARGET_VERSION = tuple(map(int, dialect.split(".")))
+    harness._mongo_client_class = pymongo.MongoClient
+    case = next(case for case in REAL_PARITY_CASES if case.name == name)
+    fixture = Path(__file__).parents[1] / "fixtures" / (
+        f"semantic_{corpus_name}_{dialect.replace('.', '_')}.json"
+    )
+    expected = _decode_capture(fixture.read_text())["cases"][name]
+    actual = harness._observe_eco_case(
+        case, engine_factory, "real_parity_harness", "records"
+    )
+    _assert_native_observation(actual, expected, corpus=corpus_name, name=name)
