@@ -497,3 +497,18 @@ decimal_math, bson_scalars y _sqlite_search_runtime. No se reutiliza la igualdad
 completa del payload. Se repiten los globales, cobertura exacta, matriz y nativos
 que el circuito exige expresamente sobre ese wheel final; se conservan los
 resultados anteriores y sus ejecuciones en curso. L02/L04 siguen pendientes.
+
+El candidato integrado 10d85550 tiene el mismo árbol que el cierre focal de la
+rama auxiliar, eliminada local y remotamente con comprobación de identidad y
+lease. Su run es 41564373931. Unittest 3.13 detecta un error en el nuevo oráculo:
+`Fraction` de 3.13 conserva el tipo Decimal vinculado al importar y el test
+forzaba otro backend; desde 3.14 admite otros objetos con `as_integer_ratio`.
+Se usa `Fraction(*actual.as_integer_ratio())`, manteniendo la cota
+racional exacta. El foco pasa con C y Python: 1 test y 24 subtests por intérprete
+3.13/3.14/3.15. No cambia ningún archivo productivo.
+
+Se conservan los resultados pendientes de 10d85550 antes del siguiente push,
+para agrupar cualquier fallo adicional. La corrección sólo cambia el test y
+esta nota; el próximo wheel debe conservar todo su payload y metadata frente
+al de 10d85550. La CI del SHA final sigue siendo exigida por el circuito; no
+se sustituye su rojo 3.13 por una declaración de aceptación ni se publica.

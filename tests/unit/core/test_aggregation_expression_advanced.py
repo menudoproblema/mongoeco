@@ -1006,7 +1006,7 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
                 for index, value in enumerate(values):
                     with self.subTest(backend=module, case=index):
                         actual = decimal_math._decimal(value)
-                        error = abs(Fraction(actual) - value)
+                        error = abs(Fraction(*actual.as_integer_ratio()) - value)
                         digits = actual.as_tuple().digits
                         exponent = actual.as_tuple().exponent
                         quantum = (
