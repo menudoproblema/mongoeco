@@ -8,6 +8,7 @@ See resources/Intel-Decimal-Math-LICENSE.txt for the adapted BID algorithms.
 
 from decimal import ROUND_DOWN, ROUND_HALF_EVEN, Context, Decimal, localcontext
 from fractions import Fraction
+from math import log10
 
 from mongoeco.core.bson_scalars import _DECIMAL128_ARITHMETIC_CONTEXT
 
@@ -17,6 +18,7 @@ _WORK_CONTEXT = Context(
 )
 _BINARY_RADIX = 2
 _DECIMAL_RADIX = 10
+_LOG10_2 = log10(2)
 _EXP_SPLIT = 11000
 _EXP10_BOUND = 6400
 _ZERO = Decimal("0E-6176")
@@ -74,7 +76,41 @@ _LN2 = _constant(0x3FFE62E42FEFA39EF35793C7673007E6)
 
 
 def _decimal(value: Fraction) -> Decimal:
-    return _WORK_CONTEXT.divide(Decimal(value.numerator), Decimal(value.denominator))
+    """Round the rational once, without serializing its enormous integers."""
+    numerator, denominator = abs(value.numerator), value.denominator
+    if not numerator:
+        return Decimal(0)
+    # The float only seeds the exponent search; integer comparisons establish
+    # the exact decade before any rounding decision.
+    exponent = int((numerator.bit_length() - denominator.bit_length()) * _LOG10_2)
+    if exponent >= 0:
+        denominator *= 10**exponent
+    else:
+        numerator *= 10**-exponent
+    while numerator < denominator:
+        numerator *= 10
+        exponent -= 1
+    while numerator >= denominator * 10:
+        denominator *= 10
+        exponent += 1
+    precision = _WORK_CONTEXT.prec
+    coefficient, remainder = divmod(numerator * 10 ** (precision - 1), denominator)
+    if remainder * 2 > denominator or (
+        remainder * 2 == denominator and coefficient % 2
+    ):
+        coefficient += 1
+    exponent -= precision - 1
+    if coefficient == 10**precision:
+        coefficient //= 10
+        exponent += 1
+    # Exact division prefers exponent zero, or the nearest exact exponent below
+    # it. Preserve that quantum rather than padding exact values to 100 digits.
+    if not remainder:
+        while exponent < 0 and coefficient % 10 == 0:
+            coefficient //= 10
+            exponent += 1
+    digits = tuple(map(int, str(coefficient)))
+    return _WORK_CONTEXT.create_decimal(Decimal((int(value < 0), digits, exponent)))
 
 
 def _binary_log(value: Fraction, base: int) -> Fraction:

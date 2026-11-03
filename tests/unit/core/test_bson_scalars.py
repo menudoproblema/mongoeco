@@ -1,9 +1,11 @@
 import decimal
+import importlib
 import math
 import unittest
 
 from unittest.mock import patch
 
+from mongoeco.core import bson_scalars
 from mongoeco.core.bson_scalars import (
     BsonDecimal128,
     BsonDouble,
@@ -32,6 +34,35 @@ from mongoeco.types import Decimal128
 
 
 class BsonScalarTests(unittest.TestCase):
+    def test_decimal_mod_avoids_large_quotients_with_each_backend(self):
+        specimens = (
+            ("1E6144", "3", "1"),
+            ("-1E6144", "3", "-1"),
+            ("1E-6176", "3", "1E-6176"),
+            ("-4.00", "-2", "-0.00"),
+            ("1.23", "0.1", "0.03"),
+            ("3", "1E-6176", "0E-6176"),
+            ("1E6144", "1E-6176", "0E-6176"),
+        )
+        for module in ("decimal", "_pydecimal"):
+            backend = importlib.import_module(module)
+            context = backend.Context(prec=34, Emin=-6143, Emax=6144)
+            with patch.multiple(
+                bson_scalars,
+                decimal=backend,
+                DECIMAL128_CONTEXT=context,
+                _DECIMAL128_ARITHMETIC_CONTEXT=context,
+            ):
+                for left, right, expected in specimens:
+                    with self.subTest(backend=module, left=left, right=right):
+                        actual = bson_mod(
+                            BsonDecimal128(backend.Decimal(left)),
+                            BsonDecimal128(backend.Decimal(right)),
+                        ).value
+                        self.assertEqual(
+                            actual.as_tuple(), backend.Decimal(expected).as_tuple()
+                        )
+
     def test_wrap_bson_numeric_distinguishes_numeric_kinds(self):
         self.assertEqual(wrap_bson_numeric(1), BsonInt32(1))
         self.assertEqual(wrap_bson_numeric(1 << 40), BsonInt64(1 << 40))

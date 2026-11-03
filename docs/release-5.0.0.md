@@ -438,3 +438,27 @@ campaña de coste ni otra sonda nativa: no altera sus entradas causales.
 Los globales finales incluyen `-ra` para conservar los motivos de skip y poder
 comprobarlos sin repetir una suite. Es sólo presentación de resultados: no
 altera selección, ejecución ni aceptación.
+
+El global pytest de Python 3.15 en 41554413441 termina con 124 fallos:
+120 decimales y cuatro de SQLite Vector Search. Las excepciones de `_pydecimal`
+revelan otras dos conversiones de enteros grandes a texto: los intermediarios
+Fraction de las funciones BID y el cociente interno del resto decimal.
+El fallback Python es un [caso documentado en CPython 3.15](https://github.com/python/cpython/issues/139994).
+No se sustituye por un nuevo requisito de instalación ni se modifica
+`sys.set_int_max_str_digits`.
+
+La conversión racional común ahora redondea una sola vez a la precisión de
+trabajo con comparaciones/división entera exactas y empate al par. El float sólo
+estima el inicio de una búsqueda cuyo resultado se comprueba con enteros.
+Se conserva el quantum preferido. El resto finito opera sobre coeficientes y
+escalas BSON sin construir el cociente enorme; conserva signo y cero firmado.
+Se mantienen las rutas no finitas y las demás promociones numéricas.
+
+Focos sobre fuente corregida: 289 tests y 42 subtests pasan tanto con el backend
+Python forzado en 3.15 como con C en 3.14. Incluyen capturas nativas, operaciones
+de escritura y transporte y contextos decimales del usuario alterados. El
+primer arreglo racional dejó 60 fallos del resto, conservados en el registro;
+el segundo corrige esa causa compartida. Los tests de precisión usan también
+cotas racionales independientes y comparación de tuplas con C cuando está
+disponible. El ratchet y la revisión del diff pasan. Son comprobaciones focales;
+el wheel corregido aún exige el gate global final.

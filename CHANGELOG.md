@@ -21,6 +21,8 @@ Preparación del candidato; todavía no publicada.
 
 ### Fixed
 
+- Preserve Decimal128 intermediates and remainders with Python's pure Decimal
+  backend, without changing the process-wide integer conversion limit.
 - Avoid redundant SQLite metadata reads when empty collection options remain valid;
   preserve session, namespace and storage identity and refresh options after writes.
 - Reuse prepared aggregation context and close every owned cursor source after

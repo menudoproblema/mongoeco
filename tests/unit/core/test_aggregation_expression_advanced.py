@@ -6,9 +6,11 @@ import re
 import unittest
 import uuid
 from copy import deepcopy
+from fractions import Fraction
 from unittest.mock import ANY, patch
 
 from mongoeco.compat import MongoDialect
+from mongoeco.core import decimal_math
 import mongoeco.core.aggregation.accumulators as accumulators_module
 import mongoeco.core.aggregation.grouping_stages as grouping_stages
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
@@ -978,6 +980,55 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
                     ),
                     "fallback",
                 )
+
+    def test_fraction_decimal_conversion_preserves_rounding_with_each_backend(self):
+        values = (
+            Fraction(0),
+            Fraction(1, 2),
+            Fraction(1000),
+            Fraction(1, 3),
+            Fraction(1 << 16000),
+            Fraction(1, 1 << 16000),
+            Fraction(-(1 << 16000), 7),
+            Fraction(10**5000),
+            Fraction(1, 10**5000),
+            Fraction(2 * 10**99) + Fraction(1, 2),
+            Fraction(2 * 10**99 + 1) + Fraction(1, 2),
+            Fraction(10**100 - 1) + Fraction(1, 2),
+        )
+        reference = decimal.Context(prec=100, Emin=-999999, Emax=999999)
+        for module in ("decimal", "_pydecimal"):
+            backend = importlib.import_module(module)
+            context = backend.Context(prec=100, Emin=-999999, Emax=999999)
+            with patch.multiple(
+                decimal_math, Decimal=backend.Decimal, _WORK_CONTEXT=context
+            ):
+                for index, value in enumerate(values):
+                    with self.subTest(backend=module, case=index):
+                        actual = decimal_math._decimal(value)
+                        error = abs(Fraction(actual) - value)
+                        digits = actual.as_tuple().digits
+                        exponent = actual.as_tuple().exponent
+                        quantum = (
+                            Fraction(10**exponent)
+                            if exponent >= 0
+                            else Fraction(1, 10**-exponent)
+                        )
+                        self.assertLessEqual(error, quantum / 2)
+                        if error:
+                            self.assertEqual(len(digits), context.prec)
+                        if error == quantum / 2:
+                            self.assertEqual(digits[-1] % 2, 0)
+                        try:
+                            expected = reference.divide(
+                                decimal.Decimal(value.numerator),
+                                decimal.Decimal(value.denominator),
+                            )
+                        except ValueError:
+                            # A pure-only interpreter has the same integer-string
+                            # limit; the exact rational bound above is independent.
+                            continue
+                        self.assertEqual(actual.as_tuple(), expected.as_tuple())
 
     def test_evaluate_expression_scalar_conversion_additional_type_and_error_paths(self):
         class CustomValue:

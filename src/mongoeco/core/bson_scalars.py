@@ -6,7 +6,7 @@ import math
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from operator import add, mul, sub
-from typing import Any
+from typing import Any, cast
 
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Decimal128
@@ -382,8 +382,29 @@ def bson_divide(left: object, right: object) -> object:
     return _wrap_float_result(result, left, right)
 
 
+def _finite_decimal_remainder(
+    left: decimal.Decimal, right: decimal.Decimal
+) -> decimal.Decimal:
+    """Compute the remainder without constructing its potentially huge quotient."""
+    sign, left_digits, left_exponent = left.as_tuple()
+    _, right_digits, right_exponent = right.as_tuple()
+    left_exponent = cast("int", left_exponent)
+    right_exponent = cast("int", right_exponent)
+    exponent = min(left_exponent, right_exponent)
+    left_coefficient = int("".join(map(str, left_digits)))
+    right_coefficient = int("".join(map(str, right_digits)))
+    remainder = (left_coefficient * 10 ** (left_exponent - exponent)) % (
+        right_coefficient * 10 ** (right_exponent - exponent)
+    )
+    # BSON coefficients, including this remainder, contain at most 34 digits.
+    return decimal.Decimal((sign, tuple(map(int, str(remainder))), exponent))
+
+
 def bson_mod(
-    left: object, right: object, *, integral_double_divisor: bool = False,
+    left: object,
+    right: object,
+    *,
+    integral_double_divisor: bool = False,
 ) -> object:
     wrapped_left = wrap_bson_numeric(left)
     wrapped_right = wrap_bson_numeric(right)
@@ -394,17 +415,13 @@ def bson_mod(
     if isinstance(wrapped_left, BsonDecimal128) or isinstance(
         wrapped_right, BsonDecimal128
     ):
-        with decimal.localcontext(_DECIMAL128_ARITHMETIC_CONTEXT) as context:
+        with decimal.localcontext(_DECIMAL128_ARITHMETIC_CONTEXT):
             left_decimal = _numeric_to_decimal(wrapped_left.value)
             right_decimal = _numeric_to_decimal(wrapped_right.value)
             if left_decimal.is_finite() and right_decimal.is_finite():
-                # MongoDB remainder is valid even when the integer quotient
-                # needs more than 34 digits. Retain that quotient internally;
-                # only the final remainder is a Decimal128 result.
-                context.prec = max(
-                    context.prec, left_decimal.adjusted() - right_decimal.adjusted() + 1
-                )
-            result = left_decimal % right_decimal
+                result = _finite_decimal_remainder(left_decimal, right_decimal)
+            else:
+                result = left_decimal % right_decimal
             return BsonDecimal128(_normalize_decimal128(result))
     left_value = wrapped_left.value
     right_value = wrapped_right.value
