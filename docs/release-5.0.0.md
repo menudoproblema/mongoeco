@@ -340,3 +340,27 @@ se conservan los artifacts/manifiestos/run de Actions y se descargan al destino
 conclusiones, determina L02/L04; escribir un recibo no debe cambiar el candidato
 ni provocar otra suite completa. La comprobación privada L03 permanece separada
 hasta recibir su evidencia. Esta nota registra el inicio, no adelanta un verde.
+
+
+Incidencia L02 de la primera ejecución alojada:
+[run 41551884015](https://github.com/menudoproblema/mongoeco/actions/runs/41551884015),
+candidato d8b3aa2c. El build reproducible y el smoke del publicado pasan. MongoDB
+8.0.32 y 9.0.2 no llegan a iniciar: el propio mongod rechaza Linux >=6.19 por
+[SERVER-121912](https://jira.mongodb.org/browse/SERVER-121912). El cambio mínimo
+fija únicamente el runner del diferencial a ubuntu-22.04 (kernel 6.8 según la
+imagen oficial consultada), conservando los tres tags/digests MongoDB, corpus,
+fixtures, runtime y comandos. No se debilita el guard del servidor.
+
+Esta modificación del workflow requiere un SHA final nuevo. Su CI vuelve a
+construir y probar la pareja de ese SHA porque el circuito declarado exige
+consumo del artefacto del mismo run. Se conserva la evidencia previa; no se
+interrumpen los jobs válidos ni se repiten globales locales. No se introduce
+otro mecanismo de promoción/reutilización de jobs para evitar esa ejecución.
+El primer wheel CI 522dece0… conserva todos los miembros de 5ac014b1…, incluidos
+metadata/RECORD: sólo cambió la identidad de archivo por SOURCE_DATE_EPOCH.
+
+El propietario ha confirmado directamente los cuatro campos del Trusted
+Publisher en PyPI. Su procedencia es confirmación expresa del usuario, no
+lectura automatizada del agente; queda junto a la evidencia del entorno en
+`dist/release-5.0.0-final/d8b3aa2c/publisher-verification.json`. L03 queda comprobado
+con ese límite de procedencia. No se han creado tags ni autorizado publicación.

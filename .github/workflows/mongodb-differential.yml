@@ -31,7 +31,9 @@ jobs:
       github.event_name != 'pull_request' ||
       contains(github.event.pull_request.labels.*.name, 'mongodb-differential')
     name: MongoDB ${{ matrix.target }} differential
-    runs-on: ubuntu-latest
+    # These pinned MongoDB releases reject Linux >=6.19 (SERVER-121912).
+    # Ubuntu 22.04 currently provides the compatible 6.8 Azure kernel.
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
     strategy:
       fail-fast: false
