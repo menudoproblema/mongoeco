@@ -396,3 +396,31 @@ las pruebas históricas del resto y las reservas de coste aceptadas; no hay
 nueva campaña de rendimiento. El circuito CI exige construir y probar de
 nuevo la pareja del SHA final, incluidos los tres Python y MongoDB 7/8/9.
 No se declara cerrado L02/L04 hasta disponer de sus resultados terminales.
+
+El run 41554413441 (f0a4367c) supera la matriz de doce celdas pero encuentra un
+desacuerdo nativo posterior en `shared_errors`: seis escrituras con
+`$$CLUSTER_TIME` pasan en vez de fallar. La sonda seleccionada 41555845519 pasa
+en 7/8/9; el contraste completo 41558222986 reproduce el fallo y conserva las
+observaciones rechazadas. El capturador existente ahora conserva ese dato
+antes de abortar, sin sustituir el golden.
+
+Causa contrastada con MongoDB 9.0.2: insertar Timestamp(0,0) en la raíz inicializa
+el reloj lógico del proceso y habilita `$$CLUSTER_TIME`, incluso en standalone.
+Los testigos `semantic_followup_f07_timestamp` y las demás variantes de timestamp
+vacío precedían a capturas que exigían reloj sin inicializar. Eliminar sus bases
+no reinicia ese reloj. La sonda mínima conserva el error previo 10071200 y el
+timestamp posterior; una aserción de la sonda usó por error el código 51144 de
+otro dialecto y se corrigió en el análisis contra el fixture 9.0, sin repetirla.
+
+La corrección de validación sólo mueve los dos pasos standalone existentes
+después de las capturas sensibles al reloj, manteniendo todos sus comandos,
+selecciones, corpus y checks intactos. No añade otro runner, reinicios de mongod
+ni filtros que oculten diferencias. actionlint valida el workflow y la
+comparación YAML comprueba identidad de todos los pasos salvo su orden.
+Se comprueba primero en la rama auxiliar, antes de otra integración global.
+
+El rechazo local de `$$CLUSTER_TIME` se mantiene. Se precisa su límite en
+Missing Features y en el owner de errores: no cubre un standalone cuyo reloj
+lógico ya se haya inicializado. Implementar ese estado queda como seguimiento,
+fuera de esta preparación; no se reabren los cierres aceptados ni se presenta
+el aislamiento del oráculo como una ampliación de paridad productiva.

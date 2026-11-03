@@ -137,48 +137,6 @@ jobs:
               assert client.admin.command({"getParameter": 1, "featureCompatibilityVersion": 1})["featureCompatibilityVersion"] == {"version": target}
           PY
 
-      - name: Run standalone differential partition
-        shell: bash
-        env:
-          CASE_FILTER: ${{ inputs.case_filter }}
-        run: |
-          set -euo pipefail
-          if [ ! -s "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/selection-standalone.txt" ]; then
-            echo "Standalone partition empty by requested selection; no physical execution claimed."
-            exit 0
-          fi
-          mkdir -p "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/junit"
-          timeout 20m python scripts/run_mongodb_real_differential.py \
-            "$MONGOECO_REAL_MONGODB_TARGET" "$CASE_FILTER" --partition standalone \
-            --seed "$MONGOECO_DIFFERENTIAL_SEED" \
-            --json-report "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/report.json" \
-            --junit-dir "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/junit" \
-              2>&1 | tee "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/run.log"
-
-      - name: Check topology-sensitive standalone captures
-        shell: bash
-        env:
-          CASE_FILTER: ${{ inputs.case_filter }}
-        run: |
-          python scripts/run_mongodb_real_differential.py \
-            "$MONGOECO_REAL_MONGODB_TARGET" "$CASE_FILTER" --partition standalone \
-            --list-corpora > "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/standalone-corpora.json"
-          python - <<'PYTHON'
-          import json, os, subprocess, sys
-          from pathlib import Path
-          target = os.environ["MONGOECO_REAL_MONGODB_TARGET"]
-          root = Path("artifacts") / target
-          for corpus in json.loads((root / "standalone-corpora.json").read_text()):
-              if corpus.get("topology") != "standalone":
-                  continue
-              subprocess.run([
-                  sys.executable, "scripts/capture_differential_replay_golden.py",
-                  "--target", target, "--case-set", corpus["case_set"],
-                  "--output", str(root / (corpus["case_set"] + "-capture.json")),
-                  "--check", f"tests/fixtures/semantic_{corpus['fixture_key']}_{target.replace('.', '_')}.json",
-              ], check=True)
-          PYTHON
-
       - name: Verify positional update error codes and document atomicity
         shell: bash
         run: |
@@ -285,6 +243,50 @@ jobs:
             --output "artifacts/${{ matrix.target }}/error-phases-sdk49.json" \
             --baseline "tests/fixtures/error_phases_mongodb_${TARGET_SUFFIX}.json" \
             --check tests/fixtures/error_phases_pymongo49_deltas.json
+
+      # Root Timestamp(0,0) witnesses initialize mongod's process-wide clock.
+      # Keep fresh-clock error captures above these mutating witnesses.
+      - name: Run standalone differential partition
+        shell: bash
+        env:
+          CASE_FILTER: ${{ inputs.case_filter }}
+        run: |
+          set -euo pipefail
+          if [ ! -s "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/selection-standalone.txt" ]; then
+            echo "Standalone partition empty by requested selection; no physical execution claimed."
+            exit 0
+          fi
+          mkdir -p "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/junit"
+          timeout 20m python scripts/run_mongodb_real_differential.py \
+            "$MONGOECO_REAL_MONGODB_TARGET" "$CASE_FILTER" --partition standalone \
+            --seed "$MONGOECO_DIFFERENTIAL_SEED" \
+            --json-report "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/report.json" \
+            --junit-dir "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/junit" \
+              2>&1 | tee "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/run.log"
+
+      - name: Check topology-sensitive standalone captures
+        shell: bash
+        env:
+          CASE_FILTER: ${{ inputs.case_filter }}
+        run: |
+          python scripts/run_mongodb_real_differential.py \
+            "$MONGOECO_REAL_MONGODB_TARGET" "$CASE_FILTER" --partition standalone \
+            --list-corpora > "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/standalone-corpora.json"
+          python - <<'PYTHON'
+          import json, os, subprocess, sys
+          from pathlib import Path
+          target = os.environ["MONGOECO_REAL_MONGODB_TARGET"]
+          root = Path("artifacts") / target
+          for corpus in json.loads((root / "standalone-corpora.json").read_text()):
+              if corpus.get("topology") != "standalone":
+                  continue
+              subprocess.run([
+                  sys.executable, "scripts/capture_differential_replay_golden.py",
+                  "--target", target, "--case-set", corpus["case_set"],
+                  "--output", str(root / (corpus["case_set"] + "-capture.json")),
+                  "--check", f"tests/fixtures/semantic_{corpus['fixture_key']}_{target.replace('.', '_')}.json",
+              ], check=True)
+          PYTHON
 
       - name: Verify replica-set differential partition and captures
         shell: bash

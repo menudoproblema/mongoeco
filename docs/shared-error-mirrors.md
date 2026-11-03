@@ -24,8 +24,12 @@ ni el formato de almacenamiento SQLite.
   clave rechazada y diagnóstico BSON. Se reutiliza el contexto obtenido bajo la
   autoridad de escritura. La inserción en lote comparte el formateador. El prefijo
   de ejecución de updates de MongoDB 9 se conserva como delta de dialecto.
-- En un servidor standalone, `$$CLUSTER_TIME` es una variable reservada no
-  disponible. La [ampliación posterior](error-contract-refactor.md) distingue
+- El runtime local rechaza la variable reservada `$$CLUSTER_TIME`. El oráculo
+  de estos rechazos exige un standalone con reloj lógico sin inicializar;
+  no basta la topología. Insertar un Timestamp BSON vacío en la raíz puede
+  inicializar ese reloj del proceso y habilitar la variable en MongoDB real.
+  Ese estado inicializado queda fuera del soporte local actual; no se afirma
+  paridad con él. La [ampliación posterior](error-contract-refactor.md) distingue
   operación y dialecto: `51144` en 7; en 8, count y `$match` de agregación usan
   `5611301`; en 9, distinct, borrado y findAndModify remove conservan `51144`
   mientras las otras rutas ejercitadas usan `10071200`. Las restantes rutas de 8

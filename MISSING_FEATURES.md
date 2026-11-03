@@ -4,6 +4,12 @@ Este fichero lista solo capacidades de producto que siguen pendientes. La deuda
 arquitectonica y las decisiones de endurecimiento del diseno viven ya en
 `docs/architecture/`, no aqui.
 
+`$$CLUSTER_TIME` no está soportado por el runtime local. El rechazo se contrasta
+con un standalone cuyo reloj lógico aún no está inicializado. MongoDB real puede
+habilitar la variable tras una escritura de Timestamp BSON vacío en la raíz,
+incluso sin replica set; ese estado queda pendiente. Véase el
+[contrato y límite de la evidencia](docs/shared-error-mirrors.md).
+
 | Prioridad | Nombre                                                            | Impacto     | Esfuerzo    | Refs                                                              |
 | --------- | ----------------------------------------------------------------- | ----------- | ----------- | ----------------------------------------------------------------- |
 | 11        | Ir mas alla del contrato local estable `search-v1` hacia paridad Atlas-like remota/distribuida (analyzers, collectors y highlighting de backend) | Medio-Alto  | Alto  | `docs/architecture/search-contract-v1.md`<br>`TODO.md:10` |
