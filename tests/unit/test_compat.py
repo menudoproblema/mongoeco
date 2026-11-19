@@ -876,11 +876,11 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertIs(resolution.resolved_profile, PYMONGO_PROFILE_417)
         self.assertEqual(resolution.resolution_mode, 'auto-exact')
 
-    @patch('mongoeco.compat.registry.importlib_metadata.version', return_value='4.20.0')
+    @patch('mongoeco.compat.registry.importlib_metadata.version', return_value='4.21.0')
     def test_auto_installed_falls_back_to_latest_known_profile_in_same_major(self, _version):
         resolution = resolve_pymongo_profile_resolution('auto-installed')
 
-        self.assertIs(resolution.resolved_profile, PYMONGO_PROFILES['4.19'])
+        self.assertIs(resolution.resolved_profile, PYMONGO_PROFILES['4.20'])
         self.assertEqual(resolution.resolution_mode, 'auto-compatible-minor-fallback')
 
     @patch('mongoeco.compat.registry.importlib_metadata.version', return_value='4.14.0')

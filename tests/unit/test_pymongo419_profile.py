@@ -10,6 +10,7 @@ from mongoeco.compat import (
     DEFAULT_PYMONGO_PROFILE,
     PYMONGO_PROFILE_418,
     PYMONGO_PROFILE_419,
+    PYMONGO_PROFILE_420,
     PYMONGO_PROFILES,
     PyMongoProfile419,
     export_pymongo_profile_catalog,
@@ -45,10 +46,10 @@ def test_installed_419_resolves_exactly(mode, installed):
 
 def test_unknown_future_minor_keeps_distinct_flexible_and_strict_policies():
     with patch(
-        "mongoeco.compat.registry.importlib_metadata.version", return_value="4.20.0"
+        "mongoeco.compat.registry.importlib_metadata.version", return_value="4.21.0"
     ):
         resolution = resolve_pymongo_profile_resolution("auto-installed")
-        assert resolution.resolved_profile is PYMONGO_PROFILE_419
+        assert resolution.resolved_profile is PYMONGO_PROFILE_420
         assert resolution.resolution_mode == "auto-compatible-minor-fallback"
         with pytest.raises(ValueError, match="strict-auto-installed"):
             resolve_pymongo_profile_resolution("strict-auto-installed")

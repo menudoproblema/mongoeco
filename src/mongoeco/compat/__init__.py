@@ -7,9 +7,11 @@ if TYPE_CHECKING:
         MONGODB_DIALECT_90 as MONGODB_DIALECT_90,
         PYMONGO_PROFILE_418 as PYMONGO_PROFILE_418,
         PYMONGO_PROFILE_419 as PYMONGO_PROFILE_419,
+        PYMONGO_PROFILE_420 as PYMONGO_PROFILE_420,
         MongoDialect90 as MongoDialect90,
         PyMongoProfile418 as PyMongoProfile418,
         PyMongoProfile419 as PyMongoProfile419,
+        PyMongoProfile420 as PyMongoProfile420,
     )
     from mongoeco.compat.deprecations import (
         DEPRECATION_CATALOG_RESOURCE as DEPRECATION_CATALOG_RESOURCE,
@@ -59,6 +61,7 @@ _PROFILE_EXPORTS = (
     "PYMONGO_PROFILE_417",
     "PYMONGO_PROFILE_418",
     "PYMONGO_PROFILE_419",
+    "PYMONGO_PROFILE_420",
     "PYMONGO_PROFILES",
     "PYMONGO_PROFILE_ALIASES",
     "PYMONGO_PROFILE_CAPABILITIES",
@@ -69,6 +72,7 @@ _PROFILE_EXPORTS = (
     "PyMongoProfile417",
     "PyMongoProfile418",
     "PyMongoProfile419",
+    "PyMongoProfile420",
     "SUPPORTED_PYMONGO_MAJORS",
     "DEFAULT_PYMONGO_PROFILE",
     "AUTO_INSTALLED_PYMONGO_PROFILE",
@@ -151,6 +155,7 @@ _BASE_EXPORTS = {
     "PYMONGO_PROFILE_417",
     "PYMONGO_PROFILE_418",
     "PYMONGO_PROFILE_419",
+    "PYMONGO_PROFILE_420",
     "PYMONGO_PROFILES",
     "PYMONGO_PROFILE_ALIASES",
     "PYMONGO_PROFILE_CAPABILITIES",
@@ -161,6 +166,7 @@ _BASE_EXPORTS = {
     "PyMongoProfile417",
     "PyMongoProfile418",
     "PyMongoProfile419",
+    "PyMongoProfile420",
     "SUPPORTED_PYMONGO_MAJORS",
 }
 _REGISTRY_EXPORTS = {

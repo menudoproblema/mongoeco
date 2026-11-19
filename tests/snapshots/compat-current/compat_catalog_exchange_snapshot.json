@@ -8802,6 +8802,24 @@
       "driver_series": "4.x",
       "label": "PyMongo 4.19"
     },
+    "4.20": {
+      "aliases": [
+        "4.20"
+      ],
+      "behavior_flags": {
+        "rejects_reserved_aggregation_keywords": true,
+        "supports_update_one_sort": true
+      },
+      "capabilities": [
+        "aggregate.reserved_keywords_validation",
+        "update_one.sort",
+        "uri.rejects_percent_encoded_hostnames",
+        "uri.srv_allowed_hosts_suffix",
+        "uri.srv_host_validator"
+      ],
+      "driver_series": "4.x",
+      "label": "PyMongo 4.20"
+    },
     "4.9": {
       "aliases": [
         "4",

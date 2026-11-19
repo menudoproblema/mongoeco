@@ -84,6 +84,27 @@ PYMONGO_PROFILE_CATALOG = MappingProxyType(
                 }
             ),
         ),
+        "4.20": PyMongoProfileCatalogEntry(
+            key="4.20",
+            driver_series="4.x",
+            label="PyMongo 4.20",
+            aliases=("4.20",),
+            behavior_flags=MappingProxyType(
+                {
+                    "supports_update_one_sort": True,
+                    "rejects_reserved_aggregation_keywords": True,
+                }
+            ),
+            capabilities=frozenset(
+                {
+                    PYMONGO_CAP_UPDATE_ONE_SORT,
+                    PYMONGO_CAP_RESERVED_AGGREGATION_KEYWORDS,
+                    PYMONGO_CAP_SRV_ALLOWED_HOSTS_SUFFIX,
+                    PYMONGO_CAP_SRV_HOST_VALIDATOR,
+                    PYMONGO_CAP_STRICT_URI_HOSTS,
+                }
+            ),
+        ),
     }
 )
 

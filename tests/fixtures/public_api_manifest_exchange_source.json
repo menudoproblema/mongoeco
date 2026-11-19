@@ -19222,6 +19222,7 @@
         "PYMONGO_PROFILE_417",
         "PYMONGO_PROFILE_418",
         "PYMONGO_PROFILE_419",
+        "PYMONGO_PROFILE_420",
         "PYMONGO_PROFILE_49",
         "PYMONGO_PROFILE_ALIASES",
         "PYMONGO_PROFILE_BEHAVIOR_FLAGS",
@@ -19233,6 +19234,7 @@
         "PyMongoProfile417",
         "PyMongoProfile418",
         "PyMongoProfile419",
+        "PyMongoProfile420",
         "PyMongoProfile49",
         "PyMongoProfileResolution",
         "STRICT_AUTO_INSTALLED_PYMONGO_PROFILE",
@@ -21444,6 +21446,12 @@
           "qualifiedName": "PyMongoProfile419",
           "valueType": "PyMongoProfile419"
         },
+        "PYMONGO_PROFILE_420": {
+          "definedIn": "mongoeco.compat.base",
+          "kind": "value",
+          "qualifiedName": "PyMongoProfile420",
+          "valueType": "PyMongoProfile420"
+        },
         "PYMONGO_PROFILE_49": {
           "definedIn": "mongoeco.compat.base",
           "kind": "value",
@@ -22327,6 +22335,121 @@
           "members": {},
           "protocol": false,
           "qualifiedName": "PyMongoProfile419"
+        },
+        "PyMongoProfile420": {
+          "callable": {
+            "async": false,
+            "parameters": [
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "str"
+                },
+                "default": "'4.20'",
+                "kind": "positional_or_keyword",
+                "name": "key",
+                "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "str"
+                },
+                "default": "'4.x'",
+                "kind": "positional_or_keyword",
+                "name": "driver_series",
+                "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "str"
+                },
+                "default": "'PyMongo 4.20'",
+                "kind": "positional_or_keyword",
+                "name": "label",
+                "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "mappingproxy"
+                },
+                "default": "<builtins.mappingproxy>",
+                "kind": "positional_or_keyword",
+                "name": "catalog_behavior_flags",
+                "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "frozenset[str]"
+                },
+                "default": "<builtins.frozenset>",
+                "kind": "positional_or_keyword",
+                "name": "catalog_capabilities",
+                "required": false
+              }
+            ],
+            "return": {
+              "nullable": true,
+              "rendered": "None"
+            },
+            "signatureAvailable": true
+          },
+          "dataclass": true,
+          "definedIn": "mongoeco.compat.base",
+          "fields": [
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "str"
+              },
+              "default": "'4.20'",
+              "name": "key",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "str"
+              },
+              "default": "'4.x'",
+              "name": "driver_series",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "str"
+              },
+              "default": "'PyMongo 4.20'",
+              "name": "label",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "mappingproxy"
+              },
+              "default": "<builtins.mappingproxy>",
+              "name": "catalog_behavior_flags",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "frozenset[str]"
+              },
+              "default": "<builtins.frozenset>",
+              "name": "catalog_capabilities",
+              "required": false
+            }
+          ],
+          "kind": "class",
+          "members": {},
+          "protocol": false,
+          "qualifiedName": "PyMongoProfile420"
         },
         "PyMongoProfile49": {
           "callable": {
