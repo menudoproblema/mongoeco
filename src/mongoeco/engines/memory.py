@@ -33,7 +33,6 @@ from mongoeco.core.change_events import (
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import (
     normalize_collation,
-    values_equal_with_collation,
 )
 from mongoeco.core.duplicate_keys import (
     duplicate_key_context,
@@ -181,6 +180,8 @@ from mongoeco.engines.virtual_indexes import (
     existing_index_for_definition,
     normalize_partial_filter_expression,
     query_can_use_index,
+    unique_index_conflict,
+    unique_index_keys,
     unique_index_values,
     validate_index_definition,
     validate_index_document,
@@ -2680,7 +2681,7 @@ class MemoryEngine(AsyncStorageEngine):
             return {(self._index_equality_key(None),)}
         return {
             (self._index_equality_key(value),) for value in values
-        } | self._unique_index_keys(document, fields)
+        } | unique_index_keys(document, fields)
 
     _array_paths_for_index_field = staticmethod(array_paths_for_index_field)
 
@@ -2688,52 +2689,7 @@ class MemoryEngine(AsyncStorageEngine):
 
     _values_at_index_path = staticmethod(values_at_index_path)
 
-    _unique_index_values = staticmethod(unique_index_values)
-
-    def _unique_index_keys(
-        self,
-        document: Document,
-        fields: list[str],
-    ) -> set[tuple[Any, ...]]:
-        return {
-            tuple(self._index_equality_key(value) for value in key)
-            for key in self._unique_index_values(document, fields)
-        }
-
     _validate_compound_multikey_shape = staticmethod(validate_index_document)
-
-    def _unique_index_conflict(
-        self,
-        candidate: Document,
-        existing: Document,
-        index: EngineIndexRecord,
-    ) -> tuple[Any, ...] | None:
-        fields = index["fields"]
-        if index.get("collation") is None:
-            duplicate_keys = self._unique_index_keys(
-                candidate,
-                fields,
-            ).intersection(self._unique_index_keys(existing, fields))
-            return next(iter(duplicate_keys)) if duplicate_keys else None
-
-        collation = normalize_collation(index["collation"])
-        for candidate_key in self._unique_index_values(candidate, fields):
-            for existing_key in self._unique_index_values(existing, fields):
-                if all(
-                    values_equal_with_collation(
-                        candidate_value,
-                        existing_value,
-                        dialect=MONGODB_DIALECT_70,
-                        collation=collation,
-                    )
-                    for candidate_value, existing_value in zip(
-                        candidate_key,
-                        existing_key,
-                        strict=True,
-                    )
-                ):
-                    return candidate_key
-        return None
 
     @staticmethod
     def _is_builtin_id_index(keys: IndexKeySpec) -> bool:
@@ -2748,7 +2704,7 @@ class MemoryEngine(AsyncStorageEngine):
         error._duplicate_key_context = duplicate_key_context(
             namespace=namespace,
             index=index,
-            values=self._unique_index_values(document, index["fields"]),
+            values=unique_index_values(document, index["fields"]),
             conflict=conflict,
             equality=self._index_equality_key,
         )
@@ -2837,7 +2793,7 @@ class MemoryEngine(AsyncStorageEngine):
                 continue
 
             fields = index["fields"]
-            candidate_keys = self._unique_index_keys(candidate, fields)
+            candidate_keys = unique_index_keys(candidate, fields)
 
             # Optimización: usar datos del índice si están disponibles
             index_map = (
@@ -2857,7 +2813,7 @@ class MemoryEngine(AsyncStorageEngine):
                         continue
                     if any(
                         key != normalized_exclude
-                        and candidate_key in self._unique_index_keys(
+                        and candidate_key in unique_index_keys(
                             self._borrow_storage_document(coll[key]), fields
                         )
                         for key in matches
@@ -2879,7 +2835,7 @@ class MemoryEngine(AsyncStorageEngine):
                 existing = self._borrow_storage_document(data)
                 if not document_in_virtual_index(existing, index):
                     continue
-                duplicate_key = self._unique_index_conflict(
+                duplicate_key = unique_index_conflict(
                     candidate,
                     existing,
                     index,
@@ -4736,7 +4692,7 @@ class MemoryEngine(AsyncStorageEngine):
                     )
                     if unique:
                         for existing_document in seen_documents:
-                            duplicate_key = self._unique_index_conflict(
+                            duplicate_key = unique_index_conflict(
                                 document,
                                 existing_document,
                                 new_index,

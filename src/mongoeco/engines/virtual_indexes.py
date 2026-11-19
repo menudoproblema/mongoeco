@@ -8,6 +8,7 @@ from typing import Any
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core._filtering_support import query_field_values
 from mongoeco.core.aggregation.expression_values import MISSING
+from mongoeco.core.bson_ordering import bson_equality_key
 from mongoeco.core.bson_scalars import _is_nan_numeric_value, unwrap_bson_numeric
 from mongoeco.core.bson_values import document_mapping, matches_bson_type
 from mongoeco.core.collation import (
@@ -307,6 +308,49 @@ def unique_index_values(
             for value in (index_field_values(document, field) or [None])
         ]
     return keys
+
+
+def unique_index_keys(
+    document: Document, fields: list[str]
+) -> set[tuple[Any, ...]]:
+    return {
+        tuple(bson_equality_key(value) for value in key)
+        for key in unique_index_values(document, fields)
+    }
+
+
+def unique_index_conflict(
+    candidate: Document,
+    existing: Document,
+    index: EngineIndexRecord,
+) -> tuple[Any, ...] | None:
+    """Return the conflicting key for two documents already in this index."""
+    fields = index["fields"]
+    if index.get("collation") is None:
+        duplicate_keys = unique_index_keys(
+            candidate,
+            fields,
+        ).intersection(unique_index_keys(existing, fields))
+        return next(iter(duplicate_keys)) if duplicate_keys else None
+
+    collation = normalize_collation(index["collation"])
+    for candidate_key in unique_index_values(candidate, fields):
+        for existing_key in unique_index_values(existing, fields):
+            if all(
+                values_equal_with_collation(
+                    candidate_value,
+                    existing_value,
+                    dialect=MONGODB_DIALECT_70,
+                    collation=collation,
+                )
+                for candidate_value, existing_value in zip(
+                    candidate_key,
+                    existing_key,
+                    strict=True,
+                )
+            ):
+                return candidate_key
+    return None
 
 
 def normalize_partial_filter_expression(

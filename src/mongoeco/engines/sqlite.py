@@ -55,7 +55,6 @@ from mongoeco.core.change_events import (
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import (
     normalize_collation,
-    values_equal_with_collation,
 )
 from mongoeco.core.duplicate_keys import duplicate_key_context
 from mongoeco.core.expression_context import (
@@ -300,6 +299,7 @@ from mongoeco.engines.virtual_indexes import (
     document_in_virtual_index,
     normalize_partial_filter_expression,
     query_can_use_index,
+    unique_index_conflict,
     unique_index_values,
     validate_index_document,
     values_at_index_path,
@@ -1819,51 +1819,6 @@ class SQLiteEngine(AsyncStorageEngine):
                 entries.add(signature)
         return entries
 
-    def _unique_index_keys(
-        self,
-        document: Document,
-        fields: list[str],
-    ) -> set[tuple[object, ...]]:
-        return {
-            tuple(bson_equality_key(value) for value in key)
-            for key in self._unique_index_values(document, fields)
-        }
-
-    _unique_index_values = staticmethod(unique_index_values)
-
-    def _unique_index_conflict(
-        self,
-        candidate: Document,
-        existing: Document,
-        index: EngineIndexRecord,
-    ) -> tuple[object, ...] | None:
-        fields = index["fields"]
-        if index.get("collation") is None:
-            duplicate_keys = self._unique_index_keys(
-                candidate,
-                fields,
-            ).intersection(self._unique_index_keys(existing, fields))
-            return next(iter(duplicate_keys)) if duplicate_keys else None
-
-        collation = normalize_collation(index["collation"])
-        for candidate_key in self._unique_index_values(candidate, fields):
-            for existing_key in self._unique_index_values(existing, fields):
-                if all(
-                    values_equal_with_collation(
-                        candidate_value,
-                        existing_value,
-                        dialect=MONGODB_DIALECT_70,
-                        collation=collation,
-                    )
-                    for candidate_value, existing_value in zip(
-                        candidate_key,
-                        existing_key,
-                        strict=True,
-                    )
-                ):
-                    return candidate_key
-        return None
-
     def _unique_index_uses_multikey_values(
         self,
         db_name: str,
@@ -3037,7 +2992,7 @@ class SQLiteEngine(AsyncStorageEngine):
         error._duplicate_key_context = duplicate_key_context(
             namespace=namespace,
             index=index,
-            values=self._unique_index_values(document, index["fields"]),
+            values=unique_index_values(document, index["fields"]),
             conflict=conflict,
             equality=bson_equality_key,
         )
@@ -3142,7 +3097,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         continue
                     if not document_in_virtual_index(existing_document, index):
                         continue
-                    duplicate_key = self._unique_index_conflict(
+                    duplicate_key = unique_index_conflict(
                         document,
                         existing_document,
                         index,
@@ -6620,7 +6575,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             document, index, building=True
                         )
                     ),
-                    unique_index_conflict=self._unique_index_conflict,
+                    unique_index_conflict=unique_index_conflict,
                     quote_identifier=self._quote_identifier,
                 )
 
