@@ -159,12 +159,13 @@ SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = (
     | frozenset(SCALAR_EXPRESSION_ARGUMENTS)
 )
 
-UNIMPLEMENTED_AGGREGATION_STAGES = frozenset({"$out", "$graphLookup"})
+UNIMPLEMENTED_AGGREGATION_STAGES = frozenset({"$out"})
 
 SUPPORTED_AGGREGATION_STAGES = frozenset(
     {
         "$match", "$project", "$unset", "$sample", "$sort", "$skip", "$limit", "$addFields", "$set",
-        "$unwind", "$group", "$bucket", "$bucketAuto", "$lookup", "$unionWith", "$replaceRoot",
+        "$unwind", "$group", "$bucket", "$bucketAuto", "$lookup", "$graphLookup",
+        "$unionWith", "$replaceRoot",
         "$replaceWith", "$redact", "$facet", "$count", "$sortByCount", "$setWindowFields", "$documents",
         "$densify", "$fill", "$merge", "$geoNear", "$collStats", "$indexStats", "$currentOp", "$planCacheStats", "$listSessions",
     }

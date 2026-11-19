@@ -6,8 +6,8 @@
     "catalog": {
       "name": "mongodb",
       "namespace": "org.mongoeco",
-      "version": "2.0.0",
-      "sha256": "aa232d017fb8bcc85989b55c9817c0c1e379bd387dc5c3d59bdab467bcfe1081"
+      "version": "2.1.0",
+      "sha256": "b8152f20905507d7bf26b85f324dac24c0aee25f5897b36712cd3b81615cf8c5"
     },
     "requirement": {
       "conditions": [

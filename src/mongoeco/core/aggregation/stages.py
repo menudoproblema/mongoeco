@@ -22,6 +22,10 @@ from mongoeco.core.aggregation.extensions import (
     AggregationStageExecutionMode,
     get_registered_aggregation_stage_registration,
 )
+from mongoeco.core.aggregation.graph_lookup import (
+    graph_lookup_results,
+    set_graph_output,
+)
 from mongoeco.core.aggregation.grouping_stages import (
     _apply_bucket,
     _apply_bucket_auto,
@@ -293,6 +297,15 @@ def _stage_lookup(
         list_sessions_resolver=context.list_sessions_resolver,
         deadline=context.deadline,
     )
+
+
+def _stage_graph_lookup(documents, spec, context):
+    output = []
+    for document, matches in graph_lookup_results(documents, spec, context):
+        result = deepcopy(document)
+        set_graph_output(result, spec["as"], matches)
+        output.append(result)
+    return output
 
 
 def _stage_union_with(
@@ -1116,6 +1129,7 @@ AGGREGATION_STAGE_SPECS: dict[str, AggregationStageSpec] = {
     "$bucket": AggregationStageSpec(_stage_bucket, "materializing"),
     "$bucketAuto": AggregationStageSpec(_stage_bucket_auto, "materializing"),
     "$lookup": AggregationStageSpec(_stage_lookup, "streamable"),
+    "$graphLookup": AggregationStageSpec(_stage_graph_lookup, "streamable"),
     "$unionWith": AggregationStageSpec(_stage_union_with, "materializing"),
     "$replaceRoot": AggregationStageSpec(_stage_replace_root, "streamable"),
     "$replaceWith": AggregationStageSpec(_stage_replace_with, "streamable"),

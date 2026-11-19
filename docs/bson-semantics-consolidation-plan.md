@@ -2868,8 +2868,10 @@ la cartera completa X01–X06 por este incremento.
 
 - X04a, out: decidir reemplazo de colección, índices/opciones, validadores,
   atomicidad/fallo, permisos y efectos de watch, no implementarlo como merge.
-- X04b, graphLookup: fijar recorrido, ciclos, profundidad, filtros, arrays,
-  collation, memoria y restricciones del subset/topología.
+- X04b, graphLookup: implementado para colecciones locales en Memory y SQLite.
+  El [contrato público](../COMPATIBILITY.md#recorrido-local-con-graphlookup)
+  define recorrido, collation y presupuesto sin volcado a disco. El corpus
+  `graph-lookup` contrasta los dialectos 7.0, 8.0 y 9.0.
 - X04c, capacidades escalares: granularity de bucketAuto, formatos/dominios
   de fecha no anunciados, fechas fuera del dominio público representable y
   otras familias ausentes. No exigir calendario completo para aceptar F09.

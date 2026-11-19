@@ -1,0 +1,769 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_graph_lookup_invalid": {
+      "negative_depth": {
+        "code": {
+          "$numberInt": "40101"
+        }
+      },
+      "fractional_depth": {
+        "code": {
+          "$numberInt": "40102"
+        }
+      },
+      "boolean_depth": {
+        "code": {
+          "$numberInt": "40100"
+        }
+      },
+      "negative_fractional_depth": {
+        "code": {
+          "$numberInt": "40102"
+        }
+      },
+      "filter_text": {
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "filter_where": {
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "filter_near": {
+        "code": {
+          "$numberInt": "5626500"
+        }
+      },
+      "empty_namespace": {
+        "code": {
+          "$numberInt": "73"
+        }
+      },
+      "empty_output_path": {
+        "code": {
+          "$numberInt": "40105"
+        }
+      },
+      "bad_path_type": {
+        "code": {
+          "$numberInt": "40103"
+        }
+      },
+      "bad_filter": {
+        "code": {
+          "$numberInt": "40185"
+        }
+      },
+      "missing_variable_start": {
+        "code": {
+          "$numberInt": "17276"
+        }
+      },
+      "missing_variable_filter": {
+        "code": {
+          "$numberInt": "17276"
+        }
+      },
+      "unknown_argument": {
+        "code": {
+          "$numberInt": "40104"
+        }
+      }
+    },
+    "semantic_graph_lookup_matching": {
+      "missing": [],
+      "null": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "key": null,
+          "depth": {
+            "$numberLong": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "key": [
+            null
+          ],
+          "depth": {
+            "$numberLong": "0"
+          }
+        }
+      ],
+      "empty_array": [],
+      "array_link": [
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "key": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ],
+          "depth": {
+            "$numberLong": "0"
+          }
+        }
+      ],
+      "regex": [
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "key": "ab",
+          "depth": {
+            "$numberLong": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "key": {
+            "$regularExpression": {
+              "pattern": "^a",
+              "options": ""
+            }
+          },
+          "depth": {
+            "$numberLong": "0"
+          }
+        }
+      ],
+      "collation": [
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "key": "caf\u00e9",
+          "next": {
+            "links": [
+              {
+                "value": {
+                  "$numberInt": "7"
+                }
+              },
+              {
+                "value": {
+                  "$numberInt": "8"
+                }
+              }
+            ]
+          },
+          "depth": {
+            "$numberLong": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "key": {
+            "$numberInt": "7"
+          },
+          "depth": {
+            "$numberLong": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "key": {
+            "$numberInt": "8"
+          },
+          "depth": {
+            "$numberLong": "1"
+          }
+        },
+        {
+          "_id": "A",
+          "key": {
+            "$numberInt": "8"
+          },
+          "depth": {
+            "$numberLong": "1"
+          }
+        },
+        {
+          "_id": "a",
+          "key": {
+            "$numberInt": "8"
+          },
+          "depth": {
+            "$numberLong": "1"
+          }
+        }
+      ]
+    },
+    "semantic_graph_lookup_traversal": {
+      "cycle_diamond_array": {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "obsolete": {
+          "$numberInt": "1"
+        },
+        "children": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "parent_id": {
+              "$numberInt": "3"
+            },
+            "depth": {
+              "$numberLong": "1"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "parent_id": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "depth": {
+              "$numberLong": "0"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "parent_id": {
+              "$numberInt": "1"
+            },
+            "depth": {
+              "$numberLong": "0"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            },
+            "parent_id": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "active": false,
+            "depth": {
+              "$numberLong": "1"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "parent_id": {
+              "$numberInt": "4"
+            },
+            "depth": {
+              "$numberLong": "2"
+            }
+          }
+        ]
+      },
+      "max_depth_zero": {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "obsolete": {
+          "$numberInt": "1"
+        },
+        "children": [
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "parent_id": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "depth": {
+              "$numberLong": "0"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "parent_id": {
+              "$numberInt": "1"
+            },
+            "depth": {
+              "$numberLong": "0"
+            }
+          }
+        ]
+      },
+      "integral_decimal_depth": {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "obsolete": {
+          "$numberInt": "1"
+        },
+        "children": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "parent_id": {
+              "$numberInt": "3"
+            },
+            "depth": {
+              "$numberLong": "1"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "parent_id": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "depth": {
+              "$numberLong": "0"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "parent_id": {
+              "$numberInt": "1"
+            },
+            "depth": {
+              "$numberLong": "0"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            },
+            "parent_id": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "active": false,
+            "depth": {
+              "$numberLong": "1"
+            }
+          }
+        ]
+      },
+      "array_seeds": {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "obsolete": {
+          "$numberInt": "1"
+        },
+        "children": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "parent_id": {
+              "$numberInt": "3"
+            },
+            "depth": {
+              "$numberLong": "1"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "parent_id": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "depth": {
+              "$numberLong": "0"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "parent_id": {
+              "$numberInt": "1"
+            },
+            "depth": {
+              "$numberLong": "0"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            },
+            "parent_id": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "active": false,
+            "depth": {
+              "$numberLong": "1"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "parent_id": {
+              "$numberInt": "4"
+            },
+            "depth": {
+              "$numberLong": "0"
+            }
+          }
+        ]
+      },
+      "restriction_prunes": {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "obsolete": {
+          "$numberInt": "1"
+        },
+        "children": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "parent_id": {
+              "$numberInt": "3"
+            },
+            "depth": {
+              "$numberLong": "1"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "parent_id": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "depth": {
+              "$numberLong": "0"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "parent_id": {
+              "$numberInt": "1"
+            },
+            "depth": {
+              "$numberLong": "0"
+            }
+          }
+        ]
+      },
+      "foreign_expression": {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "obsolete": {
+          "$numberInt": "1"
+        },
+        "children": [
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "parent_id": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "depth": {
+              "$numberLong": "0"
+            }
+          }
+        ]
+      },
+      "empty_collection": {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "obsolete": {
+          "$numberInt": "1"
+        },
+        "children": []
+      },
+      "nested_command": {
+        "nested": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "obsolete": {
+              "children": [
+                {
+                  "_id": {
+                    "$numberInt": "2"
+                  },
+                  "parent_id": [
+                    {
+                      "$numberInt": "1"
+                    },
+                    {
+                      "$numberInt": "3"
+                    }
+                  ],
+                  "depth": {
+                    "$numberLong": "0"
+                  }
+                },
+                {
+                  "_id": {
+                    "$numberInt": "3"
+                  },
+                  "parent_id": {
+                    "$numberInt": "1"
+                  },
+                  "depth": {
+                    "$numberLong": "0"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "nested_lookup": {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "obsolete": {
+          "$numberInt": "1"
+        },
+        "nested": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "obsolete": {
+              "$numberInt": "1"
+            },
+            "children": [
+              {
+                "_id": {
+                  "$numberInt": "2"
+                },
+                "parent_id": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "3"
+                  }
+                ],
+                "depth": {
+                  "$numberLong": "0"
+                }
+              },
+              {
+                "_id": {
+                  "$numberInt": "3"
+                },
+                "parent_id": {
+                  "$numberInt": "1"
+                },
+                "depth": {
+                  "$numberLong": "0"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_graph_lookup_cases.py",
+    "sha256": "3157bf43bc1c3aa71b41f44ce861361a2634a0e465b611e77409cacf21675eb6"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_graph_lookup_traversal",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "obsolete": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "selector": "semantic_graph_lookup_traversal"
+    },
+    {
+      "name": "semantic_graph_lookup_matching",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "obsolete": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "selector": "semantic_graph_lookup_matching"
+    },
+    {
+      "name": "semantic_graph_lookup_invalid",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "obsolete": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "selector": "semantic_graph_lookup_invalid"
+    }
+  ]
+}

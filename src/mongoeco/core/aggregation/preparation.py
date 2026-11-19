@@ -36,6 +36,10 @@ from mongoeco.core.aggregation.extensions import (
     get_registered_aggregation_expression_operator,
     get_registered_aggregation_stage_registration,
 )
+from mongoeco.core.aggregation.graph_lookup import (
+    compile_graph_restriction,
+    graph_lookup_spec,
+)
 from mongoeco.core.aggregation.group_execution import (
     group_prefix_slot_compatible,
     group_uses_slot_semantics,
@@ -288,7 +292,7 @@ def _discover_stage_requests(operator, spec, collection):
         if not isinstance(scale, int) or isinstance(scale, bool) or scale <= 0:
             scale = 1
         requests.append(ResourceRequest(collection, operator, scale))
-    elif operator == "$lookup" and isinstance(spec, dict):
+    elif operator in {"$lookup", "$graphLookup"} and isinstance(spec, dict):
         foreign = spec.get("from")
         if isinstance(foreign, str):
             requests.append(ResourceRequest(foreign, "documents"))
@@ -572,6 +576,14 @@ def _prepare_builtin_stage(operator, spec, *, dialect, address, context):
     if operator in {"$lookup", "$unionWith"}:
         spec = _prepare_join(
             operator, spec, dialect=dialect, address=address, context=context
+        )
+    elif operator == "$graphLookup":
+        spec = graph_lookup_spec(spec, dialect)
+        prepare_expression(
+            spec["startWith"], dialect=dialect, variables=context.variables
+        )
+        compile_graph_restriction(
+            spec, dialect=dialect, variables=dict.fromkeys(context.variables)
         )
     elif operator == "$facet":
         spec = _prepare_facet(spec, dialect=dialect, address=address, context=context)

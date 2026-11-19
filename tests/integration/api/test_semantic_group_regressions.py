@@ -1084,21 +1084,6 @@ def test_followup_f10_capabilities_are_rejected_without_effects(
             {"find": "records", "returnKey": True},
             {"find": "records", "showRecordId": True},
             {"aggregate": "records", "pipeline": [{"$out": "output"}], "cursor": {}},
-            {
-                "aggregate": "records",
-                "pipeline": [
-                    {
-                        "$graphLookup": {
-                            "from": "records",
-                            "startWith": "$_id",
-                            "connectFromField": "_id",
-                            "connectToField": "_id",
-                            "as": "links",
-                        }
-                    }
-                ],
-                "cursor": {},
-            },
         ):
             with pytest.raises(OperationFailure) as failure:
                 database.command(command)

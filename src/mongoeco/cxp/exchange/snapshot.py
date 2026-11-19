@@ -190,14 +190,11 @@ def build_mongodb_snapshot(
 ) -> Document:
     """Require explicit provenance, metadata coverage and operation bindings."""
     catalog.require_type("cxp.catalog")
-    if catalog.payload["identity"] != {
-        "namespace": "org.mongoeco",
-        "name": "mongodb",
-        "version": "2.0.0",
-    }:
+    owned_catalog = load_mongodb_catalog()
+    if catalog.payload["identity"] != owned_catalog.payload["identity"]:
         message = "Expected the Mongoeco-owned MongoDB catalog"
         raise ValueError(message)
-    if catalog.sha256 != load_mongodb_catalog().sha256:
+    if catalog.sha256 != owned_catalog.sha256:
         message = "Expected the exact Mongoeco-owned MongoDB catalog"
         raise ValueError(message)
     claims = [

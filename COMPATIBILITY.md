@@ -1546,6 +1546,19 @@ USearch enumera slots compactos sobre vectores válidos. Los controles incluyen
 embeddings inválidos, reparación y recreación del índice con otras dimensiones.
 Las reglas de cuantización y score permanecen separadas de los filtros BSON.
 
+## Recorrido local con graphLookup
+
+Memory y SQLite ejecutan `$graphLookup` sobre colecciones de la misma base,
+incluidos pipelines anidados. El recorrido usa la collation de la operación,
+deduplica por `_id` y produce `depthField` como BSON int64. El orden del array
+no forma parte del contrato. El recorrido local aplica un presupuesto de
+100 MiB estimados por documento de entrada y el plazo de la operación.
+Al agotar el presupuesto devuelve 40099 en 7.0/8.0 y 292 en 9.0, incluso
+cuando se solicita `allowDiskUse`.
+La carga de la colección destino usa el mecanismo compartido de agregación.
+Vistas, colecciones distribuidas y volcado a disco durante el recorrido quedan
+fuera del subset local.
+
 ## Límites del incremento F00–F11
 
 Database.client conserva el cliente propietario, incluidas las copias con opciones;
@@ -1556,8 +1569,8 @@ intrínseco en _id_; el SPI sigue representando su unicidad obligatoria.
 
 Views/viewOn, capped, return_key/show_record_id y los campos raw returnKey/
 showRecordId quedan fuera del subset. Se rechazan sin crear namespaces ni
-modificar documentos. out y graphLookup son stages reconocidos sin implementación
-local (CommandNotSupported, 115), distintos de un stage desconocido (40324).
+modificar documentos. `$out` es un stage reconocido sin implementación local
+(CommandNotSupported, 115), distinto de un stage desconocido (40324).
 Las extensiones registradas conservan su precedencia. Natural sort/hint de find
 sigue soportado, sin prometer identidad física pública recordId.
 

@@ -54,7 +54,7 @@ def _context() -> Document:
             "spec_version": 2,
             "payload": {
                 "subject_id": "mongoeco-public-catalog",
-                "configuration_revision": "mongoeco-public-catalog-2.0.0",
+                "configuration_revision": "mongoeco-public-catalog-2.1.0",
                 "accepted_sources": ["declared"],
             },
         },
@@ -177,11 +177,11 @@ def test_catalog_identity_and_hash_are_exact() -> None:
     catalog = load_mongodb_catalog()
     reference = catalog_reference(catalog)
     assert catalog.sha256 == (
-        "aa232d017fb8bcc85989b55c9817c0c1e379bd387dc5c3d59bdab467bcfe1081"
+        "b8152f20905507d7bf26b85f324dac24c0aee25f5897b36712cd3b81615cf8c5"
     )
     assert reference == load_mongodb_declared_snapshot().payload["catalog"]
     assert load_mongodb_declared_snapshot().payload["source"]["reference"] == (
-        "org.mongoeco:public-catalog:2.0.0"
+        "org.mongoeco:public-catalog:2.1.0"
     )
     assert all(
         reference == load_mongodb_profile(name).payload["catalog"]

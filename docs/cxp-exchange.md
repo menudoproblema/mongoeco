@@ -5,7 +5,8 @@ requirements. They are packaged as JSON data under
 `mongoeco.cxp.exchange.data`; a consumer can read and evaluate them without
 importing a CXP catalog, descriptor, handshake or registry module.
 Install `cxp[exchange]>=5.0.0,<6` to use the document API and context v2.
-Catalog `2.0.0` uses `cxp.catalog` spec_version 2. Snapshot and requirements
+Catalog `2.1.0` adds `$graphLookup` to the aggregation inventory and uses
+`cxp.catalog` spec_version 2. Snapshot and requirements
 remain spec_version 1; context remains spec_version 2. The earlier catalog
 `1.1.0` keeps its own identity and hash, and consumers must adopt the new pin
 explicitly.
@@ -24,7 +25,7 @@ context = Document(
         "spec_version": 2,
         "payload": {
             "subject_id": "mongoeco-public-catalog",
-            "configuration_revision": "mongoeco-public-catalog-2.0.0",
+            "configuration_revision": "mongoeco-public-catalog-2.1.0",
             "accepted_sources": ["declared"],
         },
     },

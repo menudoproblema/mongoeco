@@ -163,6 +163,10 @@ from tests.differential.semantic_granularity_cases import (
     SEED as GRANULARITY_SEED,
     SEMANTIC_GRANULARITY_CASES,
 )
+from tests.differential.semantic_graph_lookup_cases import (
+    SEED as GRAPH_LOOKUP_SEED,
+    SEMANTIC_GRAPH_LOOKUP_CASES,
+)
 from tests.differential.semantic_group_cases import SEMANTIC_GROUP_CASES
 from tests.differential.semantic_index_information_cases import (
     SEED as INDEX_INFORMATION_SEED,
@@ -353,6 +357,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "graph_lookup": SemanticCorpus(
+        "graph-lookup", "semantic_graph_lookup_cases",
+        GRAPH_LOOKUP_SEED, SEMANTIC_GRAPH_LOOKUP_CASES,
+    ),
     "bucket_granularity": SemanticCorpus(
         "bucket-granularity", "semantic_granularity_cases",
         GRANULARITY_SEED, SEMANTIC_GRANULARITY_CASES,

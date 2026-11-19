@@ -319,6 +319,7 @@ _NONEXPANDING_STREAM_STAGES = frozenset(
         "$replaceRoot",
         "$replaceWith",
         "$lookup",
+        "$graphLookup",
     }
 )
 

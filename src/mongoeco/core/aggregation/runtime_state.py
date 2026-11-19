@@ -10,6 +10,13 @@ from mongoeco.core.aggregation.evaluation_environment import (
     aggregation_environment,
     scoped_environment,
 )
+from mongoeco.core.aggregation.extensions import (
+    get_registered_aggregation_stage_registration,
+)
+from mongoeco.core.aggregation.graph_lookup import (
+    graph_lookup_results,
+    set_graph_output,
+)
 from mongoeco.core.aggregation.grouping_stages import (
     _apply_bucket,
     _apply_bucket_auto,
@@ -43,6 +50,7 @@ from mongoeco.core.aggregation.runtime import (
     _CURRENT_COLLECTION_RESOLVER_KEY,
     _MISSING,
     _REMOVE,
+    AggregationStageContext,
     _apply_unwind,
     _evaluate_expression_with_missing,
     _lookup_matches,
@@ -612,6 +620,24 @@ def _apply_lookup_states(  # noqa: PLR0913
     return result
 
 
+def _apply_graph_lookup_states(states, spec, context):
+    output = []
+    path = spec["as"]
+    for state, matches in graph_lookup_results(states, spec, context):
+        document = state.persistence_document()
+        set_graph_output(document, path, matches)
+        metadata = RuntimeMetadata(
+            entries=state.metadata.entries,
+            virtual_fields=tuple(
+                field
+                for field in state.metadata.virtual_fields
+                if not _paths_overlap(field.path, path)
+            ),
+        )
+        output.append(RuntimeDocumentState(document, metadata))
+    return output
+
+
 def _apply_union_states(
     states: list[RuntimeDocumentState],
     spec: object,
@@ -658,7 +684,7 @@ def _apply_union_states(
     return [deepcopy(state) for state in iter_with_deadline(states, deadline)] + foreign
 
 
-def apply_pipeline_states(  # noqa: PLR0912, PLR0913
+def apply_pipeline_states(  # noqa: PLR0912, PLR0913, PLR0915
     documents: list[RuntimeDocumentState] | list[dict[str, Any]],
     pipeline: Pipeline,
     *,
@@ -752,6 +778,13 @@ def apply_pipeline_states(  # noqa: PLR0912, PLR0913
             states = _apply_facet_states(states, spec, **common)
         elif operator == "$lookup":
             states = _apply_lookup_states(states, spec, **common)
+        elif (
+            operator == "$graphLookup"
+            and get_registered_aggregation_stage_registration(operator) is None
+        ):
+            states = _apply_graph_lookup_states(
+                states, spec, AggregationStageContext(stage_index=index, **common)
+            )
         elif operator == "$unionWith":
             states = _apply_union_states(states, spec, **common)
         elif operator in {
