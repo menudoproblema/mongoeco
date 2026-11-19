@@ -8,11 +8,16 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [5.1.0]
+
 ### Added
 
 - Add the explicit PyMongo 4.20 profile and exact detection of installed 4.20.x.
 - Support local `$graphLookup` in Memory and SQLite, including nested pipelines.
-  The CXP catalog 2.1.0 advertises the stage.
+  The CXP catalog 2.1.0 advertises the stage. Requirements pinned to catalog
+  2.0.0 must explicitly adopt the new catalog version and SHA-256 before
+  evaluating the 2.1.0 snapshot. See the
+  [CXP exchange guide](docs/cxp-exchange.md#catalog-210-adoption).
 
 ### Fixed
 

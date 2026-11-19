@@ -352,6 +352,17 @@ deployment. The owner contract and deprecation record are
 [`search-contract-v1.md`](architecture/search-contract-v1.md) and
 [`deprecations-v1.json`](../src/mongoeco/compat/resources/deprecations-v1.json).
 
+## Catalog 2.1.0 adoption
+
+Catalog 2.1.0 adds `$graphLookup` to the closed aggregation stage domain and to
+the declared stage inventories at both capability and operation level.
+Consumers using Mongoeco's packaged profiles and tiers receive the matching
+2.1.0 references with the package. Consumers with their own requirements
+pinned to 2.0.0 must review and explicitly adopt the new reference returned by
+`catalog_reference(load_mongodb_catalog())`, including its SHA-256. Evaluate
+the updated requirements against the matching 2.1.0 snapshot. A context for
+the bundled declaration must use that snapshot's `configuration_revision`.
+
 ## Catalog 2.0.0 migration
 
 Catalog 2.0.0 corrects the integrated expression inventory. At capability level
