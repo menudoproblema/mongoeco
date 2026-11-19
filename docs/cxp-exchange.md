@@ -253,8 +253,8 @@ removal requires the coordinated release sequence and installed consumer gates.
 
 The row-level audit of the owner metadata is in
 [`cxp-operational-metadata-conservation.csv`](cxp-operational-metadata-conservation.csv).
-It pins the source SHA-256 and assigns all 410 logical facts to an exchange
-claim or a producer-operated contract. Of those, 289 have exact exchange
+It pins the source SHA-256 and assigns all 411 logical facts to an exchange
+claim or a producer-operated contract. Of those, 290 have exact exchange
 claims; 104 owner operational rows have individual positive and negative
 oracles; five owner narratives have documented limits; nine catalog definitions
 and three owner runtime facts still require concrete deployment observations.

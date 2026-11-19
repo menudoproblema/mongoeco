@@ -1,9 +1,12 @@
 """Public declarations stay bound to integrated inventories, not just each other."""
 
+import csv
+import hashlib
 import json
 
 from copy import deepcopy
 from importlib.resources import files
+from pathlib import Path
 
 import pytest
 
@@ -50,6 +53,38 @@ def _check(owner):
         for operation in owner[capability].get("operationMetadata", {}).values():
             if field in operation:
                 assert set(operation[field]) == expected
+
+
+def test_operational_inventory_pins_the_current_owner_and_catalog():
+    project = Path(__file__).resolve().parents[2]
+    owner_path = "src/mongoeco/cxp/exchange/data/operational-metadata.json"
+    source = (project / owner_path).read_bytes()
+    owner = json.loads(source)
+    digest = hashlib.sha256(source).hexdigest()
+    identity = load_mongodb_catalog().payload["identity"]
+    catalog_name = f"{identity['namespace']}:{identity['name']}"
+    catalog = f"{catalog_name}@{identity['version']}"
+    inventory = project / "docs/cxp-operational-metadata-conservation.csv"
+    with inventory.open(encoding="utf-8", newline="") as table:
+        rows = list(csv.DictReader(table))
+
+    elements = {row["element"] for row in rows}
+    assert len(elements) == len(rows)
+    assert {
+        "/aggregation/supportedStages",
+        "/aggregation/operationMetadata/aggregate/supportedStages",
+    } <= elements
+    for row in rows:
+        element = row["element"]
+        assert row["source"] == owner_path
+        assert row["source_sha256"] == digest
+        assert row["exact_reference"].endswith(f"owner sha256:{digest}#{element}")
+        if row["destination"].startswith(f"{catalog_name}@"):
+            assert row["destination"].startswith(f"{catalog} ")
+            assert row["exact_reference"].startswith(row["destination"] + "; ")
+        value = owner
+        for token in element.removeprefix("/").split("/"):
+            value = value[token.replace("~1", "/").replace("~0", "~")]
 
 
 def test_integrated_inventory_conservation():
@@ -120,6 +155,14 @@ def test_expression_verdicts(operator, prefix):
         assert _evaluate(prefix + "supportedExpressionOperators", operator) == (
             "compatible" if operator in ("$not", "$last") else "incompatible"
         )
+
+
+def test_graph_lookup_stage_verdicts():
+    assert _evaluate("supportedStages", "$graphLookup") == "compatible"
+    assert _evaluate("aggregate.supportedStages", "$graphLookup") == "compatible"
+    with pytest.raises(InvalidDocumentError):
+        _evaluate("supportedStages", "$unknownStage")
+    assert _evaluate("aggregate.supportedStages", "$unknownStage") == "incompatible"
 
 
 def test_granularity_domain_and_claim():
