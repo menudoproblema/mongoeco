@@ -302,3 +302,12 @@ aceptadas indebidamente y cuatro variantes de blancos en ObjectId con SDK
 4.19.0. Son testigos rojos deliberados de la base; falta completar el corpus
 nativo antes de aceptar P01. Registro del foco: p01-base-regressions.log en
 el directorio de evidencia de este incremento. No se han ejecutado globales.
+
+P02/P03 implementados parcialmente en 9780de7a y 1dc8c050: el helper UUID
+rechaza longitudes inválidas sólo al solicitar la conversión correspondiente;
+ObjectId valida forma/tamaño antes de delegar. Pasan 105 tests con SDK 4.19
+y 129 con SDK 4.20 (cuatro subtests en cada foco), incluyendo el corpus público
+de política UUID en el segundo. Ratchet de lint conforme. Esta evidencia no
+cierra todavía P02/P03: faltan testigos ampliados, instalación sin SDK y
+comparación nativa. MongoDB 9.0.2 está disponible y Docker se ha comprobado
+operativo para las capturas 7/8/9. Ningún global ejecutado.
