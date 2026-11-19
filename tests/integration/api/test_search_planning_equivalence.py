@@ -554,7 +554,14 @@ def test_sqlite_residual_materialization_reuses_exact_document_entries(  # noqa:
         assert list(restored.materialized.rows.aggregate(pipeline)) == cold
 
 
-def test_memory_near_preserves_rank_and_metadata_against_exhaustive_search():
+@pytest.mark.parametrize(
+    ["limit", "expected_ids"],
+    [(None, ["c", "a", "b"]), (2, ["c", "a"])],
+    ids=["eligibility", "limited-tiebreak"],
+)
+def test_memory_near_preserves_rank_and_metadata_against_exhaustive_search(
+    limit, expected_ids
+):
     rows = [
         {"_id": "b", "score": [12, 30], "kind": "keep", "title": "Ada"},
         {"_id": "a", "score": 8, "kind": "keep", "title": "Ada"},
@@ -578,9 +585,12 @@ def test_memory_near_preserves_rank_and_metadata_against_exhaustive_search():
             "highlight": {"path": "title"},
         }},
         {"$match": {"kind": "keep"}},
-        {"$limit": 2},
-        {"$project": {"_id": 1, "highlights": {"$meta": "searchHighlights"}}},
     ]
+    if limit is not None:
+        pipeline.append({"$limit": limit})
+    pipeline.append(
+        {"$project": {"_id": 1, "highlights": {"$meta": "searchHighlights"}}}
+    )
     with MongoClient(MemoryEngine()) as client:
         collection = client.test.records
         collection.insert_many(rows)
@@ -588,4 +598,5 @@ def test_memory_near_preserves_rank_and_metadata_against_exhaustive_search():
         observed = list(collection.aggregate(pipeline))
         expected = list(aggregate_for_search_oracle(collection, pipeline))
     assert observed == expected
-    assert [row["_id"] for row in observed] == ["c", "a"]
+    assert [row["_id"] for row in observed] == expected_ids
+    assert all(row["highlights"] is None for row in observed)
