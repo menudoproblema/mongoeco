@@ -7,10 +7,8 @@ import time
 from typing import Any, Protocol, Self, runtime_checkable
 
 try:
-    from bson.errors import InvalidId as _PyMongoInvalidId
     from bson.objectid import ObjectId as _PyMongoObjectId
 except Exception:  # pragma: no cover - optional dependency
-    _PyMongoInvalidId = None
     _PyMongoObjectId = None
 
 
@@ -23,22 +21,40 @@ class ObjectIdLike(Protocol):
 _OBJECT_ID_BYTE_LENGTH = 12
 
 
-def _validate_object_id_input(oid: Any) -> None:
-    """Enforce the same physical size before either implementation accepts input."""
+def _object_id_bytes(oid: str | bytes | ObjectIdLike) -> bytes:
+    """Decode and validate the common input before either implementation stores it."""
     if isinstance(oid, str):
         if len(oid) != _OBJECT_ID_BYTE_LENGTH * 2:
             message = f"string de ObjectId debe ser de 24 hex, no {len(oid)}"
             raise ValueError(message)
         try:
-            binascii.unhexlify(oid)
+            binary = binascii.unhexlify(oid)
         except (binascii.Error, ValueError) as exc:
             message = f"'{oid}' no es un hexadecimal valido"
             raise ValueError(message) from exc
-    elif isinstance(oid, (bytes, ObjectIdLike)):
-        binary = oid if isinstance(oid, bytes) else bytes(oid.binary)
-        if len(binary) != _OBJECT_ID_BYTE_LENGTH:
-            message = f"bytes de ObjectId deben ser de 12, no {len(binary)}"
-            raise ValueError(message)
+    elif isinstance(oid, bytes):
+        binary = oid
+    elif isinstance(oid, ObjectIdLike):
+        binary = bytes(oid.binary)
+    else:
+        message = f"ID invalido tipo {type(oid)}: {oid}"
+        raise TypeError(message)
+    if len(binary) != _OBJECT_ID_BYTE_LENGTH:
+        message = f"bytes de ObjectId deben ser de 12, no {len(binary)}"
+        raise ValueError(message)
+    return binary
+
+
+def _is_valid_object_id(oid: Any) -> bool:
+    # The constructor also accepts the structural protocol. is_valid keeps
+    # the SDK and fallback's historical domain of strings, bytes and ids.
+    if not isinstance(oid, (str, bytes, *OBJECT_ID_TYPES)):
+        return False
+    try:
+        _object_id_bytes(oid)
+    except (TypeError, ValueError):
+        return False
+    return True
 
 
 if _PyMongoObjectId is not None:
@@ -52,39 +68,11 @@ if _PyMongoObjectId is not None:
             self,
             oid: str | bytes | Self | ObjectIdLike | None = None,
         ):
-            if oid is not None and not isinstance(
-                oid, (str, bytes, ObjectId, _PyMongoObjectId)
-            ):
-                if isinstance(oid, ObjectIdLike):
-                    oid = bytes(oid.binary)
-                else:
-                    raise TypeError(f"ID invalido tipo {type(oid)}: {oid}")
-            _validate_object_id_input(oid)
-            try:
-                super().__init__(oid)
-            except TypeError as exc:
-                if isinstance(oid, bytes):
-                    raise ValueError(
-                        f"bytes de ObjectId deben ser de 12, no {len(oid)}"
-                    ) from exc
-                raise
-            except _PyMongoInvalidId as exc:
-                text = str(oid)
-                if isinstance(oid, str) and len(oid) != 24:
-                    raise ValueError(
-                        f"string de ObjectId debe ser de 24 hex, no {len(oid)}"
-                    ) from exc
-                raise ValueError(f"'{text}' no es un hexadecimal valido") from exc
+            super().__init__(None if oid is None else _object_id_bytes(oid))
 
         @classmethod
         def is_valid(cls, oid: Any) -> bool:
-            try:
-                _validate_object_id_input(oid)
-            except (TypeError, ValueError):
-                return False
-            if isinstance(oid, bytes):
-                return len(oid) == 12
-            return bool(_PyMongoObjectId.is_valid(oid))
+            return _is_valid_object_id(oid)
 
         @property
         def binary(self) -> bytes:
@@ -111,34 +99,7 @@ else:
             self,
             oid: str | bytes | Self | ObjectIdLike | None = None,
         ):
-            _validate_object_id_input(oid)
-            if oid is None:
-                self._oid = self._generate()
-            elif isinstance(oid, ObjectId):
-                self._oid = oid._oid
-            elif isinstance(oid, bytes):
-                if len(oid) != 12:
-                    raise ValueError(
-                        f"bytes de ObjectId deben ser de 12, no {len(oid)}"
-                    )
-                self._oid = oid
-            elif isinstance(oid, ObjectIdLike):
-                binary = bytes(oid.binary)
-                if len(binary) != _OBJECT_ID_BYTE_LENGTH:
-                    message = f"bytes de ObjectId deben ser de 12, no {len(binary)}"
-                    raise ValueError(message)
-                self._oid = binary
-            elif isinstance(oid, str):
-                if len(oid) != 24:
-                    raise ValueError(
-                        f"string de ObjectId debe ser de 24 hex, no {len(oid)}"
-                    )
-                try:
-                    self._oid = binascii.unhexlify(oid)
-                except binascii.Error as exc:
-                    raise ValueError(f"'{oid}' no es un hexadecimal valido") from exc
-            else:
-                raise TypeError(f"ID invalido tipo {type(oid)}: {oid}")
+            self._oid = self._generate() if oid is None else _object_id_bytes(oid)
 
         @classmethod
         def _generate(cls) -> bytes:
@@ -153,17 +114,7 @@ else:
 
         @classmethod
         def is_valid(cls, oid: Any) -> bool:
-            try:
-                _validate_object_id_input(oid)
-            except (TypeError, ValueError):
-                return False
-            if isinstance(oid, ObjectId):
-                return True
-            if isinstance(oid, bytes):
-                return len(oid) == 12
-            if isinstance(oid, str) and len(oid) == 24:
-                return all(ch in "0123456789abcdefABCDEF" for ch in oid)
-            return False
+            return _is_valid_object_id(oid)
 
         @property
         def binary(self) -> bytes:

@@ -35,6 +35,7 @@ class _InvalidCompatibleObjectId:
 def _assert_structural_fallback_contract(test_case, fallback_object_id):
     from_compatible = fallback_object_id(_CompatibleObjectId())
     test_case.assertEqual(from_compatible.binary, _CompatibleObjectId.binary)
+    test_case.assertFalse(fallback_object_id.is_valid(_CompatibleObjectId()))
     with test_case.assertRaises(ValueError):
         fallback_object_id(_InvalidCompatibleObjectId())
 
@@ -55,6 +56,17 @@ class TestObjectId(unittest.TestCase):
         compatible: ObjectIdLike = CompatibleObjectId()
 
         self.assertEqual(ObjectId(compatible).binary, compatible.binary)
+        self.assertFalse(ObjectId.is_valid(compatible))
+
+    def test_rejects_driver_object_id_with_irregular_legacy_pickle_state(self):
+        if BsonObjectId is None:
+            self.skipTest("bson is not installed")
+
+        original = BsonObjectId()
+        original.__setstate__(b"short")
+        self.assertFalse(ObjectId.is_valid(original))
+        with self.assertRaises(ValueError):
+            ObjectId(original)
 
     def test_generation_is_unique(self):
         oid1 = ObjectId()
