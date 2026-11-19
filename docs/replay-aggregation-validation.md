@@ -23,3 +23,13 @@ A2 uses one campaign, at most 240 seconds, with four
 `A0,A1,B1,B2,A2` blocks. Each slot runs both fixed lots. The primary metric
 is elapsed time per lot; CPU and maximum per-worker RSS are recorded as
 secondary measurements. The cache has at most four entries per worker.
+
+## A1 — Replay failures
+
+The BSON comparison still decides equality. A failure reports the first
+divergent observation path instead of rendering the complete normalized
+tuple. The PyMongo 4.20 mutation exception overlay copies the outer result
+and the affected observations; the original capture and its source hash
+remain unchanged. The negative focus and all 24 mutation precedence replay
+nodes passed with each of PyMongo 4.19.0 and 4.20.0. The capture identity
+focus also passed.

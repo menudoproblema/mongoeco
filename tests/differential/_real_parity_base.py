@@ -15,7 +15,10 @@ from mongoeco.wire import AsyncMongoEcoProxyServer
 
 from tests.differential.cases import REAL_PARITY_CASES, RealParityCase
 from tests.differential.semantic_corpora import SEMANTIC_CORPORA
-from tests.support_bson_observation import bson_comparison_value
+from tests.support_bson_observation import (
+    bson_comparison_value,
+    describe_bson_difference,
+)
 
 
 def _normalize(value: Any) -> Any:
@@ -69,7 +72,11 @@ def _assert_native_observation(actual, expected, *, corpus=None, name=None):
                     "indexes": [],
                 },
             )
-    checker.assertEqual(_normalize(actual), _normalize(expected))
+    observed, reference = _normalize(actual), _normalize(expected)
+    if observed != reference:
+        difference = describe_bson_difference(actual, expected, observed, reference)
+        message = f"{corpus}/{name}: {difference}"
+        raise AssertionError(message)
 
 
 def _native_sdk_profile_for_case(name):
@@ -80,6 +87,18 @@ def _native_sdk_profile_for_case(name):
         if version_tuple[:2] == (4, 20):
             return {"pymongo_profile": "4.20"}
     return {}
+
+
+def mutation_precedence_for_pymongo420(expected):
+    """Project the four SDK-side exception changes onto the 4.19 capture."""
+    result = dict(expected)
+    for kind in ("int", "str", "dict", "list"):
+        key = f"return/{kind}"
+        observation = expected[key]
+        assert observation["exception"] == "ValueError"
+        result[key] = {**observation, "exception": "TypeError"}
+    return result
+
 
 
 class MongoRealParityBase(unittest.TestCase):

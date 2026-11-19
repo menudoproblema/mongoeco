@@ -41,6 +41,7 @@ from tests.differential._real_parity_base import (
     _decode_capture,
     _native_sdk_profile_for_case,
     _normalize,
+    mutation_precedence_for_pymongo420,
 )
 from tests.differential.semantic_average_route_cases import GROUP, SEED as AVERAGE_SEED
 from tests.differential.semantic_command_let_cases import VALID as COMMAND_LET_VALID
@@ -389,13 +390,7 @@ def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest a
     expected = capture["cases"][name]
     profile = _native_sdk_profile_for_case(name)
     if profile:
-        # The 4.19 captures remain authoritative for phase, code and effects.
-        # PyMongo 4.20 changes only these four client validation exceptions.
-        expected = deepcopy(expected)
-        for kind in ("int", "str", "dict", "list"):
-            observation = expected[f"return/{kind}"]
-            assert observation["exception"] == "ValueError"
-            observation["exception"] = "TypeError"
+        expected = mutation_precedence_for_pymongo420(expected)
 
     def check(actual):
         _assert_native_observation(actual, expected, corpus=corpus, name=name)

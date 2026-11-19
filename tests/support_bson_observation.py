@@ -4,6 +4,7 @@ import math
 
 from collections.abc import Mapping
 from datetime import datetime
+from reprlib import repr as short_repr
 
 from bson import BSON
 from bson.binary import UuidRepresentation
@@ -46,3 +47,34 @@ def bson_comparison_value(value):
         BSON.encode({"value": value}, codec_options=_COMPARISON_CODEC_OPTIONS),
     )
 
+
+def describe_bson_difference(actual, expected, observed, reference, path="$"):
+    """Explain a mismatch already detected by the independent comparison."""
+    if observed[0] == reference[0] == "document":
+        for got, wanted in zip(observed[1], reference[1], strict=False):
+            got_type, got_key, got_value = got
+            want_type, want_key, want_value = wanted
+            if (got_type, got_key) != (want_type, want_key):
+                return (
+                    f"{path}: field order or presence differs at "
+                    f"{short_repr(got_key)} vs {short_repr(want_key)}"
+                )
+            if got_value != want_value:
+                return describe_bson_difference(
+                    actual[got_key], expected[want_key], got_value, want_value,
+                    f"{path}[{short_repr(got_key)}]",
+                )
+        return f"{path}: field count {len(actual)} != {len(expected)}"
+    if observed[0] == reference[0] == "array":
+        for index, (got, wanted) in enumerate(
+            zip(observed[1], reference[1], strict=False)
+        ):
+            if got != wanted:
+                return describe_bson_difference(
+                    actual[index], expected[index], got, wanted, f"{path}[{index}]"
+                )
+        return f"{path}: array length {len(actual)} != {len(expected)}"
+    return (
+        f"{path}: observed {type(actual).__name__} {short_repr(actual)}; "
+        f"expected {type(expected).__name__} {short_repr(expected)}"
+    )
