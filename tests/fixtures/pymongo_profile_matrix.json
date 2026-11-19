@@ -5,7 +5,8 @@
     "PyMongo 4.13.2",
     "PyMongo 4.17.0",
     "PyMongo 4.18.2",
-    "PyMongo 4.19.0"
+    "PyMongo 4.19.0",
+    "PyMongo 4.20.0"
   ],
   "scope": {
     "write_methods": [
@@ -108,7 +109,7 @@
       "parse_uri.percent_encoded_hostname"
     ]
   },
-  "confirmed_unsupported_in_4_9_to_4_19": {
+  "confirmed_unsupported_in_4_9_to_4_20": {
     "update_one": [
       "max_time_ms"
     ],

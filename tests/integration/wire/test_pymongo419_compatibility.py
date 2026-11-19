@@ -1,7 +1,9 @@
 """Exercise inherited 4.19 cursor, bulk and session APIs over the local proxy."""
 
 import asyncio
+import os
 import struct
+import sys
 
 import pymongo
 import pytest
@@ -11,12 +13,58 @@ from bson.errors import InvalidBSON
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.wire import AsyncMongoEcoProxyServer
+from mongoeco.wire.connections import WireConnectionContext
 from mongoeco.wire.protocol import OP_MSG, MessageHeader, decode_op_msg
 
 
 pytestmark = pytest.mark.skipif(
     pymongo.version_tuple[:2] < (4, 19), reason="requires PyMongo 4.19"
 )
+
+
+@pytest.mark.skipif(pymongo.version_tuple[:2] < (4, 20), reason="requires PyMongo 4.20")
+def test_driver420_agent_metadata_and_unlimited_pool(monkeypatch):
+    agents = []
+    original = WireConnectionContext.register_hello
+
+    def record(connection, command, body):
+        agent = body.get("client", {}).get("env", {}).get("agent")
+        if agent:
+            agents.append(agent)
+        return original(connection, command, body)
+
+    monkeypatch.setattr(WireConnectionContext, "register_hello", record)
+    # A fresh driver import observes the environment, rather than a module cache.
+    script = '''
+import asyncio, sys, pymongo
+options = dict(directConnection=True, serverSelectionTimeoutMS=3000,
+               maxPoolSize=0, minPoolSize=1)
+with pymongo.MongoClient(sys.argv[1], **options) as client:
+    assert client.admin.command("ping")["ok"] == 1
+    client.test.items.insert_one({"_id": "sync"})
+    assert client.test.items.find_one("sync") == {"_id": "sync"}
+async def check():
+    async with pymongo.AsyncMongoClient(sys.argv[1], **options) as client:
+        assert (await client.admin.command("ping"))["ok"] == 1
+        await client.test.items.insert_one({"_id": "async"})
+        assert await client.test.items.find_one("async") == {"_id": "async"}
+asyncio.run(check())
+'''
+
+    async def exercise():
+        async with AsyncMongoEcoProxyServer(pymongo_profile="4.20") as proxy:
+            process = await asyncio.create_subprocess_exec(
+                sys.executable, "-I", "-c", script, proxy.address.uri,
+                env={**os.environ, "AI_AGENT": "mongoeco-compat-probe"},
+                stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await process.communicate()
+            assert process.returncode == 0, (stdout, stderr)
+
+    asyncio.run(exercise())
+    assert agents
+    # A known agent may take precedence over AI_AGENT in the invoking environment.
+    assert all(isinstance(agent, str) and agent for agent in agents)
 
 
 @pytest.mark.parametrize("factory", [MemoryEngine, SQLiteEngine])

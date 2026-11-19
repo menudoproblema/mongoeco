@@ -343,3 +343,18 @@ Siguiente paso: revisar ese resultado y comprobar focalmente los cambios de
 P05 y el ratchet de lint antes de su commit. P06/P07 siguen pendientes.
 No hay campañas de coste ni suites globales iniciadas por esta pausa.
 El archivo ajeno benchmarks/execution.json se conserva fuera del incremento.
+
+### Comprobaciones focales tras reanudar
+
+P01–P04 conservan sus capturas y pruebas. La repetición focal de la frontera
+BSON, imports sin SDK, lotes raw, perfil y wire pasa con 4.20 (147 tests y
+11 subtests). El foco UUID/ObjectId con 4.19 pasa (186 tests y cuatro subtests).
+Se corrige el estilo de la selección de operaciones detectado por el ratchet.
+
+P05 comprobado focalmente. El runner aislado clasificó las 378 observaciones
+de los siete SDK sin indeterminados. Las 54 decisiones de aceptación de
+4.20.0 coinciden con 4.19.0. El smoke con sockets locales verifica el saludo
+con metadata de agente, ping y escritura/lectura con pool sin límite en sync
+y async. El pin 4.19.0 del canario de escritura conserva el entorno histórico
+documentado en write-parity-validation.md. La matriz completa del kit y la
+aceptación del artefacto se comprueban en P07.

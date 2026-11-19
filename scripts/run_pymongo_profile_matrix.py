@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_VERSIONS = ("4.9.2", "4.11.3", "4.13.2", "4.17.0", "4.18.2", "4.19.0")
+DEFAULT_VERSIONS = ("4.9.2", "4.11.3", "4.13.2", "4.17.0", "4.18.2", "4.19.0", "4.20.0")
 WRITE_METHODS = (
     "update_one",
     "update_many",
