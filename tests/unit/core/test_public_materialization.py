@@ -55,6 +55,29 @@ def test_portable_decoder_failure_keeps_the_decoding_boundary(monkeypatch):
     assert isinstance(error.value.__cause__, ValueError)
 
 
+def test_portable_cursor_rejects_invalid_uuid_before_document_write(monkeypatch):
+    class LoggedDocument(dict):
+        def __setitem__(self, key, value):
+            written_keys.append(key)
+            super().__setitem__(key, value)
+
+    written_keys = []
+    monkeypatch.setattr(materializer, "_BSON", None)
+    options = CodecOptions(
+        document_class=LoggedDocument,
+        uuid_representation=UuidRepresentation.STANDARD,
+    )
+    with pytest.raises(materializer._InvalidBSON, match="expected 16"):
+        materializer.materialize_cursor_response(
+            [{"invalid_uuid": Binary(b"bad", subtype=4)}],
+            codec_options=options,
+            cursor_id=0,
+            namespace="test.rows",
+            initial=True,
+        )
+    assert "invalid_uuid" not in written_keys
+
+
 def reference(value, options):
     return DocumentCodec.apply_codec_options(
         DocumentCodec.to_pymongo(DocumentCodec.to_public(value)), codec_options=options

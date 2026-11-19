@@ -657,53 +657,42 @@ class DocumentCodec:
         codec_options: CodecOptions,
     ) -> uuid.UUID | bytes:
         uuid_representation = codec_options.uuid_representation
-        subtype = 4 if isinstance(value, uuid.UUID) else getattr(value, "subtype", 0)
         uuid_size, standard_subtype, legacy_subtype = 16, 4, 3
+        subtype = (
+            standard_subtype if isinstance(value, uuid.UUID)
+            else getattr(value, "subtype", 0)
+        )
         converts = (
             subtype == standard_subtype
             and uuid_representation is UuidRepresentation.STANDARD
         ) or (
-            subtype == legacy_subtype
-            and uuid_representation in (
+            subtype == legacy_subtype and uuid_representation in (
                 UuidRepresentation.PYTHON_LEGACY,
                 UuidRepresentation.JAVA_LEGACY,
                 UuidRepresentation.CSHARP_LEGACY,
             )
         )
-        if not isinstance(value, uuid.UUID) and len(value) != uuid_size:
-            if converts:
-                # Reuse the response boundary's portable error family when no
-                # optional SDK is installed; do not invent another exception.
+        if converts:
+            payload = value.bytes if isinstance(value, uuid.UUID) else bytes(value)
+            if len(payload) != uuid_size:
+                # The portable response error also covers installations without BSON.
                 from mongoeco.core._public_materialization import (  # noqa: PLC0415
                     _InvalidBSON,
                 )
 
                 message = (
-                    f"cannot decode a uuid from a {len(value)}-byte payload, "
-                    "expected 16"
+                    f"cannot decode a uuid from a {len(payload)}-byte payload, "
+                    f"expected {uuid_size}"
                 )
                 raise _InvalidBSON(message)
-            return value
-        payload = value.bytes if isinstance(value, uuid.UUID) else bytes(value)
-        if len(payload) == uuid_size:
-            if (
-                subtype == standard_subtype
-                and uuid_representation is UuidRepresentation.STANDARD
-            ):
-                return uuid.UUID(bytes=payload)
-            if subtype == legacy_subtype and uuid_representation in (
-                UuidRepresentation.PYTHON_LEGACY,
-                UuidRepresentation.JAVA_LEGACY,
-                UuidRepresentation.CSHARP_LEGACY,
-            ):
-                if uuid_representation is UuidRepresentation.JAVA_LEGACY:
-                    payload = payload[:8][::-1] + payload[8:][::-1]
-                if uuid_representation is UuidRepresentation.CSHARP_LEGACY:
-                    return uuid.UUID(bytes_le=payload)
-                return uuid.UUID(bytes=payload)
+            if uuid_representation is UuidRepresentation.JAVA_LEGACY:
+                payload = payload[:8][::-1] + payload[8:][::-1]
+            if uuid_representation is UuidRepresentation.CSHARP_LEGACY:
+                return uuid.UUID(bytes_le=payload)
+            return uuid.UUID(bytes=payload)
         if isinstance(value, uuid.UUID):
             binary_class = BsonBinary or Binary
-            return binary_class(payload, subtype=4)
+            return binary_class(value.bytes, subtype=standard_subtype)
         return value
 
     @staticmethod
