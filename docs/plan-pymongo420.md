@@ -361,5 +361,13 @@ aceptación del artefacto se comprueban en P07.
 
 P06 documenta la selección del perfil en COMPATIBILITY y los contratos BSON
 en la referencia de runtime. Se conservan las notas históricas de 4.19.
-La aceptación toma como candidato el commit de cierre de P06 y su árbol.
+La aceptación identifica el commit candidato y su árbol antes de cada evaluación.
 Los gates ya comprobados focalmente se conservan como evidencia de diagnóstico.
+
+P07 detectó un delta del SDK omitido en la revisión inicial. En los tres
+servidores, ambos motores pasaron el nuevo caso UUID y fallaron únicamente
+en `semantic_mutation_precedence`. La sonda focal con ambos SDK confirmó que
+PyMongo 4.20 cambia de ValueError a TypeError cuatro rechazos de
+return_document antes de enviar el comando, con estado intacto. El perfil
+4.20 aplica esa categoría en la admisión de la API. El replay conserva los
+goldens de 4.19 y aplica sólo ese delta comprobado, manteniendo fase y efectos.

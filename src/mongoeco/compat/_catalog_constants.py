@@ -27,6 +27,7 @@ MONGODB_DIALECT_HOOK_NAMES = (
 PYMONGO_PROFILE_HOOK_NAMES = (
     "supports_update_one_sort",
     "rejects_reserved_aggregation_keywords",
+    "invalid_return_document_type_error",
 )
 
 DEFAULT_MONGODB_DIALECT = "7.0"

@@ -93,6 +93,7 @@ PYMONGO_PROFILE_CATALOG = MappingProxyType(
                 {
                     "supports_update_one_sort": True,
                     "rejects_reserved_aggregation_keywords": True,
+                    "invalid_return_document_type_error": True,
                 }
             ),
             capabilities=frozenset(

@@ -6957,7 +6957,8 @@
     ],
     "pymongo_profile": [
       "supports_update_one_sort",
-      "rejects_reserved_aggregation_keywords"
+      "rejects_reserved_aggregation_keywords",
+      "invalid_return_document_type_error"
     ]
   },
   "local_runtime_subsets": {
@@ -8807,6 +8808,7 @@
         "4.20"
       ],
       "behavior_flags": {
+        "invalid_return_document_type_error": true,
         "rejects_reserved_aggregation_keywords": true,
         "supports_update_one_sort": true
       },

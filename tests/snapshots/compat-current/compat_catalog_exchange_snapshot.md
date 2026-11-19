@@ -8,7 +8,7 @@
 
 ## Hooks
 - `mongodb_dialect`: `bounded_sort_reports_eof`, `aggregate_initial_reports_eof`, `aggregate_window_reports_eof`, `supports_dynamic_get_field`, `supports_now_in_read_command_let`, `uses_distinct_command_request_field_name`, `null_query_matches_undefined`, `rejects_empty_group_fields`, `validates_densify_partition_paths`, `validates_aggregation_syntax_early`, `documents_join_omits_collection_namespace`, `supports_array_index_variables`, `uses_extended_conversions`, `uses_server_densify_bounds`, `densify_equal_bounds_are_empty`, `densify_full_nonadvancing_step_errors`, `densify_empty_partition_generates_values`, `supports_date_range_windows`, `limits_trim_chars`, `rejects_cluster_time_expression`, `list_indexes_includes_simple_collation`, `rejects_unimplemented_wildcard_projection`, `merge_insert_preserves_incoming_field_order`
-- `pymongo_profile`: `supports_update_one_sort`, `rejects_reserved_aggregation_keywords`
+- `pymongo_profile`: `supports_update_one_sort`, `rejects_reserved_aggregation_keywords`, `invalid_return_document_type_error`
 
 ## Supported Majors
 - `mongodb`: 7, 8, 9
@@ -110,7 +110,7 @@
 - `driver_series`: `4.x`
 - `label`: `PyMongo 4.20`
 - `aliases`: `4.20`
-- `behavior_flags`: `{'supports_update_one_sort': True, 'rejects_reserved_aggregation_keywords': True}`
+- `behavior_flags`: `{'supports_update_one_sort': True, 'rejects_reserved_aggregation_keywords': True, 'invalid_return_document_type_error': True}`
 - `capabilities`: `aggregate.reserved_keywords_validation`, `update_one.sort`, `uri.rejects_percent_encoded_hostnames`, `uri.srv_allowed_hosts_suffix`, `uri.srv_host_validator`
 
 ## Database Commands

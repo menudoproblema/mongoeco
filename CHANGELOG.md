@@ -16,6 +16,7 @@ usa Semantic Versioning.
 
 - Reject malformed UUID payloads when response decoding requests conversion.
   Preserve Binary values when the selected representation leaves them unconverted.
+- Match PyMongo 4.20's `TypeError` for rejected `return_document` values.
 - Enforce ObjectId text and BSON length validation with or without PyMongo.
 
 ## [5.0.0] - 2026-11-02

@@ -205,7 +205,8 @@
     {
       "after": [
         "supports_update_one_sort",
-        "rejects_reserved_aggregation_keywords"
+        "rejects_reserved_aggregation_keywords",
+        "invalid_return_document_type_error"
       ],
       "before": [
         "supports_update_one_sort"
@@ -1490,6 +1491,7 @@
           "4.20"
         ],
         "behavior_flags": {
+          "invalid_return_document_type_error": true,
           "rejects_reserved_aggregation_keywords": true,
           "supports_update_one_sort": true
         },

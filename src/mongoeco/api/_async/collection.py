@@ -588,7 +588,9 @@ class AsyncCollection:
         return name
 
     @staticmethod
-    def _normalize_return_document(value: object | None) -> ReturnDocument:
+    def _normalize_return_document(
+        value: object | None, *, type_error: bool = False
+    ) -> ReturnDocument:
         if value is None:
             return ReturnDocument.BEFORE
         if isinstance(value, ReturnDocument):
@@ -602,6 +604,12 @@ class AsyncCollection:
                 return ReturnDocument.BEFORE
             if normalized_name == "AFTER":
                 return ReturnDocument.AFTER
+        if type_error:
+            message = (
+                "return_document must be ReturnDocument.BEFORE or "
+                f"ReturnDocument.AFTER, not {type(value)}"
+            )
+            raise TypeError(message)
         message = "return_document must be a ReturnDocument value"
         raise ValueError(message)
 

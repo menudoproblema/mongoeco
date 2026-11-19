@@ -133,7 +133,12 @@ def _admit_write_options(  # noqa: PLR0912 - native validation/session phases
         if change != "update_many" and change is not None:
             collection._ensure_session_active(options.get("session"))
     if find_modify and "return_document" in options:
-        returned = collection._normalize_return_document(options["return_document"])
+        returned = collection._normalize_return_document(
+            options["return_document"],
+            type_error=bool(collection._pymongo_profile.behavior_flag(
+                "invalid_return_document_type_error"
+            )),
+        )
         options["return_document"] = returned is ReturnDocument.AFTER
     if (
         not find_modify

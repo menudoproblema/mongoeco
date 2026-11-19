@@ -18,7 +18,10 @@ def test_explicit_profile_and_instance_preserve_the_inherited_contract():
     assert resolve_pymongo_profile("4.20") is PYMONGO_PROFILE_420
     assert resolve_pymongo_profile(PyMongoProfile420()) == PYMONGO_PROFILE_420
     assert PYMONGO_PROFILE_420.capabilities == PYMONGO_PROFILE_419.capabilities
-    assert PYMONGO_PROFILE_420.behavior_flags() == PYMONGO_PROFILE_419.behavior_flags()
+    assert PYMONGO_PROFILE_420.behavior_flags() == {
+        **PYMONGO_PROFILE_419.behavior_flags(),
+        "invalid_return_document_type_error": True,
+    }
     assert DEFAULT_PYMONGO_PROFILE == "4.9"
 
 

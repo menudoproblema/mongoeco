@@ -629,7 +629,9 @@ Regla práctica:
 * `4.19` hereda 4.18 y añade `srv_host_validator` con resolución pública,
   sufijos privados y rechazo de percent-encoding en hostnames. La
   [guía 4.19](docs/pymongo419.md) documenta validación y límites.
-* `4.20` conserva las capacidades y opciones de `4.19`. Se puede seleccionar
+* `4.20` conserva las capacidades de `4.19` y usa `TypeError` para valores
+  rechazados de `return_document` en las operaciones de actualización y
+  reemplazo con devolución de documento. Se puede seleccionar
   con `pymongo_profile="4.20"` o importar `PyMongoProfile420` y
   `PYMONGO_PROFILE_420` de `mongoeco.compat`. La selección del dialecto de
   MongoDB es independiente. El cifrado del driver queda fuera del soporte.

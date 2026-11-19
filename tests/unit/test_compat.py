@@ -381,6 +381,7 @@ class CompatResolutionTests(unittest.TestCase):
         ))
         self.assertEqual(PYMONGO_PROFILE_HOOK_NAMES, (
             'supports_update_one_sort', 'rejects_reserved_aggregation_keywords',
+            'invalid_return_document_type_error',
         ))
         self.assertEqual(SUPPORTED_MONGODB_MAJORS, frozenset({7, 8, 9}))
         self.assertEqual(SUPPORTED_PYMONGO_MAJORS, frozenset({4}))

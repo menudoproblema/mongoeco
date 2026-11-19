@@ -72,6 +72,16 @@ def _assert_native_observation(actual, expected, *, corpus=None, name=None):
     checker.assertEqual(_normalize(actual), _normalize(expected))
 
 
+def _native_sdk_profile_for_case(name):
+    # The installed driver controls the exception before any command runs.
+    if name == "semantic_mutation_precedence":
+        from pymongo import version_tuple  # noqa: PLC0415 - optional SDK
+
+        if version_tuple[:2] == (4, 20):
+            return {"pymongo_profile": "4.20"}
+    return {}
+
+
 class MongoRealParityBase(unittest.TestCase):
     TARGET_VERSION: tuple[int, int] = (7, 0)
     _real_client = None
@@ -172,7 +182,8 @@ class MongoRealParityBase(unittest.TestCase):
             return asyncio.run(observe_wire())
 
         with MongoClient(
-            engine_factory(), mongodb_dialect=self._target_dialect_key()
+            engine_factory(), mongodb_dialect=self._target_dialect_key(),
+            **_native_sdk_profile_for_case(case.name),
         ) as client:
             collection = client.get_database(database_name).get_collection(
                 collection_name
