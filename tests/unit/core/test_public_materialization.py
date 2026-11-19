@@ -156,7 +156,7 @@ def document():
     return {
         "nested": [{"plain": [None, True, 2, 2.5, "text", b"bytes"]}],
         "int64": BsonInt64(3),
-        "binary": Binary(b"payload", subtype=4),
+        "binary": Binary(b"0123456789abcdef", subtype=4),
         "oid": ObjectId("0123456789abcdef01234567"),
         "decimal": Decimal128("3.25"),
         "regex": Regex("ab", "i"),
