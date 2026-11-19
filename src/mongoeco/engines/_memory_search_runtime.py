@@ -451,16 +451,9 @@ async def execute_search_documents(
     if is_text_search_query(query):
         if isinstance(query, SearchNearQuery):
             distance_hits: list[tuple[float, str, Document]] = []
-            for document, materialized in materialized_documents:
+            for document, _materialized in materialized_documents:
                 if downstream_filter_spec is not None and not downstream_matches(
                     document
-                ):
-                    continue
-                if not matches_search_query(
-                    document,
-                    definition=definition,
-                    query=query,
-                    materialized=materialized,
                 ):
                     continue
                 distance = search_near_distance(document, query=query)

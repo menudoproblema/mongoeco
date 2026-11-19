@@ -552,3 +552,40 @@ def test_sqlite_residual_materialization_reuses_exact_document_entries(  # noqa:
 
     with MongoClient(SQLiteEngine(backup_path)) as restored:
         assert list(restored.materialized.rows.aggregate(pipeline)) == cold
+
+
+def test_memory_near_preserves_rank_and_metadata_against_exhaustive_search():
+    rows = [
+        {"_id": "b", "score": [12, 30], "kind": "keep", "title": "Ada"},
+        {"_id": "a", "score": 8, "kind": "keep", "title": "Ada"},
+        {"_id": "c", "score": 10, "kind": "keep", "title": "Ada"},
+        {"_id": "d", "score": 10, "kind": "drop", "title": "Ada"},
+        {"_id": "e", "kind": "keep", "title": "Ada"},
+        {"_id": "f", "score": 40, "kind": "keep", "title": "Ada"},
+    ]
+    mapping = SearchIndexModel(
+        {"mappings": {"dynamic": False, "fields": {
+            "score": {"type": "number"},
+            "kind": {"type": "token"},
+            "title": {"type": "string"},
+        }}},
+        name="near_index",
+    )
+    pipeline = [
+        {"$search": {
+            "index": "near_index",
+            "near": {"path": "score", "origin": 10, "pivot": 3},
+            "highlight": {"path": "title"},
+        }},
+        {"$match": {"kind": "keep"}},
+        {"$limit": 2},
+        {"$project": {"_id": 1, "highlights": {"$meta": "searchHighlights"}}},
+    ]
+    with MongoClient(MemoryEngine()) as client:
+        collection = client.test.records
+        collection.insert_many(rows)
+        collection.create_search_index(mapping)
+        observed = list(collection.aggregate(pipeline))
+        expected = list(aggregate_for_search_oracle(collection, pipeline))
+    assert observed == expected
+    assert [row["_id"] for row in observed] == ["c", "a"]

@@ -6,7 +6,7 @@ from unittest.mock import patch
 import mongoeco.engines._memory_search_runtime as memory_search_runtime_module
 
 from mongoeco.compat import MONGODB_DIALECT_70
-from mongoeco.core import filtering as filtering_module
+from mongoeco.core import filtering as filtering_module, search as search_module
 from mongoeco.core.operation_context import OperationContext
 from mongoeco.engines._memory_search_runtime import (
     _vector_filter_residual_description,
@@ -148,14 +148,26 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                 await engine.create_search_index("db", "coll", search_definition)
                 await engine.create_search_index("db", "coll", vector_definition)
 
-                near_docs = await execute_search_documents(
-                    engine,
-                    "db",
-                    "coll",
-                    "$search",
-                    {"index": "by_text", "near": {"path": "score", "origin": 8, "pivot": 2}},
-                    downstream_filter_spec={"kind": {"$regex": "^n"}},
-                )
+                distance = search_module.search_near_distance
+                with (
+                    patch.object(
+                        search_module, "search_near_distance", wraps=distance
+                    ) as match,
+                    patch.object(
+                        memory_search_runtime_module, "search_near_distance",
+                        wraps=distance,
+                    ) as rank,
+                ):
+                    near_docs = await execute_search_documents(
+                        engine,
+                        "db",
+                        "coll",
+                        "$search",
+                        {"index": "by_text", "near": {"path": "score", "origin": 8, "pivot": 2}},
+                        downstream_filter_spec={"kind": {"$regex": "^n"}},
+                    )
+                calls = match.call_args_list + rank.call_args_list
+                self.assertEqual(sorted(call.args[0]["_id"] for call in calls), [1, 3])
                 self.assertEqual([doc["_id"] for doc in near_docs], [1])
 
                 compound_docs = await execute_search_documents(
