@@ -1,10 +1,15 @@
 """Read-only traversal of a same-database collection, one breadth level at a time."""
 
 from copy import deepcopy
+from functools import partial
 from typing import TYPE_CHECKING
 
+from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80, MONGODB_DIALECT_90
 from mongoeco.core._filtering_support import query_array_members
 from mongoeco.core.aggregation.expression_values import MISSING
+from mongoeco.core.aggregation.lookup_physical import (
+    build_bounded_equality_candidate_index,
+)
 from mongoeco.core.aggregation.runtime import (
     aggregation_equality_key,
     evaluate_expression,
@@ -17,6 +22,7 @@ from mongoeco.core.bson_scalars import (
     truncate_bson_int64,
 )
 from mongoeco.core.bson_size import bson_document_size, bson_value_size
+from mongoeco.core.bson_values import regex_parts
 from mongoeco.core.error_documents import error_message
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.query_plan import compile_filter
@@ -34,6 +40,7 @@ _REQUIRED = ("from", "as", "connectFromField", "connectToField", "startWith")
 _OPTIONS = frozenset((*_REQUIRED, "depthField", "maxDepth", "restrictSearchWithMatch"))
 _MAX_DEPTH = (1 << 63) - 1
 _MAX_MEMORY_BYTES = 100 * 1024 * 1024
+_INDEX_DIALECTS = (MONGODB_DIALECT_70, MONGODB_DIALECT_80, MONGODB_DIALECT_90)
 
 
 def _validate_graph_path(path, name, modern):
@@ -175,7 +182,18 @@ def _check_memory(size, context):
         raise server_error(message, code=292 if context.dialect.key == "9.0" else 40099)
 
 
-def _matching_documents(foreign, frontier, spec, restriction, context):
+def _graph_candidates(foreign, candidate_index, values, deadline):
+    # A regex frontier can match strings without BSON equality.
+    if candidate_index is not None and not any(
+        regex_parts(value) is not None for value in iter_with_deadline(values, deadline)
+    ):
+        indices = candidate_index.candidate_indices(values)
+        if indices is not None:
+            return (foreign[index] for index in indices)
+    return foreign
+
+
+def _matching_documents(select_candidates, frontier, spec, restriction, context):
     # Query membership expands terminal arrays and applies regexes. In this
     # stage a missing connectToField must not match an explicit null frontier.
     field = spec["connectToField"]
@@ -184,7 +202,8 @@ def _matching_documents(foreign, frontier, spec, restriction, context):
     if any(value is None for value in values):
         predicate["$exists"] = True
     plan = compile_filter({field: predicate}, dialect=context.dialect)
-    for candidate in iter_with_deadline(foreign, context.deadline):
+    candidates = select_candidates(values)
+    for candidate in iter_with_deadline(candidates, context.deadline):
         if QueryEngine.match_plan(
             candidate, plan, dialect=context.dialect, collation=context.collation
         ) and QueryEngine.match_plan(
@@ -197,7 +216,7 @@ def _matching_documents(foreign, frontier, spec, restriction, context):
             yield candidate
 
 
-def _walk(start, foreign, spec, restriction, context):
+def _walk(start, select_candidates, spec, restriction, context):
     visited = set()
     matches = []
     output_identities = (
@@ -216,7 +235,7 @@ def _walk(start, foreign, spec, restriction, context):
         next_frontier = {}
         next_size = 0
         for candidate in _matching_documents(
-            foreign, frontier, spec, restriction, context
+            select_candidates, frontier, spec, restriction, context
         ):
             if "_id" not in candidate:
                 message = "Documents traversed by $graphLookup must contain an _id"
@@ -265,6 +284,21 @@ def graph_lookup_results(documents, spec, context: "AggregationStageContext"):
         spec, dialect=context.dialect, variables=context.variables
     )
     foreign = context.collection_resolver(spec["from"]) or ()
+    candidate_index = None
+    if context.collation is None and any(
+        context.dialect is dialect for dialect in _INDEX_DIALECTS
+    ):
+        candidate_index = build_bounded_equality_candidate_index(
+            foreign,
+            spec["connectToField"],
+            document_getter=lambda document: document,
+            dialect=context.dialect,
+            max_associations=context.lookup_hash_max_associations,
+            deadline=context.deadline,
+        )
+    select_candidates = partial(
+        _graph_candidates, foreign, candidate_index, deadline=context.deadline
+    )
     for document in iter_with_deadline(documents, context.deadline):
         start = evaluate_expression(
             document,
@@ -273,4 +307,7 @@ def graph_lookup_results(documents, spec, context: "AggregationStageContext"):
             dialect=context.dialect,
             collation=context.collation,
         )
-        yield document, _walk(start, foreign, spec, restriction, context)
+        yield (
+            document,
+            _walk(start, select_candidates, spec, restriction, context),
+        )

@@ -28,6 +28,7 @@ usa Semantic Versioning.
 
 ### Performance
 
+- Reuse a bounded BSON equality index for eligible `$graphLookup` frontiers.
 - Reuse the computed distance for matching and ranking in Memory `near` queries.
   The engine benchmark's high-match workload used 49% less median CPU per query.
   See the [measurement and controls](docs/index-search-validation.md#b2--reuse-the-distance-in-memory-near-ranking).

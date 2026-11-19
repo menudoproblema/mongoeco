@@ -1555,7 +1555,10 @@ no forma parte del contrato. El recorrido local aplica un presupuesto de
 100 MiB estimados por documento de entrada y el plazo de la operación.
 Al agotar el presupuesto devuelve 40099 en 7.0/8.0 y 292 en 9.0, incluso
 cuando se solicita `allowDiskUse`.
-La carga de la colección destino usa el mecanismo compartido de agregación.
+La carga de la colección destino usa el mecanismo compartido de agregación. Un índice
+auxiliar acotado por el presupuesto de materialización del motor puede reducir
+los candidatos por nivel. Los niveles con regex y los recorridos con collation
+no simple se resuelven por escaneo.
 Vistas, colecciones distribuidas y volcado a disco durante el recorrido quedan
 fuera del subset local.
 

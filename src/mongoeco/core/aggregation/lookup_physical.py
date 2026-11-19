@@ -130,12 +130,29 @@ def build_bounded_lookup_hash_plan[T](  # noqa: PLR0913
     deadline: float | None = None,
 ) -> BoundedLookupHashPlan[T] | None:
     """Build a hash candidate plan or return ``None`` for the nested-loop path."""
-    if (
-        max_associations is None
-        or max_associations <= 0
-        or collation is not None
-        or not _supports_hash_semantics(dialect)
-    ):
+    if collation is not None or not _supports_hash_semantics(dialect):
+        return None
+    return build_bounded_equality_candidate_index(
+        foreign,
+        foreign_field,
+        document_getter=document_getter,
+        dialect=dialect,
+        max_associations=max_associations,
+        deadline=deadline,
+    )
+
+
+def build_bounded_equality_candidate_index[T](  # noqa: PLR0913
+    foreign: Sequence[T],
+    foreign_field: str,
+    *,
+    document_getter: Callable[[T], Document],
+    dialect: MongoDialect,
+    max_associations: int | None,
+    deadline: float | None = None,
+) -> BoundedLookupHashPlan[T] | None:
+    """Index BSON equality candidates for a caller that has checked its policy."""
+    if max_associations is None or max_associations <= 0:
         return None
 
     buckets: dict[Hashable, list[int]] = {}
