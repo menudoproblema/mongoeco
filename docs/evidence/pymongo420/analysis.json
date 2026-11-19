@@ -1,0 +1,2268 @@
+{
+  "status": "analysis only; not acceptance of the proposed implementation",
+  "source_commit": "429d90648943533b057c7c09cad4cb974295aa9b",
+  "wheel_sha256": "45340e8e9ee53f86ea3b1ffdf26ae295ee8e701dbbaae4cc227080097feaf372",
+  "upstream_changelog": "https://github.com/mongodb/mongo-python-driver/blob/4.20.0/doc/changelog.rst",
+  "observations": {
+    "summary.json": {
+      "candidate_commit": "429d90648943533b057c7c09cad4cb974295aa9b",
+      "project_version": "5.0.0",
+      "python": "3.14.5",
+      "tested_driver_versions": [
+        "4.19.0",
+        "4.20.0"
+      ],
+      "profile_probes_per_driver": 54,
+      "profile_probe_classification_deltas": 0,
+      "focused_tests_per_driver": 194,
+      "subtests_per_driver": 16,
+      "bson_uuid_combinations_per_decoder": 50,
+      "bson420_c_pure_match": true,
+      "targeted_holes": [
+        "4.20 profile unavailable; strict auto rejects, flexible falls back to 4.19",
+        "Shared local UUID codec skips invalid lengths; direct find/aggregate differ from driver and custom document/find-modify paths",
+        "ObjectId validity inherits SDK version: malformed 24-character whitespace string accepted with 4.19, rejected with 4.20"
+      ],
+      "handshake_and_pool": {
+        "pymongo": "4.20.0",
+        "sync": "passed",
+        "async": "passed",
+        "maxPoolSize": 0,
+        "minPoolSize": 1,
+        "observed_agents": [
+          "mongoeco-compat-probe"
+        ]
+      },
+      "not_tested": [
+        "physical replica topology restart",
+        "external TLS",
+        "gigabyte allocation guard",
+        "complete test suite",
+        "Python 3.13/3.15 matrix"
+      ],
+      "code_or_dependency_changes": false
+    },
+    "profile-raw.json": {
+      "4.19.0": {
+        "aggregate.aggregate": {
+          "accepted": false,
+          "error": "The aggregate option cannot be specified as a keyword argument.",
+          "error_type": "ConfigurationError",
+          "status": "configuration-rejected"
+        },
+        "aggregate.batch_size": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "aggregate.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "aggregate.duplicate_pipeline": {
+          "accepted": false,
+          "error": "Collection.aggregate() got multiple values for argument 'pipeline'",
+          "error_type": "TypeError",
+          "status": "signature-rejected"
+        },
+        "aggregate.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "aggregate.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "aggregate.max_time_ms": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "aggregate_raw_batches.aggregate": {
+          "accepted": false,
+          "error": "The aggregate option cannot be specified as a keyword argument.",
+          "error_type": "ConfigurationError",
+          "status": "configuration-rejected"
+        },
+        "aggregate_raw_batches.duplicate_pipeline": {
+          "accepted": false,
+          "error": "Collection.aggregate_raw_batches() got multiple values for argument 'pipeline'",
+          "error_type": "TypeError",
+          "status": "signature-rejected"
+        },
+        "bulk_write.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "bulk_write.delete_hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "bulk_write.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "bulk_write.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "bulk_write.replace_sort": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "bulk_write.sort": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "client.private_srv_suffix": {
+          "accepted": true,
+          "error": null,
+          "error_type": null,
+          "status": "completed"
+        },
+        "client.srv_host_validator": {
+          "accepted": true,
+          "error": null,
+          "error_type": null,
+          "status": "completed"
+        },
+        "delete_many.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "delete_many.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "delete_many.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "delete_many.max_time_ms": {
+          "accepted": false,
+          "error": "Collection.delete_many() got an unexpected keyword argument 'max_time_ms'",
+          "error_type": "TypeError",
+          "status": "signature-rejected"
+        },
+        "delete_one.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "delete_one.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "delete_one.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "delete_one.max_time_ms": {
+          "accepted": false,
+          "error": "Collection.delete_one() got an unexpected keyword argument 'max_time_ms'",
+          "error_type": "TypeError",
+          "status": "signature-rejected"
+        },
+        "find_one_and_delete.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_delete.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_delete.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_delete.max_time_ms": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_replace.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_replace.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_replace.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_replace.max_time_ms": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_update.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_update.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_update.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_update.max_time_ms": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "list_search_indexes.aggregate": {
+          "accepted": false,
+          "error": "The aggregate option cannot be specified as a keyword argument.",
+          "error_type": "ConfigurationError",
+          "status": "configuration-rejected"
+        },
+        "list_search_indexes.pipeline": {
+          "accepted": false,
+          "error": "The pipeline option cannot be specified as a keyword argument.",
+          "error_type": "ConfigurationError",
+          "status": "configuration-rejected"
+        },
+        "parse_uri.percent_encoded_hostname": {
+          "accepted": false,
+          "error": "Percent-encoding is only allowed in Unix domain socket paths and IPv6 zone indexes, not in hostnames: %6cocalhost",
+          "error_type": "InvalidURI",
+          "status": "configuration-rejected"
+        },
+        "replace_one.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "replace_one.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "replace_one.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "replace_one.max_time_ms": {
+          "accepted": false,
+          "error": "Collection.replace_one() got an unexpected keyword argument 'max_time_ms'",
+          "error_type": "TypeError",
+          "status": "signature-rejected"
+        },
+        "replace_one.sort": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "update_many.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "update_many.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "update_many.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "update_many.max_time_ms": {
+          "accepted": false,
+          "error": "Collection.update_many() got an unexpected keyword argument 'max_time_ms'",
+          "error_type": "TypeError",
+          "status": "signature-rejected"
+        },
+        "update_one.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "update_one.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "update_one.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "update_one.max_time_ms": {
+          "accepted": false,
+          "error": "Collection.update_one() got an unexpected keyword argument 'max_time_ms'",
+          "error_type": "TypeError",
+          "status": "signature-rejected"
+        },
+        "update_one.sort": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fa65753ee035160a9be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        }
+      },
+      "4.20.0": {
+        "aggregate.aggregate": {
+          "accepted": false,
+          "error": "The aggregate option cannot be specified as a keyword argument.",
+          "error_type": "ConfigurationError",
+          "status": "configuration-rejected"
+        },
+        "aggregate.batch_size": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "aggregate.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "aggregate.duplicate_pipeline": {
+          "accepted": false,
+          "error": "Collection.aggregate() got multiple values for argument 'pipeline'",
+          "error_type": "TypeError",
+          "status": "signature-rejected"
+        },
+        "aggregate.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "aggregate.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "aggregate.max_time_ms": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "aggregate_raw_batches.aggregate": {
+          "accepted": false,
+          "error": "The aggregate option cannot be specified as a keyword argument.",
+          "error_type": "ConfigurationError",
+          "status": "configuration-rejected"
+        },
+        "aggregate_raw_batches.duplicate_pipeline": {
+          "accepted": false,
+          "error": "Collection.aggregate_raw_batches() got multiple values for argument 'pipeline'",
+          "error_type": "TypeError",
+          "status": "signature-rejected"
+        },
+        "bulk_write.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "bulk_write.delete_hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "bulk_write.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "bulk_write.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "bulk_write.replace_sort": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "bulk_write.sort": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "client.private_srv_suffix": {
+          "accepted": true,
+          "error": null,
+          "error_type": null,
+          "status": "completed"
+        },
+        "client.srv_host_validator": {
+          "accepted": true,
+          "error": null,
+          "error_type": null,
+          "status": "completed"
+        },
+        "delete_many.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "delete_many.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "delete_many.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "delete_many.max_time_ms": {
+          "accepted": false,
+          "error": "Collection.delete_many() got an unexpected keyword argument 'max_time_ms'",
+          "error_type": "TypeError",
+          "status": "signature-rejected"
+        },
+        "delete_one.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "delete_one.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "delete_one.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "delete_one.max_time_ms": {
+          "accepted": false,
+          "error": "Collection.delete_one() got an unexpected keyword argument 'max_time_ms'",
+          "error_type": "TypeError",
+          "status": "signature-rejected"
+        },
+        "find_one_and_delete.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_delete.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_delete.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_delete.max_time_ms": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_replace.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_replace.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_replace.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_replace.max_time_ms": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_update.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_update.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_update.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "find_one_and_update.max_time_ms": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "list_search_indexes.aggregate": {
+          "accepted": false,
+          "error": "The aggregate option cannot be specified as a keyword argument.",
+          "error_type": "ConfigurationError",
+          "status": "configuration-rejected"
+        },
+        "list_search_indexes.pipeline": {
+          "accepted": false,
+          "error": "The pipeline option cannot be specified as a keyword argument.",
+          "error_type": "ConfigurationError",
+          "status": "configuration-rejected"
+        },
+        "parse_uri.percent_encoded_hostname": {
+          "accepted": false,
+          "error": "Percent-encoding is only allowed in Unix domain socket paths and IPv6 zone indexes, not in hostnames: %6cocalhost",
+          "error_type": "InvalidURI",
+          "status": "configuration-rejected"
+        },
+        "replace_one.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "replace_one.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "replace_one.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "replace_one.max_time_ms": {
+          "accepted": false,
+          "error": "Collection.replace_one() got an unexpected keyword argument 'max_time_ms'",
+          "error_type": "TypeError",
+          "status": "signature-rejected"
+        },
+        "replace_one.sort": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "update_many.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "update_many.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "update_many.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "update_many.max_time_ms": {
+          "accepted": false,
+          "error": "Collection.update_many() got an unexpected keyword argument 'max_time_ms'",
+          "error_type": "TypeError",
+          "status": "signature-rejected"
+        },
+        "update_one.comment": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "update_one.hint": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "update_one.let": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        },
+        "update_one.max_time_ms": {
+          "accepted": false,
+          "error": "Collection.update_one() got an unexpected keyword argument 'max_time_ms'",
+          "error_type": "TypeError",
+          "status": "signature-rejected"
+        },
+        "update_one.sort": {
+          "accepted": true,
+          "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6afe3fba8ee027e2269efe4d, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+          "error_type": "ServerSelectionTimeoutError",
+          "status": "arguments-accepted"
+        }
+      }
+    },
+    "probe-4.19.0-c.json": {
+      "pymongo": "4.19.0",
+      "mode": "c",
+      "bson_has_c": true,
+      "objectid": {
+        "driver": {
+          "construct": {
+            "type": "ObjectId",
+            "length": 11
+          },
+          "is_valid": true
+        },
+        "mongoeco": {
+          "construct": {
+            "type": "ObjectId",
+            "length": 11
+          },
+          "is_valid": true
+        }
+      },
+      "profiles": {
+        "4.20": {
+          "error": "ValueError",
+          "message": "Unsupported PyMongo profile: 4.20"
+        },
+        "strict-auto-installed": {
+          "profile": "4.19",
+          "resolution_mode": "auto-exact"
+        },
+        "auto-installed": {
+          "profile": "4.19",
+          "resolution_mode": "auto-exact"
+        },
+        "4.19": {
+          "profile": "4.19",
+          "resolution_mode": "explicit-alias"
+        }
+      },
+      "bson_decoding": {
+        "3/0/UNSPECIFIED": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/0/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/0/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/0/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/0/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/2/UNSPECIFIED": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/2/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/2/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/2/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/2/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/15/UNSPECIFIED": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/15/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/15/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/15/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/15/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/16/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 3
+        },
+        "3/16/STANDARD": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 3
+        },
+        "3/16/PYTHON_LEGACY": {
+          "type": "UUID",
+          "value": "00010203-0405-0607-0809-0a0b0c0d0e0f"
+        },
+        "3/16/JAVA_LEGACY": {
+          "type": "UUID",
+          "value": "07060504-0302-0100-0f0e-0d0c0b0a0908"
+        },
+        "3/16/CSHARP_LEGACY": {
+          "type": "UUID",
+          "value": "03020100-0504-0706-0809-0a0b0c0d0e0f"
+        },
+        "3/17/UNSPECIFIED": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/17/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/17/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/17/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "3/17/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/0/UNSPECIFIED": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/0/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/0/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/0/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/0/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/2/UNSPECIFIED": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/2/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/2/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/2/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/2/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/15/UNSPECIFIED": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/15/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/15/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/15/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/15/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/16/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/16/STANDARD": {
+          "type": "UUID",
+          "value": "00010203-0405-0607-0809-0a0b0c0d0e0f"
+        },
+        "4/16/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/16/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/16/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/17/UNSPECIFIED": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/17/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/17/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/17/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        },
+        "4/17/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "invalid length or type code"
+        }
+      },
+      "local_binary_reads": {
+        "MemoryEngine/3/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "MemoryEngine/4/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "MemoryEngine/3/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "MemoryEngine/4/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "MemoryEngine/3/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "MemoryEngine/4/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "SQLiteEngine/3/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "SQLiteEngine/4/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "SQLiteEngine/3/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "SQLiteEngine/4/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "SQLiteEngine/3/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "SQLiteEngine/4/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        }
+      },
+      "pool": {
+        "0": {
+          "error": "ValueError",
+          "message": "minPoolSize must be smaller or equal to maxPoolSize"
+        },
+        "None": {
+          "accepted": true
+        }
+      },
+      "encryption_api": {
+        "TextOpts": true,
+        "StringOpts": true,
+        "PREFIXPREVIEW": true,
+        "text_opts": true,
+        "string_opts": true
+      }
+    },
+    "probe-4.19.0-pure.json": {
+      "pymongo": "4.19.0",
+      "mode": "pure",
+      "bson_has_c": false,
+      "objectid": {
+        "driver": {
+          "construct": {
+            "type": "ObjectId",
+            "length": 11
+          },
+          "is_valid": true
+        },
+        "mongoeco": {
+          "construct": {
+            "type": "ObjectId",
+            "length": 11
+          },
+          "is_valid": true
+        }
+      },
+      "profiles": {
+        "4.20": {
+          "error": "ValueError",
+          "message": "Unsupported PyMongo profile: 4.20"
+        },
+        "strict-auto-installed": {
+          "profile": "4.19",
+          "resolution_mode": "auto-exact"
+        },
+        "auto-installed": {
+          "profile": "4.19",
+          "resolution_mode": "auto-exact"
+        },
+        "4.19": {
+          "profile": "4.19",
+          "resolution_mode": "explicit-alias"
+        }
+      },
+      "bson_decoding": {
+        "3/0/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 3
+        },
+        "3/0/STANDARD": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 3
+        },
+        "3/0/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "bytes is not a 16-char string"
+        },
+        "3/0/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "bytes is not a 16-char string"
+        },
+        "3/0/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "bytes_le is not a 16-char string"
+        },
+        "3/2/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "3/2/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "3/2/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "bytes is not a 16-char string"
+        },
+        "3/2/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "bytes is not a 16-char string"
+        },
+        "3/2/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "bytes_le is not a 16-char string"
+        },
+        "3/15/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 3
+        },
+        "3/15/STANDARD": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 3
+        },
+        "3/15/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "bytes is not a 16-char string"
+        },
+        "3/15/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "bytes is not a 16-char string"
+        },
+        "3/15/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "bytes_le is not a 16-char string"
+        },
+        "3/16/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 3
+        },
+        "3/16/STANDARD": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 3
+        },
+        "3/16/PYTHON_LEGACY": {
+          "type": "UUID",
+          "value": "00010203-0405-0607-0809-0a0b0c0d0e0f"
+        },
+        "3/16/JAVA_LEGACY": {
+          "type": "UUID",
+          "value": "07060504-0302-0100-0f0e-0d0c0b0a0908"
+        },
+        "3/16/CSHARP_LEGACY": {
+          "type": "UUID",
+          "value": "03020100-0504-0706-0809-0a0b0c0d0e0f"
+        },
+        "3/17/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 3
+        },
+        "3/17/STANDARD": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 3
+        },
+        "3/17/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "bytes is not a 16-char string"
+        },
+        "3/17/JAVA_LEGACY": {
+          "type": "UUID",
+          "value": "07060504-0302-0100-0f0e-0d0c0b0a0908"
+        },
+        "3/17/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "bytes_le is not a 16-char string"
+        },
+        "4/0/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 4
+        },
+        "4/0/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "bytes is not a 16-char string"
+        },
+        "4/0/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 4
+        },
+        "4/0/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 4
+        },
+        "4/0/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 4
+        },
+        "4/2/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "4/2/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "bytes is not a 16-char string"
+        },
+        "4/2/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "4/2/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "4/2/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "4/15/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 4
+        },
+        "4/15/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "bytes is not a 16-char string"
+        },
+        "4/15/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 4
+        },
+        "4/15/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 4
+        },
+        "4/15/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 4
+        },
+        "4/16/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/16/STANDARD": {
+          "type": "UUID",
+          "value": "00010203-0405-0607-0809-0a0b0c0d0e0f"
+        },
+        "4/16/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/16/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/16/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/17/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 4
+        },
+        "4/17/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "bytes is not a 16-char string"
+        },
+        "4/17/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 4
+        },
+        "4/17/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 4
+        },
+        "4/17/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 4
+        }
+      },
+      "local_binary_reads": {
+        "MemoryEngine/3/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "MemoryEngine/4/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "MemoryEngine/3/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "MemoryEngine/4/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "MemoryEngine/3/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "MemoryEngine/4/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "SQLiteEngine/3/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "SQLiteEngine/4/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "SQLiteEngine/3/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "SQLiteEngine/4/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "SQLiteEngine/3/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "SQLiteEngine/4/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        }
+      },
+      "pool": {
+        "0": {
+          "error": "ValueError",
+          "message": "minPoolSize must be smaller or equal to maxPoolSize"
+        },
+        "None": {
+          "accepted": true
+        }
+      },
+      "encryption_api": {
+        "TextOpts": true,
+        "StringOpts": true,
+        "PREFIXPREVIEW": true,
+        "text_opts": true,
+        "string_opts": true
+      }
+    },
+    "probe-4.20.0-c.json": {
+      "pymongo": "4.20.0",
+      "mode": "c",
+      "bson_has_c": true,
+      "objectid": {
+        "driver": {
+          "construct": {
+            "error": "InvalidId",
+            "message": "'0000000000000000000000  ' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string"
+          },
+          "is_valid": false
+        },
+        "mongoeco": {
+          "construct": {
+            "error": "ValueError",
+            "message": "'0000000000000000000000  ' no es un hexadecimal valido"
+          },
+          "is_valid": false
+        }
+      },
+      "profiles": {
+        "4.20": {
+          "error": "ValueError",
+          "message": "Unsupported PyMongo profile: 4.20"
+        },
+        "strict-auto-installed": {
+          "error": "ValueError",
+          "message": "Unsupported installed PyMongo version for strict-auto-installed: 4.20.0"
+        },
+        "auto-installed": {
+          "profile": "4.19",
+          "resolution_mode": "auto-compatible-minor-fallback"
+        },
+        "4.19": {
+          "profile": "4.19",
+          "resolution_mode": "explicit-alias"
+        }
+      },
+      "bson_decoding": {
+        "3/0/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 3
+        },
+        "3/0/STANDARD": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 3
+        },
+        "3/0/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 0-byte payload, expected 16"
+        },
+        "3/0/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 0-byte payload, expected 16"
+        },
+        "3/0/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 0-byte payload, expected 16"
+        },
+        "3/2/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "3/2/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "3/2/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 2-byte payload, expected 16"
+        },
+        "3/2/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 2-byte payload, expected 16"
+        },
+        "3/2/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 2-byte payload, expected 16"
+        },
+        "3/15/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 3
+        },
+        "3/15/STANDARD": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 3
+        },
+        "3/15/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 15-byte payload, expected 16"
+        },
+        "3/15/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 15-byte payload, expected 16"
+        },
+        "3/15/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 15-byte payload, expected 16"
+        },
+        "3/16/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 3
+        },
+        "3/16/STANDARD": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 3
+        },
+        "3/16/PYTHON_LEGACY": {
+          "type": "UUID",
+          "value": "00010203-0405-0607-0809-0a0b0c0d0e0f"
+        },
+        "3/16/JAVA_LEGACY": {
+          "type": "UUID",
+          "value": "07060504-0302-0100-0f0e-0d0c0b0a0908"
+        },
+        "3/16/CSHARP_LEGACY": {
+          "type": "UUID",
+          "value": "03020100-0504-0706-0809-0a0b0c0d0e0f"
+        },
+        "3/17/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 3
+        },
+        "3/17/STANDARD": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 3
+        },
+        "3/17/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 17-byte payload, expected 16"
+        },
+        "3/17/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 17-byte payload, expected 16"
+        },
+        "3/17/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 17-byte payload, expected 16"
+        },
+        "4/0/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 4
+        },
+        "4/0/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 0-byte payload, expected 16"
+        },
+        "4/0/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 4
+        },
+        "4/0/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 4
+        },
+        "4/0/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 4
+        },
+        "4/2/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "4/2/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 2-byte payload, expected 16"
+        },
+        "4/2/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "4/2/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "4/2/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "4/15/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 4
+        },
+        "4/15/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 15-byte payload, expected 16"
+        },
+        "4/15/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 4
+        },
+        "4/15/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 4
+        },
+        "4/15/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 4
+        },
+        "4/16/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/16/STANDARD": {
+          "type": "UUID",
+          "value": "00010203-0405-0607-0809-0a0b0c0d0e0f"
+        },
+        "4/16/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/16/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/16/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/17/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 4
+        },
+        "4/17/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 17-byte payload, expected 16"
+        },
+        "4/17/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 4
+        },
+        "4/17/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 4
+        },
+        "4/17/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 4
+        }
+      },
+      "local_binary_reads": {
+        "MemoryEngine/3/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "MemoryEngine/4/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "MemoryEngine/3/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "MemoryEngine/4/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "MemoryEngine/3/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "MemoryEngine/4/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "SQLiteEngine/3/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "SQLiteEngine/4/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "SQLiteEngine/3/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "SQLiteEngine/4/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "SQLiteEngine/3/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "SQLiteEngine/4/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        }
+      },
+      "pool": {
+        "0": {
+          "accepted": true
+        },
+        "None": {
+          "accepted": true
+        }
+      },
+      "encryption_api": {
+        "TextOpts": false,
+        "StringOpts": true,
+        "PREFIXPREVIEW": false,
+        "text_opts": false,
+        "string_opts": true
+      }
+    },
+    "probe-4.20.0-pure.json": {
+      "pymongo": "4.20.0",
+      "mode": "pure",
+      "bson_has_c": false,
+      "objectid": {
+        "driver": {
+          "construct": {
+            "error": "InvalidId",
+            "message": "'0000000000000000000000  ' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string"
+          },
+          "is_valid": false
+        },
+        "mongoeco": {
+          "construct": {
+            "error": "ValueError",
+            "message": "'0000000000000000000000  ' no es un hexadecimal valido"
+          },
+          "is_valid": false
+        }
+      },
+      "profiles": {
+        "4.20": {
+          "error": "ValueError",
+          "message": "Unsupported PyMongo profile: 4.20"
+        },
+        "strict-auto-installed": {
+          "error": "ValueError",
+          "message": "Unsupported installed PyMongo version for strict-auto-installed: 4.20.0"
+        },
+        "auto-installed": {
+          "profile": "4.19",
+          "resolution_mode": "auto-compatible-minor-fallback"
+        },
+        "4.19": {
+          "profile": "4.19",
+          "resolution_mode": "explicit-alias"
+        }
+      },
+      "bson_decoding": {
+        "3/0/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 3
+        },
+        "3/0/STANDARD": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 3
+        },
+        "3/0/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 0-byte payload, expected 16"
+        },
+        "3/0/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 0-byte payload, expected 16"
+        },
+        "3/0/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 0-byte payload, expected 16"
+        },
+        "3/2/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "3/2/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "3/2/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 2-byte payload, expected 16"
+        },
+        "3/2/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 2-byte payload, expected 16"
+        },
+        "3/2/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 2-byte payload, expected 16"
+        },
+        "3/15/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 3
+        },
+        "3/15/STANDARD": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 3
+        },
+        "3/15/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 15-byte payload, expected 16"
+        },
+        "3/15/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 15-byte payload, expected 16"
+        },
+        "3/15/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 15-byte payload, expected 16"
+        },
+        "3/16/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 3
+        },
+        "3/16/STANDARD": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 3
+        },
+        "3/16/PYTHON_LEGACY": {
+          "type": "UUID",
+          "value": "00010203-0405-0607-0809-0a0b0c0d0e0f"
+        },
+        "3/16/JAVA_LEGACY": {
+          "type": "UUID",
+          "value": "07060504-0302-0100-0f0e-0d0c0b0a0908"
+        },
+        "3/16/CSHARP_LEGACY": {
+          "type": "UUID",
+          "value": "03020100-0504-0706-0809-0a0b0c0d0e0f"
+        },
+        "3/17/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 3
+        },
+        "3/17/STANDARD": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 3
+        },
+        "3/17/PYTHON_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 17-byte payload, expected 16"
+        },
+        "3/17/JAVA_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 17-byte payload, expected 16"
+        },
+        "3/17/CSHARP_LEGACY": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 17-byte payload, expected 16"
+        },
+        "4/0/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 4
+        },
+        "4/0/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 0-byte payload, expected 16"
+        },
+        "4/0/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 4
+        },
+        "4/0/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 4
+        },
+        "4/0/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 0,
+          "subtype": 4
+        },
+        "4/2/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "4/2/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 2-byte payload, expected 16"
+        },
+        "4/2/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "4/2/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "4/2/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "4/15/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 4
+        },
+        "4/15/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 15-byte payload, expected 16"
+        },
+        "4/15/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 4
+        },
+        "4/15/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 4
+        },
+        "4/15/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 15,
+          "subtype": 4
+        },
+        "4/16/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/16/STANDARD": {
+          "type": "UUID",
+          "value": "00010203-0405-0607-0809-0a0b0c0d0e0f"
+        },
+        "4/16/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/16/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/16/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 16,
+          "subtype": 4
+        },
+        "4/17/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 4
+        },
+        "4/17/STANDARD": {
+          "error": "InvalidBSON",
+          "message": "cannot decode a uuid from a 17-byte payload, expected 16"
+        },
+        "4/17/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 4
+        },
+        "4/17/JAVA_LEGACY": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 4
+        },
+        "4/17/CSHARP_LEGACY": {
+          "type": "Binary",
+          "length": 17,
+          "subtype": 4
+        }
+      },
+      "local_binary_reads": {
+        "MemoryEngine/3/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "MemoryEngine/4/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "MemoryEngine/3/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "MemoryEngine/4/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "MemoryEngine/3/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "MemoryEngine/4/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "SQLiteEngine/3/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "SQLiteEngine/4/UNSPECIFIED": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "SQLiteEngine/3/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "SQLiteEngine/4/STANDARD": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        },
+        "SQLiteEngine/3/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 3
+        },
+        "SQLiteEngine/4/PYTHON_LEGACY": {
+          "type": "Binary",
+          "length": 2,
+          "subtype": 4
+        }
+      },
+      "pool": {
+        "0": {
+          "accepted": true
+        },
+        "None": {
+          "accepted": true
+        }
+      },
+      "encryption_api": {
+        "TextOpts": false,
+        "StringOpts": true,
+        "PREFIXPREVIEW": false,
+        "text_opts": false,
+        "string_opts": true
+      }
+    },
+    "wire-4.19.0.json": {
+      "pymongo": "4.19.0",
+      "engines": {
+        "MemoryEngine": {
+          "direct_find": {
+            "type": "Binary",
+            "subtype": 4,
+            "length": 2
+          },
+          "direct_aggregate": {
+            "type": "Binary",
+            "subtype": 4,
+            "length": 2
+          },
+          "custom_document_find": {
+            "error": "InvalidBSON",
+            "message": "invalid length or type code"
+          },
+          "find_modify": {
+            "error": "InvalidBSON",
+            "message": "invalid length or type code"
+          },
+          "wire_unspecified": {
+            "error": "InvalidBSON",
+            "message": "invalid length or type code"
+          },
+          "wire_standard": {
+            "error": "InvalidBSON",
+            "message": "invalid length or type code"
+          }
+        },
+        "SQLiteEngine": {
+          "direct_find": {
+            "type": "Binary",
+            "subtype": 4,
+            "length": 2
+          },
+          "direct_aggregate": {
+            "type": "Binary",
+            "subtype": 4,
+            "length": 2
+          },
+          "custom_document_find": {
+            "error": "InvalidBSON",
+            "message": "invalid length or type code"
+          },
+          "find_modify": {
+            "error": "InvalidBSON",
+            "message": "invalid length or type code"
+          },
+          "wire_unspecified": {
+            "error": "InvalidBSON",
+            "message": "invalid length or type code"
+          },
+          "wire_standard": {
+            "error": "InvalidBSON",
+            "message": "invalid length or type code"
+          }
+        }
+      },
+      "agents": []
+    },
+    "wire-4.20.0.json": {
+      "pymongo": "4.20.0",
+      "engines": {
+        "MemoryEngine": {
+          "direct_find": {
+            "type": "Binary",
+            "subtype": 4,
+            "length": 2
+          },
+          "direct_aggregate": {
+            "type": "Binary",
+            "subtype": 4,
+            "length": 2
+          },
+          "custom_document_find": {
+            "error": "InvalidBSON",
+            "message": "cannot decode a uuid from a 2-byte payload, expected 16"
+          },
+          "find_modify": {
+            "error": "InvalidBSON",
+            "message": "cannot decode a uuid from a 2-byte payload, expected 16"
+          },
+          "wire_unspecified": {
+            "type": "Binary",
+            "subtype": 4,
+            "length": 2
+          },
+          "wire_standard": {
+            "error": "InvalidBSON",
+            "message": "cannot decode a uuid from a 2-byte payload, expected 16"
+          }
+        },
+        "SQLiteEngine": {
+          "direct_find": {
+            "type": "Binary",
+            "subtype": 4,
+            "length": 2
+          },
+          "direct_aggregate": {
+            "type": "Binary",
+            "subtype": 4,
+            "length": 2
+          },
+          "custom_document_find": {
+            "error": "InvalidBSON",
+            "message": "cannot decode a uuid from a 2-byte payload, expected 16"
+          },
+          "find_modify": {
+            "error": "InvalidBSON",
+            "message": "cannot decode a uuid from a 2-byte payload, expected 16"
+          },
+          "wire_unspecified": {
+            "type": "Binary",
+            "subtype": 4,
+            "length": 2
+          },
+          "wire_standard": {
+            "error": "InvalidBSON",
+            "message": "cannot decode a uuid from a 2-byte payload, expected 16"
+          }
+        }
+      },
+      "agents": []
+    },
+    "handshake-pool-420.json": {
+      "pymongo": "4.20.0",
+      "sync": "passed",
+      "async": "passed",
+      "maxPoolSize": 0,
+      "minPoolSize": 1,
+      "observed_agents": [
+        "mongoeco-compat-probe"
+      ]
+    }
+  },
+  "focused_test_logs": {
+    "4.19.0": ".................................................................... [ 35%]\n........................................................................ [ 72%]\n......................................................       [100%]\n194 passed, 16 subtests passed in 0.94s\n",
+    "4.20.0": ".................................................................... [ 35%]\n........................................................................ [ 72%]\n......................................................       [100%]\n194 passed, 16 subtests passed in 0.91s\n"
+  },
+  "installed_dependencies": {
+    "4.19.0": {
+      "Pygments": "2.20.0",
+      "attrs": "26.1.0",
+      "cxp": "5.0.0",
+      "dnspython": "2.8.0",
+      "hypothesis": "6.165.9",
+      "iniconfig": "2.3.0",
+      "jsonschema": "4.26.0",
+      "jsonschema-specifications": "2025.9.1",
+      "mongoeco": "5.0.0",
+      "msgspec": "0.21.1",
+      "numkong": "7.8.0",
+      "numpy": "2.5.2",
+      "packaging": "26.3",
+      "pip": "26.3",
+      "pluggy": "1.6.0",
+      "pymongo": "4.19.0",
+      "pytest": "9.1.1",
+      "pytest-asyncio": "1.4.0",
+      "pyuca": "1.2",
+      "referencing": "0.37.0",
+      "rfc8785": "0.1.4",
+      "rpds-py": "2026.6.3",
+      "shapely": "2.2.0",
+      "sortedcontainers": "2.4.0",
+      "tqdm": "4.70.0",
+      "usearch": "2.26.4"
+    },
+    "4.20.0": {
+      "Pygments": "2.20.0",
+      "attrs": "26.1.0",
+      "cxp": "5.0.0",
+      "dnspython": "2.8.0",
+      "hypothesis": "6.165.9",
+      "iniconfig": "2.3.0",
+      "jsonschema": "4.26.0",
+      "jsonschema-specifications": "2025.9.1",
+      "mongoeco": "5.0.0",
+      "msgspec": "0.21.1",
+      "numkong": "7.8.0",
+      "numpy": "2.5.2",
+      "packaging": "26.3",
+      "pip": "26.3",
+      "pluggy": "1.6.0",
+      "pymongo": "4.20.0",
+      "pytest": "9.1.1",
+      "pytest-asyncio": "1.4.0",
+      "pyuca": "1.2",
+      "referencing": "0.37.0",
+      "rfc8785": "0.1.4",
+      "rpds-py": "2026.6.3",
+      "shapely": "2.2.0",
+      "sortedcontainers": "2.4.0",
+      "tqdm": "4.70.0",
+      "usearch": "2.26.4"
+    }
+  }
+}

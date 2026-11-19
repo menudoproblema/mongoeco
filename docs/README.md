@@ -44,6 +44,8 @@ Python/PyMongo versions.
 - [Pytest acceptance](pytest-review.md): installed-wheel matrix, parallel tests
   and anonymous consumer canary.
 - [Python support policy](python-support.md) and [PyMongo 4.19](pymongo419.md).
+- [PyMongo 4.20 integration plan](plan-pymongo420.md): proposed SDK profile,
+  shared BSON corrections and bounded integration/acceptance gates.
 
 ## Store and search locally
 
