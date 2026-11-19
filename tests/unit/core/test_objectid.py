@@ -40,6 +40,14 @@ def _assert_structural_fallback_contract(test_case, fallback_object_id):
 
 
 class TestObjectId(unittest.TestCase):
+    def test_whitespace_cannot_create_a_short_object_id(self):
+        for whitespace in ("  ", "\t\t", "\n\n", "\r\n"):
+            with self.subTest(whitespace=repr(whitespace)):
+                text = "00" * 11 + whitespace
+                self.assertFalse(ObjectId.is_valid(text))
+                with self.assertRaises(ValueError):
+                    ObjectId(text)
+
     def test_accepts_structural_object_id_input(self):
         class CompatibleObjectId:
             binary = bytes.fromhex("507f1f77bcf86cd799439011")

@@ -1,0 +1,448 @@
+.F.F.F...FF.F.F...F.F.F.F...F.F.F.F...F...........................   [100%]
+=================================== FAILURES ===================================
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.STANDARD-0-4] _
+
+subtype = 4, length = 0, mode = <UuidRepresentation.STANDARD: 'standard'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.STANDARD-2-4] _
+
+subtype = 4, length = 2, mode = <UuidRepresentation.STANDARD: 'standard'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.STANDARD-15-4] _
+
+subtype = 4, length = 15, mode = <UuidRepresentation.STANDARD: 'standard'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.STANDARD-17-4] _
+
+subtype = 4, length = 17, mode = <UuidRepresentation.STANDARD: 'standard'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.PYTHON_LEGACY-0-3] _
+
+subtype = 3, length = 0
+mode = <UuidRepresentation.PYTHON_LEGACY: 'pythonLegacy'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.PYTHON_LEGACY-2-3] _
+
+subtype = 3, length = 2
+mode = <UuidRepresentation.PYTHON_LEGACY: 'pythonLegacy'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.PYTHON_LEGACY-15-3] _
+
+subtype = 3, length = 15
+mode = <UuidRepresentation.PYTHON_LEGACY: 'pythonLegacy'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.PYTHON_LEGACY-17-3] _
+
+subtype = 3, length = 17
+mode = <UuidRepresentation.PYTHON_LEGACY: 'pythonLegacy'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.JAVA_LEGACY-0-3] _
+
+subtype = 3, length = 0, mode = <UuidRepresentation.JAVA_LEGACY: 'javaLegacy'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.JAVA_LEGACY-2-3] _
+
+subtype = 3, length = 2, mode = <UuidRepresentation.JAVA_LEGACY: 'javaLegacy'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.JAVA_LEGACY-15-3] _
+
+subtype = 3, length = 15, mode = <UuidRepresentation.JAVA_LEGACY: 'javaLegacy'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.JAVA_LEGACY-17-3] _
+
+subtype = 3, length = 17, mode = <UuidRepresentation.JAVA_LEGACY: 'javaLegacy'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.CSHARP_LEGACY-0-3] _
+
+subtype = 3, length = 0
+mode = <UuidRepresentation.CSHARP_LEGACY: 'csharpLegacy'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.CSHARP_LEGACY-2-3] _
+
+subtype = 3, length = 2
+mode = <UuidRepresentation.CSHARP_LEGACY: 'csharpLegacy'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.CSHARP_LEGACY-15-3] _
+
+subtype = 3, length = 15
+mode = <UuidRepresentation.CSHARP_LEGACY: 'csharpLegacy'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.CSHARP_LEGACY-17-3] _
+
+subtype = 3, length = 17
+mode = <UuidRepresentation.CSHARP_LEGACY: 'csharpLegacy'>
+
+    @pytest.mark.parametrize("subtype", [3, 4])
+    @pytest.mark.parametrize("length", [0, 2, 15, 16, 17])
+    @pytest.mark.parametrize("mode", list(UuidRepresentation))
+    def test_requested_uuid_conversion_enforces_the_payload_size(subtype, length, mode):
+        payload = bytes(range(length))
+        value = Binary(payload, subtype)
+        converts = (subtype, mode) in {
+            (4, UuidRepresentation.STANDARD),
+            (3, UuidRepresentation.PYTHON_LEGACY),
+            (3, UuidRepresentation.JAVA_LEGACY),
+            (3, UuidRepresentation.CSHARP_LEGACY),
+        }
+        options = CodecOptions(uuid_representation=mode)
+        if converts and length != 16:
+>           with pytest.raises(Exception) as error:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE Exception
+
+tests/unit/core/test_uuid_conversion_contract.py:25: Failed
+_ TestObjectId.test_whitespace_cannot_create_a_short_object_id (whitespace="'  '") _
+
+self = <tests.unit.core.test_objectid.TestObjectId testMethod=test_whitespace_cannot_create_a_short_object_id>
+
+    def test_whitespace_cannot_create_a_short_object_id(self):
+        for whitespace in ("  ", "\t\t", "\n\n", "\r\n"):
+            with self.subTest(whitespace=repr(whitespace)):
+                text = "00" * 11 + whitespace
+>               self.assertFalse(ObjectId.is_valid(text))
+E               AssertionError: True is not false
+
+tests/unit/core/test_objectid.py:47: AssertionError
+_ TestObjectId.test_whitespace_cannot_create_a_short_object_id (whitespace="'\\t\\t'") _
+
+self = <tests.unit.core.test_objectid.TestObjectId testMethod=test_whitespace_cannot_create_a_short_object_id>
+
+    def test_whitespace_cannot_create_a_short_object_id(self):
+        for whitespace in ("  ", "\t\t", "\n\n", "\r\n"):
+            with self.subTest(whitespace=repr(whitespace)):
+                text = "00" * 11 + whitespace
+>               self.assertFalse(ObjectId.is_valid(text))
+E               AssertionError: True is not false
+
+tests/unit/core/test_objectid.py:47: AssertionError
+_ TestObjectId.test_whitespace_cannot_create_a_short_object_id (whitespace="'\\n\\n'") _
+
+self = <tests.unit.core.test_objectid.TestObjectId testMethod=test_whitespace_cannot_create_a_short_object_id>
+
+    def test_whitespace_cannot_create_a_short_object_id(self):
+        for whitespace in ("  ", "\t\t", "\n\n", "\r\n"):
+            with self.subTest(whitespace=repr(whitespace)):
+                text = "00" * 11 + whitespace
+>               self.assertFalse(ObjectId.is_valid(text))
+E               AssertionError: True is not false
+
+tests/unit/core/test_objectid.py:47: AssertionError
+_ TestObjectId.test_whitespace_cannot_create_a_short_object_id (whitespace="'\\r\\n'") _
+
+self = <tests.unit.core.test_objectid.TestObjectId testMethod=test_whitespace_cannot_create_a_short_object_id>
+
+    def test_whitespace_cannot_create_a_short_object_id(self):
+        for whitespace in ("  ", "\t\t", "\n\n", "\r\n"):
+            with self.subTest(whitespace=repr(whitespace)):
+                text = "00" * 11 + whitespace
+>               self.assertFalse(ObjectId.is_valid(text))
+E               AssertionError: True is not false
+
+tests/unit/core/test_objectid.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.STANDARD-0-4]
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.STANDARD-2-4]
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.STANDARD-15-4]
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.STANDARD-17-4]
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.PYTHON_LEGACY-0-3]
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.PYTHON_LEGACY-2-3]
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.PYTHON_LEGACY-15-3]
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.PYTHON_LEGACY-17-3]
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.JAVA_LEGACY-0-3]
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.JAVA_LEGACY-2-3]
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.JAVA_LEGACY-15-3]
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.JAVA_LEGACY-17-3]
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.CSHARP_LEGACY-0-3]
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.CSHARP_LEGACY-2-3]
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.CSHARP_LEGACY-15-3]
+FAILED tests/unit/core/test_uuid_conversion_contract.py::test_requested_uuid_conversion_enforces_the_payload_size[UuidRepresentation.CSHARP_LEGACY-17-3]
+SUBFAILED(whitespace="'  '") tests/unit/core/test_objectid.py::TestObjectId::test_whitespace_cannot_create_a_short_object_id
+SUBFAILED(whitespace="'\\t\\t'") tests/unit/core/test_objectid.py::TestObjectId::test_whitespace_cannot_create_a_short_object_id
+SUBFAILED(whitespace="'\\n\\n'") tests/unit/core/test_objectid.py::TestObjectId::test_whitespace_cannot_create_a_short_object_id
+SUBFAILED(whitespace="'\\r\\n'") tests/unit/core/test_objectid.py::TestObjectId::test_whitespace_cannot_create_a_short_object_id
+20 failed, 50 passed in 1.20s

@@ -1,7 +1,8 @@
 # Plan de integración de PyMongo 4.20
 
-Estado: **propuesta pendiente de implementación**. Fecha: 19 de noviembre de
-2026. Preparar este plan no autoriza publicación, tags ni cambios en consumidores.
+Estado: **implementación autorizada y en curso** por el encargo del usuario.
+Fecha: 19 de noviembre de 2026. Publicación, tags y cambios en consumidores
+siguen fuera de esta implementación.
 Owner: compatibilidad SDK y fronteras BSON de Mongoeco.
 
 Base inspeccionada: Mongoeco 5.0.0,
@@ -291,3 +292,13 @@ plan, un runner por versión o una capa adicional de aprobación.
 La entrega se considera completa sólo al cerrar P07. Los límites explícitos
 —TLS externo, failover físico específico del monitor, cifrado y buffers gigantes—
 no se presentan como comprobados ni se convierten en obligaciones implícitas.
+
+### Registro inicial de implementación
+
+P00 comprobado en `feat/pymongo-4.20`, base productiva 429d9064 y commit
+documental 2e7508ff. El archivo ajeno benchmarks/execution.json sigue intacto.
+P01 en curso: el foco inicial reproduce 16 combinaciones UUID inválidas
+aceptadas indebidamente y cuatro variantes de blancos en ObjectId con SDK
+4.19.0. Son testigos rojos deliberados de la base; falta completar el corpus
+nativo antes de aceptar P01. Registro del foco: p01-base-regressions.log en
+el directorio de evidencia de este incremento. No se han ejecutado globales.
