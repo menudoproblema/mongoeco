@@ -184,9 +184,49 @@ def uuid_filter_identity(collection):
     return output
 
 
+def uuid_irregular_payload_reads(collection):
+    """Decode requested UUIDs while observing physical writes independently."""
+    class Document(dict):
+        pass
+
+    output = {}
+    for subtype in (3, 4):
+        for length in (0, 2, 15, 16, 17):
+            for mode in MODES[1:]:
+                selected = _selected(collection, mode)
+                custom = _options(
+                    collection, representation=mode, document_class=Document
+                )
+                database = collection.database.with_options(
+                    codec_options=selected.codec_options
+                )
+                operations = {
+                    "find": selected.find,
+                    "find-one": selected.find_one,
+                    "aggregate": lambda: selected.aggregate([]),
+                    "document-class": custom.find_one,
+                    "command": lambda: database.command(
+                        {"find": collection.name}
+                    )["cursor"]["firstBatch"],
+                    "find-modify": lambda: selected.find_one_and_update(
+                        {"_id": 0}, {"$set": {"updated": True}},
+                        return_document=True,
+                    ),
+                }
+                for route, operation in operations.items():
+                    collection.drop()
+                    value = Binary(bytes(range(length)), subtype)
+                    collection.insert_one({"_id": 0, "u": value, "nested": [value]})
+                    output[f"{subtype}/{length}/{mode}/{route}"] = _observe(
+                        collection, operation, cursor=route in {"find", "aggregate"}
+                    )
+    return output
+
+
 SEMANTIC_BSON_UUID_POLICY_CASES = (
     ("semantic_uuid_request_owners", uuid_request_owners),
     ("semantic_uuid_write_read_matrix", uuid_write_read_matrix),
     ("semantic_uuid_filter_identity", uuid_filter_identity),
     ("semantic_uuid_distinct_presence", uuid_distinct_presence),
+    ("semantic_uuid_irregular_payload_reads", uuid_irregular_payload_reads),
 )

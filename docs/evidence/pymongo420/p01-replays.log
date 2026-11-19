@@ -1,0 +1,2716 @@
+............FFFFFFFFFFFF                                                 [100%]
+=================================== FAILURES ===================================
+_ test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-sync-MemoryEngine-7.0] _
+
+engine_factory = <class 'mongoeco.engines.memory.MemoryEngine'>, dialect = '7.0'
+corpus = 'bson_uuid_policy', name = 'semantic_uuid_irregular_payload_reads'
+action = <function uuid_irregular_payload_reads at 0x128c07060>
+surface = 'wire-sync'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action", "surface"],
+        [
+            (corpus, name, action, surface)
+            for corpus, spec in SEMANTIC_CORPORA.items()
+            for name, action in spec.cases
+            for surface in spec.surfaces
+        ],
+    )
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        if corpus == "pcre2_regex" and REGEX_BACKEND != "pcre2":
+            pytest.skip("explicit optional PCRE2 backend profile required")
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+    
+        def check(actual):
+            _assert_native_observation(actual, expected, corpus=corpus, name=name)
+    
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+                check(action(collection))
+            return
+    
+        async def async_action(client):
+            collection = client.semantic_group.records
+            await collection.insert_many(seed)
+            result = await asyncio.to_thread(
+                action, _AsyncView(collection, asyncio.get_running_loop(), client)
+            )
+            check(result)
+    
+        async def exercise():
+            if surface == "async":
+                async with AsyncMongoClient(
+                    engine_factory(), mongodb_dialect=dialect
+                ) as client:
+                    await async_action(client)
+            else:
+                async with AsyncMongoEcoProxyServer(
+                    engine=engine_factory(), mongodb_dialect=dialect
+                ) as proxy:
+                    uri = f"mongodb://{proxy.address.host}:{proxy.address.port}"
+                    if surface == "wire-sync":
+    
+                        def run():
+                            with pymongo.MongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                collection = client.semantic_group.records
+                                collection.insert_many(seed)
+                                check(action(collection))
+    
+                        await asyncio.to_thread(run)
+                    else:
+                        # Older SDKs can perform blocking socket reads in async bulk
+                        # writes. Keep their loop separate from the server's loop.
+                        async def run_client():
+                            async with pymongo.AsyncMongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                await async_action(client)
+    
+                        await asyncio.to_thread(asyncio.run, run_client())
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_semantic_group_regressions.py:441: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_semantic_group_regressions.py:415: in exercise
+    async with AsyncMongoEcoProxyServer(
+src/mongoeco/wire/proxy.py:110: in __aenter__
+    await self.start()
+src/mongoeco/wire/proxy.py:131: in start
+    self._server = await asyncio.start_server(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/streams.py:84: in start_server
+    return await loop.create_server(factory, host, port, **kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+protocol_factory = <function start_server.<locals>.factory at 0x12cede820>
+host = '127.0.0.1', port = 0, family = <AddressFamily.AF_UNSPEC: 0>
+flags = <AddressInfo.AI_PASSIVE: 1>
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=6>, backlog = 100
+ssl = None, reuse_address = True, reuse_port = None, keep_alive = None
+ssl_handshake_timeout = None, ssl_shutdown_timeout = None, start_serving = False
+
+    async def create_server(
+            self, protocol_factory, host=None, port=None,
+            *,
+            family=socket.AF_UNSPEC,
+            flags=socket.AI_PASSIVE,
+            sock=None,
+            backlog=100,
+            ssl=None,
+            reuse_address=None,
+            reuse_port=None,
+            keep_alive=None,
+            ssl_handshake_timeout=None,
+            ssl_shutdown_timeout=None,
+            start_serving=True):
+        """Create a TCP server.
+    
+        The host parameter can be a string, in that case the TCP server is
+        bound to host and port.
+    
+        The host parameter can also be a sequence of strings and in that case
+        the TCP server is bound to all hosts of the sequence. If a host
+        appears multiple times (possibly indirectly e.g. when hostnames
+        resolve to the same IP address), the server is only bound once to that
+        host.
+    
+        Return a Server object which can be used to stop the service.
+    
+        This method is a coroutine.
+        """
+        if isinstance(ssl, bool):
+            raise TypeError('ssl argument must be an SSLContext or None')
+    
+        if ssl_handshake_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_handshake_timeout is only meaningful with ssl')
+    
+        if ssl_shutdown_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_shutdown_timeout is only meaningful with ssl')
+    
+        if sock is not None:
+            _check_ssl_socket(sock)
+    
+        if host is not None or port is not None:
+            if sock is not None:
+                raise ValueError(
+                    'host/port and sock can not be specified at the same time')
+    
+            if reuse_address is None:
+                reuse_address = os.name == "posix" and sys.platform != "cygwin"
+            sockets = []
+            if host == '':
+                hosts = [None]
+            elif (isinstance(host, str) or
+                  not isinstance(host, collections.abc.Iterable)):
+                hosts = [host]
+            else:
+                hosts = host
+    
+            fs = [self._create_server_getaddrinfo(host, port, family=family,
+                                                  flags=flags)
+                  for host in hosts]
+            infos = await tasks.gather(*fs)
+            infos = set(itertools.chain.from_iterable(infos))
+    
+            completed = False
+            try:
+                for res in infos:
+                    af, socktype, proto, canonname, sa = res
+                    try:
+                        sock = socket.socket(af, socktype, proto)
+                    except socket.error:
+                        # Assume it's a bad family/type/protocol combination.
+                        if self._debug:
+                            logger.warning('create_server() failed to create '
+                                           'socket.socket(%r, %r, %r)',
+                                           af, socktype, proto, exc_info=True)
+                        continue
+                    sockets.append(sock)
+                    if reuse_address:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+                    # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+                    # on other address families than AF_INET/AF_INET6.
+                    if reuse_port and af in (socket.AF_INET, socket.AF_INET6):
+                        _set_reuseport(sock)
+                    if keep_alive:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
+                    # Disable IPv4/IPv6 dual stack support (enabled by
+                    # default on Linux) which makes a single socket
+                    # listen on both address families.
+                    if (_HAS_IPv6 and
+                            af == socket.AF_INET6 and
+                            hasattr(socket, 'IPPROTO_IPV6')):
+                        sock.setsockopt(socket.IPPROTO_IPV6,
+                                        socket.IPV6_V6ONLY,
+                                        True)
+                    try:
+                        sock.bind(sa)
+                    except OSError as err:
+                        msg = ('error while attempting '
+                               'to bind on address %r: %s'
+                               % (sa, str(err).lower()))
+                        if err.errno == errno.EADDRNOTAVAIL:
+                            # Assume the family is not enabled (bpo-30945)
+                            sockets.pop()
+                            sock.close()
+                            if self._debug:
+                                logger.warning(msg)
+                            continue
+>                       raise OSError(err.errno, msg) from None
+E                       PermissionError: [Errno 1] error while attempting to bind on address ('127.0.0.1', 0): [errno 1] operation not permitted
+
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:1638: PermissionError
+_ test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-sync-MemoryEngine-8.0] _
+
+engine_factory = <class 'mongoeco.engines.memory.MemoryEngine'>, dialect = '8.0'
+corpus = 'bson_uuid_policy', name = 'semantic_uuid_irregular_payload_reads'
+action = <function uuid_irregular_payload_reads at 0x128c07060>
+surface = 'wire-sync'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action", "surface"],
+        [
+            (corpus, name, action, surface)
+            for corpus, spec in SEMANTIC_CORPORA.items()
+            for name, action in spec.cases
+            for surface in spec.surfaces
+        ],
+    )
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        if corpus == "pcre2_regex" and REGEX_BACKEND != "pcre2":
+            pytest.skip("explicit optional PCRE2 backend profile required")
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+    
+        def check(actual):
+            _assert_native_observation(actual, expected, corpus=corpus, name=name)
+    
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+                check(action(collection))
+            return
+    
+        async def async_action(client):
+            collection = client.semantic_group.records
+            await collection.insert_many(seed)
+            result = await asyncio.to_thread(
+                action, _AsyncView(collection, asyncio.get_running_loop(), client)
+            )
+            check(result)
+    
+        async def exercise():
+            if surface == "async":
+                async with AsyncMongoClient(
+                    engine_factory(), mongodb_dialect=dialect
+                ) as client:
+                    await async_action(client)
+            else:
+                async with AsyncMongoEcoProxyServer(
+                    engine=engine_factory(), mongodb_dialect=dialect
+                ) as proxy:
+                    uri = f"mongodb://{proxy.address.host}:{proxy.address.port}"
+                    if surface == "wire-sync":
+    
+                        def run():
+                            with pymongo.MongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                collection = client.semantic_group.records
+                                collection.insert_many(seed)
+                                check(action(collection))
+    
+                        await asyncio.to_thread(run)
+                    else:
+                        # Older SDKs can perform blocking socket reads in async bulk
+                        # writes. Keep their loop separate from the server's loop.
+                        async def run_client():
+                            async with pymongo.AsyncMongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                await async_action(client)
+    
+                        await asyncio.to_thread(asyncio.run, run_client())
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_semantic_group_regressions.py:441: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_semantic_group_regressions.py:415: in exercise
+    async with AsyncMongoEcoProxyServer(
+src/mongoeco/wire/proxy.py:110: in __aenter__
+    await self.start()
+src/mongoeco/wire/proxy.py:131: in start
+    self._server = await asyncio.start_server(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/streams.py:84: in start_server
+    return await loop.create_server(factory, host, port, **kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+protocol_factory = <function start_server.<locals>.factory at 0x12f2478a0>
+host = '127.0.0.1', port = 0, family = <AddressFamily.AF_UNSPEC: 0>
+flags = <AddressInfo.AI_PASSIVE: 1>
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=6>, backlog = 100
+ssl = None, reuse_address = True, reuse_port = None, keep_alive = None
+ssl_handshake_timeout = None, ssl_shutdown_timeout = None, start_serving = False
+
+    async def create_server(
+            self, protocol_factory, host=None, port=None,
+            *,
+            family=socket.AF_UNSPEC,
+            flags=socket.AI_PASSIVE,
+            sock=None,
+            backlog=100,
+            ssl=None,
+            reuse_address=None,
+            reuse_port=None,
+            keep_alive=None,
+            ssl_handshake_timeout=None,
+            ssl_shutdown_timeout=None,
+            start_serving=True):
+        """Create a TCP server.
+    
+        The host parameter can be a string, in that case the TCP server is
+        bound to host and port.
+    
+        The host parameter can also be a sequence of strings and in that case
+        the TCP server is bound to all hosts of the sequence. If a host
+        appears multiple times (possibly indirectly e.g. when hostnames
+        resolve to the same IP address), the server is only bound once to that
+        host.
+    
+        Return a Server object which can be used to stop the service.
+    
+        This method is a coroutine.
+        """
+        if isinstance(ssl, bool):
+            raise TypeError('ssl argument must be an SSLContext or None')
+    
+        if ssl_handshake_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_handshake_timeout is only meaningful with ssl')
+    
+        if ssl_shutdown_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_shutdown_timeout is only meaningful with ssl')
+    
+        if sock is not None:
+            _check_ssl_socket(sock)
+    
+        if host is not None or port is not None:
+            if sock is not None:
+                raise ValueError(
+                    'host/port and sock can not be specified at the same time')
+    
+            if reuse_address is None:
+                reuse_address = os.name == "posix" and sys.platform != "cygwin"
+            sockets = []
+            if host == '':
+                hosts = [None]
+            elif (isinstance(host, str) or
+                  not isinstance(host, collections.abc.Iterable)):
+                hosts = [host]
+            else:
+                hosts = host
+    
+            fs = [self._create_server_getaddrinfo(host, port, family=family,
+                                                  flags=flags)
+                  for host in hosts]
+            infos = await tasks.gather(*fs)
+            infos = set(itertools.chain.from_iterable(infos))
+    
+            completed = False
+            try:
+                for res in infos:
+                    af, socktype, proto, canonname, sa = res
+                    try:
+                        sock = socket.socket(af, socktype, proto)
+                    except socket.error:
+                        # Assume it's a bad family/type/protocol combination.
+                        if self._debug:
+                            logger.warning('create_server() failed to create '
+                                           'socket.socket(%r, %r, %r)',
+                                           af, socktype, proto, exc_info=True)
+                        continue
+                    sockets.append(sock)
+                    if reuse_address:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+                    # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+                    # on other address families than AF_INET/AF_INET6.
+                    if reuse_port and af in (socket.AF_INET, socket.AF_INET6):
+                        _set_reuseport(sock)
+                    if keep_alive:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
+                    # Disable IPv4/IPv6 dual stack support (enabled by
+                    # default on Linux) which makes a single socket
+                    # listen on both address families.
+                    if (_HAS_IPv6 and
+                            af == socket.AF_INET6 and
+                            hasattr(socket, 'IPPROTO_IPV6')):
+                        sock.setsockopt(socket.IPPROTO_IPV6,
+                                        socket.IPV6_V6ONLY,
+                                        True)
+                    try:
+                        sock.bind(sa)
+                    except OSError as err:
+                        msg = ('error while attempting '
+                               'to bind on address %r: %s'
+                               % (sa, str(err).lower()))
+                        if err.errno == errno.EADDRNOTAVAIL:
+                            # Assume the family is not enabled (bpo-30945)
+                            sockets.pop()
+                            sock.close()
+                            if self._debug:
+                                logger.warning(msg)
+                            continue
+>                       raise OSError(err.errno, msg) from None
+E                       PermissionError: [Errno 1] error while attempting to bind on address ('127.0.0.1', 0): [errno 1] operation not permitted
+
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:1638: PermissionError
+_ test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-sync-MemoryEngine-9.0] _
+
+engine_factory = <class 'mongoeco.engines.memory.MemoryEngine'>, dialect = '9.0'
+corpus = 'bson_uuid_policy', name = 'semantic_uuid_irregular_payload_reads'
+action = <function uuid_irregular_payload_reads at 0x128c07060>
+surface = 'wire-sync'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action", "surface"],
+        [
+            (corpus, name, action, surface)
+            for corpus, spec in SEMANTIC_CORPORA.items()
+            for name, action in spec.cases
+            for surface in spec.surfaces
+        ],
+    )
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        if corpus == "pcre2_regex" and REGEX_BACKEND != "pcre2":
+            pytest.skip("explicit optional PCRE2 backend profile required")
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+    
+        def check(actual):
+            _assert_native_observation(actual, expected, corpus=corpus, name=name)
+    
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+                check(action(collection))
+            return
+    
+        async def async_action(client):
+            collection = client.semantic_group.records
+            await collection.insert_many(seed)
+            result = await asyncio.to_thread(
+                action, _AsyncView(collection, asyncio.get_running_loop(), client)
+            )
+            check(result)
+    
+        async def exercise():
+            if surface == "async":
+                async with AsyncMongoClient(
+                    engine_factory(), mongodb_dialect=dialect
+                ) as client:
+                    await async_action(client)
+            else:
+                async with AsyncMongoEcoProxyServer(
+                    engine=engine_factory(), mongodb_dialect=dialect
+                ) as proxy:
+                    uri = f"mongodb://{proxy.address.host}:{proxy.address.port}"
+                    if surface == "wire-sync":
+    
+                        def run():
+                            with pymongo.MongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                collection = client.semantic_group.records
+                                collection.insert_many(seed)
+                                check(action(collection))
+    
+                        await asyncio.to_thread(run)
+                    else:
+                        # Older SDKs can perform blocking socket reads in async bulk
+                        # writes. Keep their loop separate from the server's loop.
+                        async def run_client():
+                            async with pymongo.AsyncMongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                await async_action(client)
+    
+                        await asyncio.to_thread(asyncio.run, run_client())
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_semantic_group_regressions.py:441: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_semantic_group_regressions.py:415: in exercise
+    async with AsyncMongoEcoProxyServer(
+src/mongoeco/wire/proxy.py:110: in __aenter__
+    await self.start()
+src/mongoeco/wire/proxy.py:131: in start
+    self._server = await asyncio.start_server(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/streams.py:84: in start_server
+    return await loop.create_server(factory, host, port, **kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+protocol_factory = <function start_server.<locals>.factory at 0x12f247690>
+host = '127.0.0.1', port = 0, family = <AddressFamily.AF_UNSPEC: 0>
+flags = <AddressInfo.AI_PASSIVE: 1>
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=6>, backlog = 100
+ssl = None, reuse_address = True, reuse_port = None, keep_alive = None
+ssl_handshake_timeout = None, ssl_shutdown_timeout = None, start_serving = False
+
+    async def create_server(
+            self, protocol_factory, host=None, port=None,
+            *,
+            family=socket.AF_UNSPEC,
+            flags=socket.AI_PASSIVE,
+            sock=None,
+            backlog=100,
+            ssl=None,
+            reuse_address=None,
+            reuse_port=None,
+            keep_alive=None,
+            ssl_handshake_timeout=None,
+            ssl_shutdown_timeout=None,
+            start_serving=True):
+        """Create a TCP server.
+    
+        The host parameter can be a string, in that case the TCP server is
+        bound to host and port.
+    
+        The host parameter can also be a sequence of strings and in that case
+        the TCP server is bound to all hosts of the sequence. If a host
+        appears multiple times (possibly indirectly e.g. when hostnames
+        resolve to the same IP address), the server is only bound once to that
+        host.
+    
+        Return a Server object which can be used to stop the service.
+    
+        This method is a coroutine.
+        """
+        if isinstance(ssl, bool):
+            raise TypeError('ssl argument must be an SSLContext or None')
+    
+        if ssl_handshake_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_handshake_timeout is only meaningful with ssl')
+    
+        if ssl_shutdown_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_shutdown_timeout is only meaningful with ssl')
+    
+        if sock is not None:
+            _check_ssl_socket(sock)
+    
+        if host is not None or port is not None:
+            if sock is not None:
+                raise ValueError(
+                    'host/port and sock can not be specified at the same time')
+    
+            if reuse_address is None:
+                reuse_address = os.name == "posix" and sys.platform != "cygwin"
+            sockets = []
+            if host == '':
+                hosts = [None]
+            elif (isinstance(host, str) or
+                  not isinstance(host, collections.abc.Iterable)):
+                hosts = [host]
+            else:
+                hosts = host
+    
+            fs = [self._create_server_getaddrinfo(host, port, family=family,
+                                                  flags=flags)
+                  for host in hosts]
+            infos = await tasks.gather(*fs)
+            infos = set(itertools.chain.from_iterable(infos))
+    
+            completed = False
+            try:
+                for res in infos:
+                    af, socktype, proto, canonname, sa = res
+                    try:
+                        sock = socket.socket(af, socktype, proto)
+                    except socket.error:
+                        # Assume it's a bad family/type/protocol combination.
+                        if self._debug:
+                            logger.warning('create_server() failed to create '
+                                           'socket.socket(%r, %r, %r)',
+                                           af, socktype, proto, exc_info=True)
+                        continue
+                    sockets.append(sock)
+                    if reuse_address:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+                    # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+                    # on other address families than AF_INET/AF_INET6.
+                    if reuse_port and af in (socket.AF_INET, socket.AF_INET6):
+                        _set_reuseport(sock)
+                    if keep_alive:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
+                    # Disable IPv4/IPv6 dual stack support (enabled by
+                    # default on Linux) which makes a single socket
+                    # listen on both address families.
+                    if (_HAS_IPv6 and
+                            af == socket.AF_INET6 and
+                            hasattr(socket, 'IPPROTO_IPV6')):
+                        sock.setsockopt(socket.IPPROTO_IPV6,
+                                        socket.IPV6_V6ONLY,
+                                        True)
+                    try:
+                        sock.bind(sa)
+                    except OSError as err:
+                        msg = ('error while attempting '
+                               'to bind on address %r: %s'
+                               % (sa, str(err).lower()))
+                        if err.errno == errno.EADDRNOTAVAIL:
+                            # Assume the family is not enabled (bpo-30945)
+                            sockets.pop()
+                            sock.close()
+                            if self._debug:
+                                logger.warning(msg)
+                            continue
+>                       raise OSError(err.errno, msg) from None
+E                       PermissionError: [Errno 1] error while attempting to bind on address ('127.0.0.1', 0): [errno 1] operation not permitted
+
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:1638: PermissionError
+_ test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-sync-SQLiteEngine-7.0] _
+
+engine_factory = <class 'mongoeco.engines.sqlite.SQLiteEngine'>, dialect = '7.0'
+corpus = 'bson_uuid_policy', name = 'semantic_uuid_irregular_payload_reads'
+action = <function uuid_irregular_payload_reads at 0x128c07060>
+surface = 'wire-sync'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action", "surface"],
+        [
+            (corpus, name, action, surface)
+            for corpus, spec in SEMANTIC_CORPORA.items()
+            for name, action in spec.cases
+            for surface in spec.surfaces
+        ],
+    )
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        if corpus == "pcre2_regex" and REGEX_BACKEND != "pcre2":
+            pytest.skip("explicit optional PCRE2 backend profile required")
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+    
+        def check(actual):
+            _assert_native_observation(actual, expected, corpus=corpus, name=name)
+    
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+                check(action(collection))
+            return
+    
+        async def async_action(client):
+            collection = client.semantic_group.records
+            await collection.insert_many(seed)
+            result = await asyncio.to_thread(
+                action, _AsyncView(collection, asyncio.get_running_loop(), client)
+            )
+            check(result)
+    
+        async def exercise():
+            if surface == "async":
+                async with AsyncMongoClient(
+                    engine_factory(), mongodb_dialect=dialect
+                ) as client:
+                    await async_action(client)
+            else:
+                async with AsyncMongoEcoProxyServer(
+                    engine=engine_factory(), mongodb_dialect=dialect
+                ) as proxy:
+                    uri = f"mongodb://{proxy.address.host}:{proxy.address.port}"
+                    if surface == "wire-sync":
+    
+                        def run():
+                            with pymongo.MongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                collection = client.semantic_group.records
+                                collection.insert_many(seed)
+                                check(action(collection))
+    
+                        await asyncio.to_thread(run)
+                    else:
+                        # Older SDKs can perform blocking socket reads in async bulk
+                        # writes. Keep their loop separate from the server's loop.
+                        async def run_client():
+                            async with pymongo.AsyncMongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                await async_action(client)
+    
+                        await asyncio.to_thread(asyncio.run, run_client())
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_semantic_group_regressions.py:441: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_semantic_group_regressions.py:415: in exercise
+    async with AsyncMongoEcoProxyServer(
+src/mongoeco/wire/proxy.py:110: in __aenter__
+    await self.start()
+src/mongoeco/wire/proxy.py:131: in start
+    self._server = await asyncio.start_server(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/streams.py:84: in start_server
+    return await loop.create_server(factory, host, port, **kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+protocol_factory = <function start_server.<locals>.factory at 0x139200880>
+host = '127.0.0.1', port = 0, family = <AddressFamily.AF_UNSPEC: 0>
+flags = <AddressInfo.AI_PASSIVE: 1>
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=6>, backlog = 100
+ssl = None, reuse_address = True, reuse_port = None, keep_alive = None
+ssl_handshake_timeout = None, ssl_shutdown_timeout = None, start_serving = False
+
+    async def create_server(
+            self, protocol_factory, host=None, port=None,
+            *,
+            family=socket.AF_UNSPEC,
+            flags=socket.AI_PASSIVE,
+            sock=None,
+            backlog=100,
+            ssl=None,
+            reuse_address=None,
+            reuse_port=None,
+            keep_alive=None,
+            ssl_handshake_timeout=None,
+            ssl_shutdown_timeout=None,
+            start_serving=True):
+        """Create a TCP server.
+    
+        The host parameter can be a string, in that case the TCP server is
+        bound to host and port.
+    
+        The host parameter can also be a sequence of strings and in that case
+        the TCP server is bound to all hosts of the sequence. If a host
+        appears multiple times (possibly indirectly e.g. when hostnames
+        resolve to the same IP address), the server is only bound once to that
+        host.
+    
+        Return a Server object which can be used to stop the service.
+    
+        This method is a coroutine.
+        """
+        if isinstance(ssl, bool):
+            raise TypeError('ssl argument must be an SSLContext or None')
+    
+        if ssl_handshake_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_handshake_timeout is only meaningful with ssl')
+    
+        if ssl_shutdown_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_shutdown_timeout is only meaningful with ssl')
+    
+        if sock is not None:
+            _check_ssl_socket(sock)
+    
+        if host is not None or port is not None:
+            if sock is not None:
+                raise ValueError(
+                    'host/port and sock can not be specified at the same time')
+    
+            if reuse_address is None:
+                reuse_address = os.name == "posix" and sys.platform != "cygwin"
+            sockets = []
+            if host == '':
+                hosts = [None]
+            elif (isinstance(host, str) or
+                  not isinstance(host, collections.abc.Iterable)):
+                hosts = [host]
+            else:
+                hosts = host
+    
+            fs = [self._create_server_getaddrinfo(host, port, family=family,
+                                                  flags=flags)
+                  for host in hosts]
+            infos = await tasks.gather(*fs)
+            infos = set(itertools.chain.from_iterable(infos))
+    
+            completed = False
+            try:
+                for res in infos:
+                    af, socktype, proto, canonname, sa = res
+                    try:
+                        sock = socket.socket(af, socktype, proto)
+                    except socket.error:
+                        # Assume it's a bad family/type/protocol combination.
+                        if self._debug:
+                            logger.warning('create_server() failed to create '
+                                           'socket.socket(%r, %r, %r)',
+                                           af, socktype, proto, exc_info=True)
+                        continue
+                    sockets.append(sock)
+                    if reuse_address:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+                    # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+                    # on other address families than AF_INET/AF_INET6.
+                    if reuse_port and af in (socket.AF_INET, socket.AF_INET6):
+                        _set_reuseport(sock)
+                    if keep_alive:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
+                    # Disable IPv4/IPv6 dual stack support (enabled by
+                    # default on Linux) which makes a single socket
+                    # listen on both address families.
+                    if (_HAS_IPv6 and
+                            af == socket.AF_INET6 and
+                            hasattr(socket, 'IPPROTO_IPV6')):
+                        sock.setsockopt(socket.IPPROTO_IPV6,
+                                        socket.IPV6_V6ONLY,
+                                        True)
+                    try:
+                        sock.bind(sa)
+                    except OSError as err:
+                        msg = ('error while attempting '
+                               'to bind on address %r: %s'
+                               % (sa, str(err).lower()))
+                        if err.errno == errno.EADDRNOTAVAIL:
+                            # Assume the family is not enabled (bpo-30945)
+                            sockets.pop()
+                            sock.close()
+                            if self._debug:
+                                logger.warning(msg)
+                            continue
+>                       raise OSError(err.errno, msg) from None
+E                       PermissionError: [Errno 1] error while attempting to bind on address ('127.0.0.1', 0): [errno 1] operation not permitted
+
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:1638: PermissionError
+_ test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-sync-SQLiteEngine-8.0] _
+
+engine_factory = <class 'mongoeco.engines.sqlite.SQLiteEngine'>, dialect = '8.0'
+corpus = 'bson_uuid_policy', name = 'semantic_uuid_irregular_payload_reads'
+action = <function uuid_irregular_payload_reads at 0x128c07060>
+surface = 'wire-sync'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action", "surface"],
+        [
+            (corpus, name, action, surface)
+            for corpus, spec in SEMANTIC_CORPORA.items()
+            for name, action in spec.cases
+            for surface in spec.surfaces
+        ],
+    )
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        if corpus == "pcre2_regex" and REGEX_BACKEND != "pcre2":
+            pytest.skip("explicit optional PCRE2 backend profile required")
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+    
+        def check(actual):
+            _assert_native_observation(actual, expected, corpus=corpus, name=name)
+    
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+                check(action(collection))
+            return
+    
+        async def async_action(client):
+            collection = client.semantic_group.records
+            await collection.insert_many(seed)
+            result = await asyncio.to_thread(
+                action, _AsyncView(collection, asyncio.get_running_loop(), client)
+            )
+            check(result)
+    
+        async def exercise():
+            if surface == "async":
+                async with AsyncMongoClient(
+                    engine_factory(), mongodb_dialect=dialect
+                ) as client:
+                    await async_action(client)
+            else:
+                async with AsyncMongoEcoProxyServer(
+                    engine=engine_factory(), mongodb_dialect=dialect
+                ) as proxy:
+                    uri = f"mongodb://{proxy.address.host}:{proxy.address.port}"
+                    if surface == "wire-sync":
+    
+                        def run():
+                            with pymongo.MongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                collection = client.semantic_group.records
+                                collection.insert_many(seed)
+                                check(action(collection))
+    
+                        await asyncio.to_thread(run)
+                    else:
+                        # Older SDKs can perform blocking socket reads in async bulk
+                        # writes. Keep their loop separate from the server's loop.
+                        async def run_client():
+                            async with pymongo.AsyncMongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                await async_action(client)
+    
+                        await asyncio.to_thread(asyncio.run, run_client())
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_semantic_group_regressions.py:441: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_semantic_group_regressions.py:415: in exercise
+    async with AsyncMongoEcoProxyServer(
+src/mongoeco/wire/proxy.py:110: in __aenter__
+    await self.start()
+src/mongoeco/wire/proxy.py:131: in start
+    self._server = await asyncio.start_server(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/streams.py:84: in start_server
+    return await loop.create_server(factory, host, port, **kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+protocol_factory = <function start_server.<locals>.factory at 0x139200880>
+host = '127.0.0.1', port = 0, family = <AddressFamily.AF_UNSPEC: 0>
+flags = <AddressInfo.AI_PASSIVE: 1>
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=6>, backlog = 100
+ssl = None, reuse_address = True, reuse_port = None, keep_alive = None
+ssl_handshake_timeout = None, ssl_shutdown_timeout = None, start_serving = False
+
+    async def create_server(
+            self, protocol_factory, host=None, port=None,
+            *,
+            family=socket.AF_UNSPEC,
+            flags=socket.AI_PASSIVE,
+            sock=None,
+            backlog=100,
+            ssl=None,
+            reuse_address=None,
+            reuse_port=None,
+            keep_alive=None,
+            ssl_handshake_timeout=None,
+            ssl_shutdown_timeout=None,
+            start_serving=True):
+        """Create a TCP server.
+    
+        The host parameter can be a string, in that case the TCP server is
+        bound to host and port.
+    
+        The host parameter can also be a sequence of strings and in that case
+        the TCP server is bound to all hosts of the sequence. If a host
+        appears multiple times (possibly indirectly e.g. when hostnames
+        resolve to the same IP address), the server is only bound once to that
+        host.
+    
+        Return a Server object which can be used to stop the service.
+    
+        This method is a coroutine.
+        """
+        if isinstance(ssl, bool):
+            raise TypeError('ssl argument must be an SSLContext or None')
+    
+        if ssl_handshake_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_handshake_timeout is only meaningful with ssl')
+    
+        if ssl_shutdown_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_shutdown_timeout is only meaningful with ssl')
+    
+        if sock is not None:
+            _check_ssl_socket(sock)
+    
+        if host is not None or port is not None:
+            if sock is not None:
+                raise ValueError(
+                    'host/port and sock can not be specified at the same time')
+    
+            if reuse_address is None:
+                reuse_address = os.name == "posix" and sys.platform != "cygwin"
+            sockets = []
+            if host == '':
+                hosts = [None]
+            elif (isinstance(host, str) or
+                  not isinstance(host, collections.abc.Iterable)):
+                hosts = [host]
+            else:
+                hosts = host
+    
+            fs = [self._create_server_getaddrinfo(host, port, family=family,
+                                                  flags=flags)
+                  for host in hosts]
+            infos = await tasks.gather(*fs)
+            infos = set(itertools.chain.from_iterable(infos))
+    
+            completed = False
+            try:
+                for res in infos:
+                    af, socktype, proto, canonname, sa = res
+                    try:
+                        sock = socket.socket(af, socktype, proto)
+                    except socket.error:
+                        # Assume it's a bad family/type/protocol combination.
+                        if self._debug:
+                            logger.warning('create_server() failed to create '
+                                           'socket.socket(%r, %r, %r)',
+                                           af, socktype, proto, exc_info=True)
+                        continue
+                    sockets.append(sock)
+                    if reuse_address:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+                    # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+                    # on other address families than AF_INET/AF_INET6.
+                    if reuse_port and af in (socket.AF_INET, socket.AF_INET6):
+                        _set_reuseport(sock)
+                    if keep_alive:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
+                    # Disable IPv4/IPv6 dual stack support (enabled by
+                    # default on Linux) which makes a single socket
+                    # listen on both address families.
+                    if (_HAS_IPv6 and
+                            af == socket.AF_INET6 and
+                            hasattr(socket, 'IPPROTO_IPV6')):
+                        sock.setsockopt(socket.IPPROTO_IPV6,
+                                        socket.IPV6_V6ONLY,
+                                        True)
+                    try:
+                        sock.bind(sa)
+                    except OSError as err:
+                        msg = ('error while attempting '
+                               'to bind on address %r: %s'
+                               % (sa, str(err).lower()))
+                        if err.errno == errno.EADDRNOTAVAIL:
+                            # Assume the family is not enabled (bpo-30945)
+                            sockets.pop()
+                            sock.close()
+                            if self._debug:
+                                logger.warning(msg)
+                            continue
+>                       raise OSError(err.errno, msg) from None
+E                       PermissionError: [Errno 1] error while attempting to bind on address ('127.0.0.1', 0): [errno 1] operation not permitted
+
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:1638: PermissionError
+_ test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-sync-SQLiteEngine-9.0] _
+
+engine_factory = <class 'mongoeco.engines.sqlite.SQLiteEngine'>, dialect = '9.0'
+corpus = 'bson_uuid_policy', name = 'semantic_uuid_irregular_payload_reads'
+action = <function uuid_irregular_payload_reads at 0x128c07060>
+surface = 'wire-sync'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action", "surface"],
+        [
+            (corpus, name, action, surface)
+            for corpus, spec in SEMANTIC_CORPORA.items()
+            for name, action in spec.cases
+            for surface in spec.surfaces
+        ],
+    )
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        if corpus == "pcre2_regex" and REGEX_BACKEND != "pcre2":
+            pytest.skip("explicit optional PCRE2 backend profile required")
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+    
+        def check(actual):
+            _assert_native_observation(actual, expected, corpus=corpus, name=name)
+    
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+                check(action(collection))
+            return
+    
+        async def async_action(client):
+            collection = client.semantic_group.records
+            await collection.insert_many(seed)
+            result = await asyncio.to_thread(
+                action, _AsyncView(collection, asyncio.get_running_loop(), client)
+            )
+            check(result)
+    
+        async def exercise():
+            if surface == "async":
+                async with AsyncMongoClient(
+                    engine_factory(), mongodb_dialect=dialect
+                ) as client:
+                    await async_action(client)
+            else:
+                async with AsyncMongoEcoProxyServer(
+                    engine=engine_factory(), mongodb_dialect=dialect
+                ) as proxy:
+                    uri = f"mongodb://{proxy.address.host}:{proxy.address.port}"
+                    if surface == "wire-sync":
+    
+                        def run():
+                            with pymongo.MongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                collection = client.semantic_group.records
+                                collection.insert_many(seed)
+                                check(action(collection))
+    
+                        await asyncio.to_thread(run)
+                    else:
+                        # Older SDKs can perform blocking socket reads in async bulk
+                        # writes. Keep their loop separate from the server's loop.
+                        async def run_client():
+                            async with pymongo.AsyncMongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                await async_action(client)
+    
+                        await asyncio.to_thread(asyncio.run, run_client())
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_semantic_group_regressions.py:441: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_semantic_group_regressions.py:415: in exercise
+    async with AsyncMongoEcoProxyServer(
+src/mongoeco/wire/proxy.py:110: in __aenter__
+    await self.start()
+src/mongoeco/wire/proxy.py:131: in start
+    self._server = await asyncio.start_server(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/streams.py:84: in start_server
+    return await loop.create_server(factory, host, port, **kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+protocol_factory = <function start_server.<locals>.factory at 0x139201b10>
+host = '127.0.0.1', port = 0, family = <AddressFamily.AF_UNSPEC: 0>
+flags = <AddressInfo.AI_PASSIVE: 1>
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=6>, backlog = 100
+ssl = None, reuse_address = True, reuse_port = None, keep_alive = None
+ssl_handshake_timeout = None, ssl_shutdown_timeout = None, start_serving = False
+
+    async def create_server(
+            self, protocol_factory, host=None, port=None,
+            *,
+            family=socket.AF_UNSPEC,
+            flags=socket.AI_PASSIVE,
+            sock=None,
+            backlog=100,
+            ssl=None,
+            reuse_address=None,
+            reuse_port=None,
+            keep_alive=None,
+            ssl_handshake_timeout=None,
+            ssl_shutdown_timeout=None,
+            start_serving=True):
+        """Create a TCP server.
+    
+        The host parameter can be a string, in that case the TCP server is
+        bound to host and port.
+    
+        The host parameter can also be a sequence of strings and in that case
+        the TCP server is bound to all hosts of the sequence. If a host
+        appears multiple times (possibly indirectly e.g. when hostnames
+        resolve to the same IP address), the server is only bound once to that
+        host.
+    
+        Return a Server object which can be used to stop the service.
+    
+        This method is a coroutine.
+        """
+        if isinstance(ssl, bool):
+            raise TypeError('ssl argument must be an SSLContext or None')
+    
+        if ssl_handshake_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_handshake_timeout is only meaningful with ssl')
+    
+        if ssl_shutdown_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_shutdown_timeout is only meaningful with ssl')
+    
+        if sock is not None:
+            _check_ssl_socket(sock)
+    
+        if host is not None or port is not None:
+            if sock is not None:
+                raise ValueError(
+                    'host/port and sock can not be specified at the same time')
+    
+            if reuse_address is None:
+                reuse_address = os.name == "posix" and sys.platform != "cygwin"
+            sockets = []
+            if host == '':
+                hosts = [None]
+            elif (isinstance(host, str) or
+                  not isinstance(host, collections.abc.Iterable)):
+                hosts = [host]
+            else:
+                hosts = host
+    
+            fs = [self._create_server_getaddrinfo(host, port, family=family,
+                                                  flags=flags)
+                  for host in hosts]
+            infos = await tasks.gather(*fs)
+            infos = set(itertools.chain.from_iterable(infos))
+    
+            completed = False
+            try:
+                for res in infos:
+                    af, socktype, proto, canonname, sa = res
+                    try:
+                        sock = socket.socket(af, socktype, proto)
+                    except socket.error:
+                        # Assume it's a bad family/type/protocol combination.
+                        if self._debug:
+                            logger.warning('create_server() failed to create '
+                                           'socket.socket(%r, %r, %r)',
+                                           af, socktype, proto, exc_info=True)
+                        continue
+                    sockets.append(sock)
+                    if reuse_address:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+                    # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+                    # on other address families than AF_INET/AF_INET6.
+                    if reuse_port and af in (socket.AF_INET, socket.AF_INET6):
+                        _set_reuseport(sock)
+                    if keep_alive:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
+                    # Disable IPv4/IPv6 dual stack support (enabled by
+                    # default on Linux) which makes a single socket
+                    # listen on both address families.
+                    if (_HAS_IPv6 and
+                            af == socket.AF_INET6 and
+                            hasattr(socket, 'IPPROTO_IPV6')):
+                        sock.setsockopt(socket.IPPROTO_IPV6,
+                                        socket.IPV6_V6ONLY,
+                                        True)
+                    try:
+                        sock.bind(sa)
+                    except OSError as err:
+                        msg = ('error while attempting '
+                               'to bind on address %r: %s'
+                               % (sa, str(err).lower()))
+                        if err.errno == errno.EADDRNOTAVAIL:
+                            # Assume the family is not enabled (bpo-30945)
+                            sockets.pop()
+                            sock.close()
+                            if self._debug:
+                                logger.warning(msg)
+                            continue
+>                       raise OSError(err.errno, msg) from None
+E                       PermissionError: [Errno 1] error while attempting to bind on address ('127.0.0.1', 0): [errno 1] operation not permitted
+
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:1638: PermissionError
+_ test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-async-MemoryEngine-7.0] _
+
+engine_factory = <class 'mongoeco.engines.memory.MemoryEngine'>, dialect = '7.0'
+corpus = 'bson_uuid_policy', name = 'semantic_uuid_irregular_payload_reads'
+action = <function uuid_irregular_payload_reads at 0x128c07060>
+surface = 'wire-async'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action", "surface"],
+        [
+            (corpus, name, action, surface)
+            for corpus, spec in SEMANTIC_CORPORA.items()
+            for name, action in spec.cases
+            for surface in spec.surfaces
+        ],
+    )
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        if corpus == "pcre2_regex" and REGEX_BACKEND != "pcre2":
+            pytest.skip("explicit optional PCRE2 backend profile required")
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+    
+        def check(actual):
+            _assert_native_observation(actual, expected, corpus=corpus, name=name)
+    
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+                check(action(collection))
+            return
+    
+        async def async_action(client):
+            collection = client.semantic_group.records
+            await collection.insert_many(seed)
+            result = await asyncio.to_thread(
+                action, _AsyncView(collection, asyncio.get_running_loop(), client)
+            )
+            check(result)
+    
+        async def exercise():
+            if surface == "async":
+                async with AsyncMongoClient(
+                    engine_factory(), mongodb_dialect=dialect
+                ) as client:
+                    await async_action(client)
+            else:
+                async with AsyncMongoEcoProxyServer(
+                    engine=engine_factory(), mongodb_dialect=dialect
+                ) as proxy:
+                    uri = f"mongodb://{proxy.address.host}:{proxy.address.port}"
+                    if surface == "wire-sync":
+    
+                        def run():
+                            with pymongo.MongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                collection = client.semantic_group.records
+                                collection.insert_many(seed)
+                                check(action(collection))
+    
+                        await asyncio.to_thread(run)
+                    else:
+                        # Older SDKs can perform blocking socket reads in async bulk
+                        # writes. Keep their loop separate from the server's loop.
+                        async def run_client():
+                            async with pymongo.AsyncMongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                await async_action(client)
+    
+                        await asyncio.to_thread(asyncio.run, run_client())
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_semantic_group_regressions.py:441: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_semantic_group_regressions.py:415: in exercise
+    async with AsyncMongoEcoProxyServer(
+src/mongoeco/wire/proxy.py:110: in __aenter__
+    await self.start()
+src/mongoeco/wire/proxy.py:131: in start
+    self._server = await asyncio.start_server(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/streams.py:84: in start_server
+    return await loop.create_server(factory, host, port, **kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+protocol_factory = <function start_server.<locals>.factory at 0x139201b10>
+host = '127.0.0.1', port = 0, family = <AddressFamily.AF_UNSPEC: 0>
+flags = <AddressInfo.AI_PASSIVE: 1>
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=6>, backlog = 100
+ssl = None, reuse_address = True, reuse_port = None, keep_alive = None
+ssl_handshake_timeout = None, ssl_shutdown_timeout = None, start_serving = False
+
+    async def create_server(
+            self, protocol_factory, host=None, port=None,
+            *,
+            family=socket.AF_UNSPEC,
+            flags=socket.AI_PASSIVE,
+            sock=None,
+            backlog=100,
+            ssl=None,
+            reuse_address=None,
+            reuse_port=None,
+            keep_alive=None,
+            ssl_handshake_timeout=None,
+            ssl_shutdown_timeout=None,
+            start_serving=True):
+        """Create a TCP server.
+    
+        The host parameter can be a string, in that case the TCP server is
+        bound to host and port.
+    
+        The host parameter can also be a sequence of strings and in that case
+        the TCP server is bound to all hosts of the sequence. If a host
+        appears multiple times (possibly indirectly e.g. when hostnames
+        resolve to the same IP address), the server is only bound once to that
+        host.
+    
+        Return a Server object which can be used to stop the service.
+    
+        This method is a coroutine.
+        """
+        if isinstance(ssl, bool):
+            raise TypeError('ssl argument must be an SSLContext or None')
+    
+        if ssl_handshake_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_handshake_timeout is only meaningful with ssl')
+    
+        if ssl_shutdown_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_shutdown_timeout is only meaningful with ssl')
+    
+        if sock is not None:
+            _check_ssl_socket(sock)
+    
+        if host is not None or port is not None:
+            if sock is not None:
+                raise ValueError(
+                    'host/port and sock can not be specified at the same time')
+    
+            if reuse_address is None:
+                reuse_address = os.name == "posix" and sys.platform != "cygwin"
+            sockets = []
+            if host == '':
+                hosts = [None]
+            elif (isinstance(host, str) or
+                  not isinstance(host, collections.abc.Iterable)):
+                hosts = [host]
+            else:
+                hosts = host
+    
+            fs = [self._create_server_getaddrinfo(host, port, family=family,
+                                                  flags=flags)
+                  for host in hosts]
+            infos = await tasks.gather(*fs)
+            infos = set(itertools.chain.from_iterable(infos))
+    
+            completed = False
+            try:
+                for res in infos:
+                    af, socktype, proto, canonname, sa = res
+                    try:
+                        sock = socket.socket(af, socktype, proto)
+                    except socket.error:
+                        # Assume it's a bad family/type/protocol combination.
+                        if self._debug:
+                            logger.warning('create_server() failed to create '
+                                           'socket.socket(%r, %r, %r)',
+                                           af, socktype, proto, exc_info=True)
+                        continue
+                    sockets.append(sock)
+                    if reuse_address:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+                    # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+                    # on other address families than AF_INET/AF_INET6.
+                    if reuse_port and af in (socket.AF_INET, socket.AF_INET6):
+                        _set_reuseport(sock)
+                    if keep_alive:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
+                    # Disable IPv4/IPv6 dual stack support (enabled by
+                    # default on Linux) which makes a single socket
+                    # listen on both address families.
+                    if (_HAS_IPv6 and
+                            af == socket.AF_INET6 and
+                            hasattr(socket, 'IPPROTO_IPV6')):
+                        sock.setsockopt(socket.IPPROTO_IPV6,
+                                        socket.IPV6_V6ONLY,
+                                        True)
+                    try:
+                        sock.bind(sa)
+                    except OSError as err:
+                        msg = ('error while attempting '
+                               'to bind on address %r: %s'
+                               % (sa, str(err).lower()))
+                        if err.errno == errno.EADDRNOTAVAIL:
+                            # Assume the family is not enabled (bpo-30945)
+                            sockets.pop()
+                            sock.close()
+                            if self._debug:
+                                logger.warning(msg)
+                            continue
+>                       raise OSError(err.errno, msg) from None
+E                       PermissionError: [Errno 1] error while attempting to bind on address ('127.0.0.1', 0): [errno 1] operation not permitted
+
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:1638: PermissionError
+_ test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-async-MemoryEngine-8.0] _
+
+engine_factory = <class 'mongoeco.engines.memory.MemoryEngine'>, dialect = '8.0'
+corpus = 'bson_uuid_policy', name = 'semantic_uuid_irregular_payload_reads'
+action = <function uuid_irregular_payload_reads at 0x128c07060>
+surface = 'wire-async'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action", "surface"],
+        [
+            (corpus, name, action, surface)
+            for corpus, spec in SEMANTIC_CORPORA.items()
+            for name, action in spec.cases
+            for surface in spec.surfaces
+        ],
+    )
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        if corpus == "pcre2_regex" and REGEX_BACKEND != "pcre2":
+            pytest.skip("explicit optional PCRE2 backend profile required")
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+    
+        def check(actual):
+            _assert_native_observation(actual, expected, corpus=corpus, name=name)
+    
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+                check(action(collection))
+            return
+    
+        async def async_action(client):
+            collection = client.semantic_group.records
+            await collection.insert_many(seed)
+            result = await asyncio.to_thread(
+                action, _AsyncView(collection, asyncio.get_running_loop(), client)
+            )
+            check(result)
+    
+        async def exercise():
+            if surface == "async":
+                async with AsyncMongoClient(
+                    engine_factory(), mongodb_dialect=dialect
+                ) as client:
+                    await async_action(client)
+            else:
+                async with AsyncMongoEcoProxyServer(
+                    engine=engine_factory(), mongodb_dialect=dialect
+                ) as proxy:
+                    uri = f"mongodb://{proxy.address.host}:{proxy.address.port}"
+                    if surface == "wire-sync":
+    
+                        def run():
+                            with pymongo.MongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                collection = client.semantic_group.records
+                                collection.insert_many(seed)
+                                check(action(collection))
+    
+                        await asyncio.to_thread(run)
+                    else:
+                        # Older SDKs can perform blocking socket reads in async bulk
+                        # writes. Keep their loop separate from the server's loop.
+                        async def run_client():
+                            async with pymongo.AsyncMongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                await async_action(client)
+    
+                        await asyncio.to_thread(asyncio.run, run_client())
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_semantic_group_regressions.py:441: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_semantic_group_regressions.py:415: in exercise
+    async with AsyncMongoEcoProxyServer(
+src/mongoeco/wire/proxy.py:110: in __aenter__
+    await self.start()
+src/mongoeco/wire/proxy.py:131: in start
+    self._server = await asyncio.start_server(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/streams.py:84: in start_server
+    return await loop.create_server(factory, host, port, **kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+protocol_factory = <function start_server.<locals>.factory at 0x139202350>
+host = '127.0.0.1', port = 0, family = <AddressFamily.AF_UNSPEC: 0>
+flags = <AddressInfo.AI_PASSIVE: 1>
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=6>, backlog = 100
+ssl = None, reuse_address = True, reuse_port = None, keep_alive = None
+ssl_handshake_timeout = None, ssl_shutdown_timeout = None, start_serving = False
+
+    async def create_server(
+            self, protocol_factory, host=None, port=None,
+            *,
+            family=socket.AF_UNSPEC,
+            flags=socket.AI_PASSIVE,
+            sock=None,
+            backlog=100,
+            ssl=None,
+            reuse_address=None,
+            reuse_port=None,
+            keep_alive=None,
+            ssl_handshake_timeout=None,
+            ssl_shutdown_timeout=None,
+            start_serving=True):
+        """Create a TCP server.
+    
+        The host parameter can be a string, in that case the TCP server is
+        bound to host and port.
+    
+        The host parameter can also be a sequence of strings and in that case
+        the TCP server is bound to all hosts of the sequence. If a host
+        appears multiple times (possibly indirectly e.g. when hostnames
+        resolve to the same IP address), the server is only bound once to that
+        host.
+    
+        Return a Server object which can be used to stop the service.
+    
+        This method is a coroutine.
+        """
+        if isinstance(ssl, bool):
+            raise TypeError('ssl argument must be an SSLContext or None')
+    
+        if ssl_handshake_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_handshake_timeout is only meaningful with ssl')
+    
+        if ssl_shutdown_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_shutdown_timeout is only meaningful with ssl')
+    
+        if sock is not None:
+            _check_ssl_socket(sock)
+    
+        if host is not None or port is not None:
+            if sock is not None:
+                raise ValueError(
+                    'host/port and sock can not be specified at the same time')
+    
+            if reuse_address is None:
+                reuse_address = os.name == "posix" and sys.platform != "cygwin"
+            sockets = []
+            if host == '':
+                hosts = [None]
+            elif (isinstance(host, str) or
+                  not isinstance(host, collections.abc.Iterable)):
+                hosts = [host]
+            else:
+                hosts = host
+    
+            fs = [self._create_server_getaddrinfo(host, port, family=family,
+                                                  flags=flags)
+                  for host in hosts]
+            infos = await tasks.gather(*fs)
+            infos = set(itertools.chain.from_iterable(infos))
+    
+            completed = False
+            try:
+                for res in infos:
+                    af, socktype, proto, canonname, sa = res
+                    try:
+                        sock = socket.socket(af, socktype, proto)
+                    except socket.error:
+                        # Assume it's a bad family/type/protocol combination.
+                        if self._debug:
+                            logger.warning('create_server() failed to create '
+                                           'socket.socket(%r, %r, %r)',
+                                           af, socktype, proto, exc_info=True)
+                        continue
+                    sockets.append(sock)
+                    if reuse_address:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+                    # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+                    # on other address families than AF_INET/AF_INET6.
+                    if reuse_port and af in (socket.AF_INET, socket.AF_INET6):
+                        _set_reuseport(sock)
+                    if keep_alive:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
+                    # Disable IPv4/IPv6 dual stack support (enabled by
+                    # default on Linux) which makes a single socket
+                    # listen on both address families.
+                    if (_HAS_IPv6 and
+                            af == socket.AF_INET6 and
+                            hasattr(socket, 'IPPROTO_IPV6')):
+                        sock.setsockopt(socket.IPPROTO_IPV6,
+                                        socket.IPV6_V6ONLY,
+                                        True)
+                    try:
+                        sock.bind(sa)
+                    except OSError as err:
+                        msg = ('error while attempting '
+                               'to bind on address %r: %s'
+                               % (sa, str(err).lower()))
+                        if err.errno == errno.EADDRNOTAVAIL:
+                            # Assume the family is not enabled (bpo-30945)
+                            sockets.pop()
+                            sock.close()
+                            if self._debug:
+                                logger.warning(msg)
+                            continue
+>                       raise OSError(err.errno, msg) from None
+E                       PermissionError: [Errno 1] error while attempting to bind on address ('127.0.0.1', 0): [errno 1] operation not permitted
+
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:1638: PermissionError
+_ test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-async-MemoryEngine-9.0] _
+
+engine_factory = <class 'mongoeco.engines.memory.MemoryEngine'>, dialect = '9.0'
+corpus = 'bson_uuid_policy', name = 'semantic_uuid_irregular_payload_reads'
+action = <function uuid_irregular_payload_reads at 0x128c07060>
+surface = 'wire-async'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action", "surface"],
+        [
+            (corpus, name, action, surface)
+            for corpus, spec in SEMANTIC_CORPORA.items()
+            for name, action in spec.cases
+            for surface in spec.surfaces
+        ],
+    )
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        if corpus == "pcre2_regex" and REGEX_BACKEND != "pcre2":
+            pytest.skip("explicit optional PCRE2 backend profile required")
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+    
+        def check(actual):
+            _assert_native_observation(actual, expected, corpus=corpus, name=name)
+    
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+                check(action(collection))
+            return
+    
+        async def async_action(client):
+            collection = client.semantic_group.records
+            await collection.insert_many(seed)
+            result = await asyncio.to_thread(
+                action, _AsyncView(collection, asyncio.get_running_loop(), client)
+            )
+            check(result)
+    
+        async def exercise():
+            if surface == "async":
+                async with AsyncMongoClient(
+                    engine_factory(), mongodb_dialect=dialect
+                ) as client:
+                    await async_action(client)
+            else:
+                async with AsyncMongoEcoProxyServer(
+                    engine=engine_factory(), mongodb_dialect=dialect
+                ) as proxy:
+                    uri = f"mongodb://{proxy.address.host}:{proxy.address.port}"
+                    if surface == "wire-sync":
+    
+                        def run():
+                            with pymongo.MongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                collection = client.semantic_group.records
+                                collection.insert_many(seed)
+                                check(action(collection))
+    
+                        await asyncio.to_thread(run)
+                    else:
+                        # Older SDKs can perform blocking socket reads in async bulk
+                        # writes. Keep their loop separate from the server's loop.
+                        async def run_client():
+                            async with pymongo.AsyncMongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                await async_action(client)
+    
+                        await asyncio.to_thread(asyncio.run, run_client())
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_semantic_group_regressions.py:441: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_semantic_group_regressions.py:415: in exercise
+    async with AsyncMongoEcoProxyServer(
+src/mongoeco/wire/proxy.py:110: in __aenter__
+    await self.start()
+src/mongoeco/wire/proxy.py:131: in start
+    self._server = await asyncio.start_server(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/streams.py:84: in start_server
+    return await loop.create_server(factory, host, port, **kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+protocol_factory = <function start_server.<locals>.factory at 0x12cedca90>
+host = '127.0.0.1', port = 0, family = <AddressFamily.AF_UNSPEC: 0>
+flags = <AddressInfo.AI_PASSIVE: 1>
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=6>, backlog = 100
+ssl = None, reuse_address = True, reuse_port = None, keep_alive = None
+ssl_handshake_timeout = None, ssl_shutdown_timeout = None, start_serving = False
+
+    async def create_server(
+            self, protocol_factory, host=None, port=None,
+            *,
+            family=socket.AF_UNSPEC,
+            flags=socket.AI_PASSIVE,
+            sock=None,
+            backlog=100,
+            ssl=None,
+            reuse_address=None,
+            reuse_port=None,
+            keep_alive=None,
+            ssl_handshake_timeout=None,
+            ssl_shutdown_timeout=None,
+            start_serving=True):
+        """Create a TCP server.
+    
+        The host parameter can be a string, in that case the TCP server is
+        bound to host and port.
+    
+        The host parameter can also be a sequence of strings and in that case
+        the TCP server is bound to all hosts of the sequence. If a host
+        appears multiple times (possibly indirectly e.g. when hostnames
+        resolve to the same IP address), the server is only bound once to that
+        host.
+    
+        Return a Server object which can be used to stop the service.
+    
+        This method is a coroutine.
+        """
+        if isinstance(ssl, bool):
+            raise TypeError('ssl argument must be an SSLContext or None')
+    
+        if ssl_handshake_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_handshake_timeout is only meaningful with ssl')
+    
+        if ssl_shutdown_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_shutdown_timeout is only meaningful with ssl')
+    
+        if sock is not None:
+            _check_ssl_socket(sock)
+    
+        if host is not None or port is not None:
+            if sock is not None:
+                raise ValueError(
+                    'host/port and sock can not be specified at the same time')
+    
+            if reuse_address is None:
+                reuse_address = os.name == "posix" and sys.platform != "cygwin"
+            sockets = []
+            if host == '':
+                hosts = [None]
+            elif (isinstance(host, str) or
+                  not isinstance(host, collections.abc.Iterable)):
+                hosts = [host]
+            else:
+                hosts = host
+    
+            fs = [self._create_server_getaddrinfo(host, port, family=family,
+                                                  flags=flags)
+                  for host in hosts]
+            infos = await tasks.gather(*fs)
+            infos = set(itertools.chain.from_iterable(infos))
+    
+            completed = False
+            try:
+                for res in infos:
+                    af, socktype, proto, canonname, sa = res
+                    try:
+                        sock = socket.socket(af, socktype, proto)
+                    except socket.error:
+                        # Assume it's a bad family/type/protocol combination.
+                        if self._debug:
+                            logger.warning('create_server() failed to create '
+                                           'socket.socket(%r, %r, %r)',
+                                           af, socktype, proto, exc_info=True)
+                        continue
+                    sockets.append(sock)
+                    if reuse_address:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+                    # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+                    # on other address families than AF_INET/AF_INET6.
+                    if reuse_port and af in (socket.AF_INET, socket.AF_INET6):
+                        _set_reuseport(sock)
+                    if keep_alive:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
+                    # Disable IPv4/IPv6 dual stack support (enabled by
+                    # default on Linux) which makes a single socket
+                    # listen on both address families.
+                    if (_HAS_IPv6 and
+                            af == socket.AF_INET6 and
+                            hasattr(socket, 'IPPROTO_IPV6')):
+                        sock.setsockopt(socket.IPPROTO_IPV6,
+                                        socket.IPV6_V6ONLY,
+                                        True)
+                    try:
+                        sock.bind(sa)
+                    except OSError as err:
+                        msg = ('error while attempting '
+                               'to bind on address %r: %s'
+                               % (sa, str(err).lower()))
+                        if err.errno == errno.EADDRNOTAVAIL:
+                            # Assume the family is not enabled (bpo-30945)
+                            sockets.pop()
+                            sock.close()
+                            if self._debug:
+                                logger.warning(msg)
+                            continue
+>                       raise OSError(err.errno, msg) from None
+E                       PermissionError: [Errno 1] error while attempting to bind on address ('127.0.0.1', 0): [errno 1] operation not permitted
+
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:1638: PermissionError
+_ test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-async-SQLiteEngine-7.0] _
+
+engine_factory = <class 'mongoeco.engines.sqlite.SQLiteEngine'>, dialect = '7.0'
+corpus = 'bson_uuid_policy', name = 'semantic_uuid_irregular_payload_reads'
+action = <function uuid_irregular_payload_reads at 0x128c07060>
+surface = 'wire-async'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action", "surface"],
+        [
+            (corpus, name, action, surface)
+            for corpus, spec in SEMANTIC_CORPORA.items()
+            for name, action in spec.cases
+            for surface in spec.surfaces
+        ],
+    )
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        if corpus == "pcre2_regex" and REGEX_BACKEND != "pcre2":
+            pytest.skip("explicit optional PCRE2 backend profile required")
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+    
+        def check(actual):
+            _assert_native_observation(actual, expected, corpus=corpus, name=name)
+    
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+                check(action(collection))
+            return
+    
+        async def async_action(client):
+            collection = client.semantic_group.records
+            await collection.insert_many(seed)
+            result = await asyncio.to_thread(
+                action, _AsyncView(collection, asyncio.get_running_loop(), client)
+            )
+            check(result)
+    
+        async def exercise():
+            if surface == "async":
+                async with AsyncMongoClient(
+                    engine_factory(), mongodb_dialect=dialect
+                ) as client:
+                    await async_action(client)
+            else:
+                async with AsyncMongoEcoProxyServer(
+                    engine=engine_factory(), mongodb_dialect=dialect
+                ) as proxy:
+                    uri = f"mongodb://{proxy.address.host}:{proxy.address.port}"
+                    if surface == "wire-sync":
+    
+                        def run():
+                            with pymongo.MongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                collection = client.semantic_group.records
+                                collection.insert_many(seed)
+                                check(action(collection))
+    
+                        await asyncio.to_thread(run)
+                    else:
+                        # Older SDKs can perform blocking socket reads in async bulk
+                        # writes. Keep their loop separate from the server's loop.
+                        async def run_client():
+                            async with pymongo.AsyncMongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                await async_action(client)
+    
+                        await asyncio.to_thread(asyncio.run, run_client())
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_semantic_group_regressions.py:441: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_semantic_group_regressions.py:415: in exercise
+    async with AsyncMongoEcoProxyServer(
+src/mongoeco/wire/proxy.py:110: in __aenter__
+    await self.start()
+src/mongoeco/wire/proxy.py:131: in start
+    self._server = await asyncio.start_server(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/streams.py:84: in start_server
+    return await loop.create_server(factory, host, port, **kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+protocol_factory = <function start_server.<locals>.factory at 0x139202980>
+host = '127.0.0.1', port = 0, family = <AddressFamily.AF_UNSPEC: 0>
+flags = <AddressInfo.AI_PASSIVE: 1>
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=6>, backlog = 100
+ssl = None, reuse_address = True, reuse_port = None, keep_alive = None
+ssl_handshake_timeout = None, ssl_shutdown_timeout = None, start_serving = False
+
+    async def create_server(
+            self, protocol_factory, host=None, port=None,
+            *,
+            family=socket.AF_UNSPEC,
+            flags=socket.AI_PASSIVE,
+            sock=None,
+            backlog=100,
+            ssl=None,
+            reuse_address=None,
+            reuse_port=None,
+            keep_alive=None,
+            ssl_handshake_timeout=None,
+            ssl_shutdown_timeout=None,
+            start_serving=True):
+        """Create a TCP server.
+    
+        The host parameter can be a string, in that case the TCP server is
+        bound to host and port.
+    
+        The host parameter can also be a sequence of strings and in that case
+        the TCP server is bound to all hosts of the sequence. If a host
+        appears multiple times (possibly indirectly e.g. when hostnames
+        resolve to the same IP address), the server is only bound once to that
+        host.
+    
+        Return a Server object which can be used to stop the service.
+    
+        This method is a coroutine.
+        """
+        if isinstance(ssl, bool):
+            raise TypeError('ssl argument must be an SSLContext or None')
+    
+        if ssl_handshake_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_handshake_timeout is only meaningful with ssl')
+    
+        if ssl_shutdown_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_shutdown_timeout is only meaningful with ssl')
+    
+        if sock is not None:
+            _check_ssl_socket(sock)
+    
+        if host is not None or port is not None:
+            if sock is not None:
+                raise ValueError(
+                    'host/port and sock can not be specified at the same time')
+    
+            if reuse_address is None:
+                reuse_address = os.name == "posix" and sys.platform != "cygwin"
+            sockets = []
+            if host == '':
+                hosts = [None]
+            elif (isinstance(host, str) or
+                  not isinstance(host, collections.abc.Iterable)):
+                hosts = [host]
+            else:
+                hosts = host
+    
+            fs = [self._create_server_getaddrinfo(host, port, family=family,
+                                                  flags=flags)
+                  for host in hosts]
+            infos = await tasks.gather(*fs)
+            infos = set(itertools.chain.from_iterable(infos))
+    
+            completed = False
+            try:
+                for res in infos:
+                    af, socktype, proto, canonname, sa = res
+                    try:
+                        sock = socket.socket(af, socktype, proto)
+                    except socket.error:
+                        # Assume it's a bad family/type/protocol combination.
+                        if self._debug:
+                            logger.warning('create_server() failed to create '
+                                           'socket.socket(%r, %r, %r)',
+                                           af, socktype, proto, exc_info=True)
+                        continue
+                    sockets.append(sock)
+                    if reuse_address:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+                    # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+                    # on other address families than AF_INET/AF_INET6.
+                    if reuse_port and af in (socket.AF_INET, socket.AF_INET6):
+                        _set_reuseport(sock)
+                    if keep_alive:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
+                    # Disable IPv4/IPv6 dual stack support (enabled by
+                    # default on Linux) which makes a single socket
+                    # listen on both address families.
+                    if (_HAS_IPv6 and
+                            af == socket.AF_INET6 and
+                            hasattr(socket, 'IPPROTO_IPV6')):
+                        sock.setsockopt(socket.IPPROTO_IPV6,
+                                        socket.IPV6_V6ONLY,
+                                        True)
+                    try:
+                        sock.bind(sa)
+                    except OSError as err:
+                        msg = ('error while attempting '
+                               'to bind on address %r: %s'
+                               % (sa, str(err).lower()))
+                        if err.errno == errno.EADDRNOTAVAIL:
+                            # Assume the family is not enabled (bpo-30945)
+                            sockets.pop()
+                            sock.close()
+                            if self._debug:
+                                logger.warning(msg)
+                            continue
+>                       raise OSError(err.errno, msg) from None
+E                       PermissionError: [Errno 1] error while attempting to bind on address ('127.0.0.1', 0): [errno 1] operation not permitted
+
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:1638: PermissionError
+_ test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-async-SQLiteEngine-8.0] _
+
+engine_factory = <class 'mongoeco.engines.sqlite.SQLiteEngine'>, dialect = '8.0'
+corpus = 'bson_uuid_policy', name = 'semantic_uuid_irregular_payload_reads'
+action = <function uuid_irregular_payload_reads at 0x128c07060>
+surface = 'wire-async'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action", "surface"],
+        [
+            (corpus, name, action, surface)
+            for corpus, spec in SEMANTIC_CORPORA.items()
+            for name, action in spec.cases
+            for surface in spec.surfaces
+        ],
+    )
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        if corpus == "pcre2_regex" and REGEX_BACKEND != "pcre2":
+            pytest.skip("explicit optional PCRE2 backend profile required")
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+    
+        def check(actual):
+            _assert_native_observation(actual, expected, corpus=corpus, name=name)
+    
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+                check(action(collection))
+            return
+    
+        async def async_action(client):
+            collection = client.semantic_group.records
+            await collection.insert_many(seed)
+            result = await asyncio.to_thread(
+                action, _AsyncView(collection, asyncio.get_running_loop(), client)
+            )
+            check(result)
+    
+        async def exercise():
+            if surface == "async":
+                async with AsyncMongoClient(
+                    engine_factory(), mongodb_dialect=dialect
+                ) as client:
+                    await async_action(client)
+            else:
+                async with AsyncMongoEcoProxyServer(
+                    engine=engine_factory(), mongodb_dialect=dialect
+                ) as proxy:
+                    uri = f"mongodb://{proxy.address.host}:{proxy.address.port}"
+                    if surface == "wire-sync":
+    
+                        def run():
+                            with pymongo.MongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                collection = client.semantic_group.records
+                                collection.insert_many(seed)
+                                check(action(collection))
+    
+                        await asyncio.to_thread(run)
+                    else:
+                        # Older SDKs can perform blocking socket reads in async bulk
+                        # writes. Keep their loop separate from the server's loop.
+                        async def run_client():
+                            async with pymongo.AsyncMongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                await async_action(client)
+    
+                        await asyncio.to_thread(asyncio.run, run_client())
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_semantic_group_regressions.py:441: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_semantic_group_regressions.py:415: in exercise
+    async with AsyncMongoEcoProxyServer(
+src/mongoeco/wire/proxy.py:110: in __aenter__
+    await self.start()
+src/mongoeco/wire/proxy.py:131: in start
+    self._server = await asyncio.start_server(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/streams.py:84: in start_server
+    return await loop.create_server(factory, host, port, **kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+protocol_factory = <function start_server.<locals>.factory at 0x139202980>
+host = '127.0.0.1', port = 0, family = <AddressFamily.AF_UNSPEC: 0>
+flags = <AddressInfo.AI_PASSIVE: 1>
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=6>, backlog = 100
+ssl = None, reuse_address = True, reuse_port = None, keep_alive = None
+ssl_handshake_timeout = None, ssl_shutdown_timeout = None, start_serving = False
+
+    async def create_server(
+            self, protocol_factory, host=None, port=None,
+            *,
+            family=socket.AF_UNSPEC,
+            flags=socket.AI_PASSIVE,
+            sock=None,
+            backlog=100,
+            ssl=None,
+            reuse_address=None,
+            reuse_port=None,
+            keep_alive=None,
+            ssl_handshake_timeout=None,
+            ssl_shutdown_timeout=None,
+            start_serving=True):
+        """Create a TCP server.
+    
+        The host parameter can be a string, in that case the TCP server is
+        bound to host and port.
+    
+        The host parameter can also be a sequence of strings and in that case
+        the TCP server is bound to all hosts of the sequence. If a host
+        appears multiple times (possibly indirectly e.g. when hostnames
+        resolve to the same IP address), the server is only bound once to that
+        host.
+    
+        Return a Server object which can be used to stop the service.
+    
+        This method is a coroutine.
+        """
+        if isinstance(ssl, bool):
+            raise TypeError('ssl argument must be an SSLContext or None')
+    
+        if ssl_handshake_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_handshake_timeout is only meaningful with ssl')
+    
+        if ssl_shutdown_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_shutdown_timeout is only meaningful with ssl')
+    
+        if sock is not None:
+            _check_ssl_socket(sock)
+    
+        if host is not None or port is not None:
+            if sock is not None:
+                raise ValueError(
+                    'host/port and sock can not be specified at the same time')
+    
+            if reuse_address is None:
+                reuse_address = os.name == "posix" and sys.platform != "cygwin"
+            sockets = []
+            if host == '':
+                hosts = [None]
+            elif (isinstance(host, str) or
+                  not isinstance(host, collections.abc.Iterable)):
+                hosts = [host]
+            else:
+                hosts = host
+    
+            fs = [self._create_server_getaddrinfo(host, port, family=family,
+                                                  flags=flags)
+                  for host in hosts]
+            infos = await tasks.gather(*fs)
+            infos = set(itertools.chain.from_iterable(infos))
+    
+            completed = False
+            try:
+                for res in infos:
+                    af, socktype, proto, canonname, sa = res
+                    try:
+                        sock = socket.socket(af, socktype, proto)
+                    except socket.error:
+                        # Assume it's a bad family/type/protocol combination.
+                        if self._debug:
+                            logger.warning('create_server() failed to create '
+                                           'socket.socket(%r, %r, %r)',
+                                           af, socktype, proto, exc_info=True)
+                        continue
+                    sockets.append(sock)
+                    if reuse_address:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+                    # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+                    # on other address families than AF_INET/AF_INET6.
+                    if reuse_port and af in (socket.AF_INET, socket.AF_INET6):
+                        _set_reuseport(sock)
+                    if keep_alive:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
+                    # Disable IPv4/IPv6 dual stack support (enabled by
+                    # default on Linux) which makes a single socket
+                    # listen on both address families.
+                    if (_HAS_IPv6 and
+                            af == socket.AF_INET6 and
+                            hasattr(socket, 'IPPROTO_IPV6')):
+                        sock.setsockopt(socket.IPPROTO_IPV6,
+                                        socket.IPV6_V6ONLY,
+                                        True)
+                    try:
+                        sock.bind(sa)
+                    except OSError as err:
+                        msg = ('error while attempting '
+                               'to bind on address %r: %s'
+                               % (sa, str(err).lower()))
+                        if err.errno == errno.EADDRNOTAVAIL:
+                            # Assume the family is not enabled (bpo-30945)
+                            sockets.pop()
+                            sock.close()
+                            if self._debug:
+                                logger.warning(msg)
+                            continue
+>                       raise OSError(err.errno, msg) from None
+E                       PermissionError: [Errno 1] error while attempting to bind on address ('127.0.0.1', 0): [errno 1] operation not permitted
+
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:1638: PermissionError
+_ test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-async-SQLiteEngine-9.0] _
+
+engine_factory = <class 'mongoeco.engines.sqlite.SQLiteEngine'>, dialect = '9.0'
+corpus = 'bson_uuid_policy', name = 'semantic_uuid_irregular_payload_reads'
+action = <function uuid_irregular_payload_reads at 0x128c07060>
+surface = 'wire-async'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action", "surface"],
+        [
+            (corpus, name, action, surface)
+            for corpus, spec in SEMANTIC_CORPORA.items()
+            for name, action in spec.cases
+            for surface in spec.surfaces
+        ],
+    )
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        if corpus == "pcre2_regex" and REGEX_BACKEND != "pcre2":
+            pytest.skip("explicit optional PCRE2 backend profile required")
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+    
+        def check(actual):
+            _assert_native_observation(actual, expected, corpus=corpus, name=name)
+    
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+                check(action(collection))
+            return
+    
+        async def async_action(client):
+            collection = client.semantic_group.records
+            await collection.insert_many(seed)
+            result = await asyncio.to_thread(
+                action, _AsyncView(collection, asyncio.get_running_loop(), client)
+            )
+            check(result)
+    
+        async def exercise():
+            if surface == "async":
+                async with AsyncMongoClient(
+                    engine_factory(), mongodb_dialect=dialect
+                ) as client:
+                    await async_action(client)
+            else:
+                async with AsyncMongoEcoProxyServer(
+                    engine=engine_factory(), mongodb_dialect=dialect
+                ) as proxy:
+                    uri = f"mongodb://{proxy.address.host}:{proxy.address.port}"
+                    if surface == "wire-sync":
+    
+                        def run():
+                            with pymongo.MongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                collection = client.semantic_group.records
+                                collection.insert_many(seed)
+                                check(action(collection))
+    
+                        await asyncio.to_thread(run)
+                    else:
+                        # Older SDKs can perform blocking socket reads in async bulk
+                        # writes. Keep their loop separate from the server's loop.
+                        async def run_client():
+                            async with pymongo.AsyncMongoClient(
+                                uri, serverSelectionTimeoutMS=3000
+                            ) as client:
+                                await async_action(client)
+    
+                        await asyncio.to_thread(asyncio.run, run_client())
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_semantic_group_regressions.py:441: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_semantic_group_regressions.py:415: in exercise
+    async with AsyncMongoEcoProxyServer(
+src/mongoeco/wire/proxy.py:110: in __aenter__
+    await self.start()
+src/mongoeco/wire/proxy.py:131: in start
+    self._server = await asyncio.start_server(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/streams.py:84: in start_server
+    return await loop.create_server(factory, host, port, **kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_UnixSelectorEventLoop running=False closed=True debug=False>
+protocol_factory = <function start_server.<locals>.factory at 0x1392014e0>
+host = '127.0.0.1', port = 0, family = <AddressFamily.AF_UNSPEC: 0>
+flags = <AddressInfo.AI_PASSIVE: 1>
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=6>, backlog = 100
+ssl = None, reuse_address = True, reuse_port = None, keep_alive = None
+ssl_handshake_timeout = None, ssl_shutdown_timeout = None, start_serving = False
+
+    async def create_server(
+            self, protocol_factory, host=None, port=None,
+            *,
+            family=socket.AF_UNSPEC,
+            flags=socket.AI_PASSIVE,
+            sock=None,
+            backlog=100,
+            ssl=None,
+            reuse_address=None,
+            reuse_port=None,
+            keep_alive=None,
+            ssl_handshake_timeout=None,
+            ssl_shutdown_timeout=None,
+            start_serving=True):
+        """Create a TCP server.
+    
+        The host parameter can be a string, in that case the TCP server is
+        bound to host and port.
+    
+        The host parameter can also be a sequence of strings and in that case
+        the TCP server is bound to all hosts of the sequence. If a host
+        appears multiple times (possibly indirectly e.g. when hostnames
+        resolve to the same IP address), the server is only bound once to that
+        host.
+    
+        Return a Server object which can be used to stop the service.
+    
+        This method is a coroutine.
+        """
+        if isinstance(ssl, bool):
+            raise TypeError('ssl argument must be an SSLContext or None')
+    
+        if ssl_handshake_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_handshake_timeout is only meaningful with ssl')
+    
+        if ssl_shutdown_timeout is not None and ssl is None:
+            raise ValueError(
+                'ssl_shutdown_timeout is only meaningful with ssl')
+    
+        if sock is not None:
+            _check_ssl_socket(sock)
+    
+        if host is not None or port is not None:
+            if sock is not None:
+                raise ValueError(
+                    'host/port and sock can not be specified at the same time')
+    
+            if reuse_address is None:
+                reuse_address = os.name == "posix" and sys.platform != "cygwin"
+            sockets = []
+            if host == '':
+                hosts = [None]
+            elif (isinstance(host, str) or
+                  not isinstance(host, collections.abc.Iterable)):
+                hosts = [host]
+            else:
+                hosts = host
+    
+            fs = [self._create_server_getaddrinfo(host, port, family=family,
+                                                  flags=flags)
+                  for host in hosts]
+            infos = await tasks.gather(*fs)
+            infos = set(itertools.chain.from_iterable(infos))
+    
+            completed = False
+            try:
+                for res in infos:
+                    af, socktype, proto, canonname, sa = res
+                    try:
+                        sock = socket.socket(af, socktype, proto)
+                    except socket.error:
+                        # Assume it's a bad family/type/protocol combination.
+                        if self._debug:
+                            logger.warning('create_server() failed to create '
+                                           'socket.socket(%r, %r, %r)',
+                                           af, socktype, proto, exc_info=True)
+                        continue
+                    sockets.append(sock)
+                    if reuse_address:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+                    # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+                    # on other address families than AF_INET/AF_INET6.
+                    if reuse_port and af in (socket.AF_INET, socket.AF_INET6):
+                        _set_reuseport(sock)
+                    if keep_alive:
+                        sock.setsockopt(
+                            socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
+                    # Disable IPv4/IPv6 dual stack support (enabled by
+                    # default on Linux) which makes a single socket
+                    # listen on both address families.
+                    if (_HAS_IPv6 and
+                            af == socket.AF_INET6 and
+                            hasattr(socket, 'IPPROTO_IPV6')):
+                        sock.setsockopt(socket.IPPROTO_IPV6,
+                                        socket.IPV6_V6ONLY,
+                                        True)
+                    try:
+                        sock.bind(sa)
+                    except OSError as err:
+                        msg = ('error while attempting '
+                               'to bind on address %r: %s'
+                               % (sa, str(err).lower()))
+                        if err.errno == errno.EADDRNOTAVAIL:
+                            # Assume the family is not enabled (bpo-30945)
+                            sockets.pop()
+                            sock.close()
+                            if self._debug:
+                                logger.warning(msg)
+                            continue
+>                       raise OSError(err.errno, msg) from None
+E                       PermissionError: [Errno 1] error while attempting to bind on address ('127.0.0.1', 0): [errno 1] operation not permitted
+
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:1638: PermissionError
+=========================== short test summary info ============================
+FAILED tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-sync-MemoryEngine-7.0]
+FAILED tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-sync-MemoryEngine-8.0]
+FAILED tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-sync-MemoryEngine-9.0]
+FAILED tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-sync-SQLiteEngine-7.0]
+FAILED tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-sync-SQLiteEngine-8.0]
+FAILED tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-sync-SQLiteEngine-9.0]
+FAILED tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-async-MemoryEngine-7.0]
+FAILED tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-async-MemoryEngine-8.0]
+FAILED tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-async-MemoryEngine-9.0]
+FAILED tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-async-SQLiteEngine-7.0]
+FAILED tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-async-SQLiteEngine-8.0]
+FAILED tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_uuid_policy-semantic_uuid_irregular_payload_reads-uuid_irregular_payload_reads-wire-async-SQLiteEngine-9.0]
+12 failed, 12 passed, 18104 deselected in 8.61s

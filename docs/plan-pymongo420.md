@@ -311,3 +311,15 @@ de política UUID en el segundo. Ratchet de lint conforme. Esta evidencia no
 cierra todavía P02/P03: faltan testigos ampliados, instalación sin SDK y
 comparación nativa. MongoDB 9.0.2 está disponible y Docker se ha comprobado
 operativo para las capturas 7/8/9. Ningún global ejecutado.
+
+P01: capturadas 300 observaciones nuevas por MongoDB 7.0.43/8.0.32/9.0.2
+con SDK 4.20 y las imágenes fijadas en CI. Las cuatro acciones anteriores
+conservan sus observaciones exactas. Se actualizan los fixtures propietarios
+semantic_bson_uuid_policy_7_0/8_0/9_0.json; no se duplican en otro archivo.
+Los 12 replays directos pasan. Los 12 wire fallaron inicialmente al abrir
+puertos en el sandbox y pasan al repetir sólo esa selección con permiso local.
+Los contenedores propios terminaron y se eliminaron con sus volúmenes.
+P04 implementado en 7fa4168e y comprobado focalmente: 69 tests verdes,
+resolución exacta 4.20.x y fallback futuro 4.21, catálogo/profiles anteriores
+y documentos/hash CXP preservados. Su aceptación integrada queda para P07.
+P01–P03 conservan pendiente el foco ampliado de factories/decoders y sin SDK.
