@@ -1,7 +1,5 @@
 {
-  "critical_extensions": [],
   "document_type": "cxp.catalog",
-  "extensions": {},
   "payload": {
     "capabilities": [
       {
@@ -9,9 +7,6 @@
         "name": "read",
         "operations": [
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "find",
             "result_type": "org.mongoeco:result.cursor:1",
             "source": {
@@ -22,9 +17,6 @@
             }
           },
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "find_one",
             "result_type": "org.mongoeco:result.document:1",
             "source": {
@@ -35,9 +27,6 @@
             }
           },
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "count_documents",
             "result_type": "org.mongoeco:result.count:1",
             "source": {
@@ -48,9 +37,6 @@
             }
           },
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "estimated_document_count",
             "result_type": "org.mongoeco:result.count:1",
             "source": {
@@ -61,9 +47,6 @@
             }
           },
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "distinct",
             "result_type": "org.mongoeco:result.array:1",
             "source": {
@@ -78,7 +61,6 @@
           "metadata_keys": {
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/metadata.py",
               "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
@@ -101,7 +83,6 @@
           "find.acceptedNoopOptions": {
             "description": "Mongoeco read.find acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -115,7 +96,6 @@
           "find.acceptsBatchSize": {
             "description": "Mongoeco read.find acceptsBatchSize for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -126,7 +106,6 @@
           "find.acceptsCollation": {
             "description": "Mongoeco read.find acceptsCollation for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -137,7 +116,6 @@
           "find.acceptsComment": {
             "description": "Mongoeco read.find acceptsComment for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -148,7 +126,6 @@
           "find.acceptsFilter": {
             "description": "Mongoeco read.find acceptsFilter for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -159,7 +136,6 @@
           "find.acceptsHint": {
             "description": "Mongoeco read.find acceptsHint for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -170,7 +146,6 @@
           "find.acceptsLet": {
             "description": "Mongoeco read.find acceptsLet for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -181,7 +156,6 @@
           "find.acceptsLimit": {
             "description": "Mongoeco read.find acceptsLimit for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -192,7 +166,6 @@
           "find.acceptsMaxTimeMs": {
             "description": "Mongoeco read.find acceptsMaxTimeMs for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -203,7 +176,6 @@
           "find.acceptsProjection": {
             "description": "Mongoeco read.find acceptsProjection for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -214,7 +186,6 @@
           "find.acceptsSkip": {
             "description": "Mongoeco read.find acceptsSkip for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -225,7 +196,6 @@
           "find.acceptsSort": {
             "description": "Mongoeco read.find acceptsSort for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -236,7 +206,6 @@
           "find.collectionScoped": {
             "description": "Mongoeco read.find collectionScoped for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -247,7 +216,6 @@
           "find.supportedOptions": {
             "description": "Mongoeco read.find supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -261,7 +229,6 @@
           "find.supportsExplain": {
             "description": "Mongoeco read.find supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -272,7 +239,6 @@
           "find.supportsSession": {
             "description": "Mongoeco read.find supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -283,7 +249,6 @@
           "find.unsupportedOptions": {
             "description": "Mongoeco read.find unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -297,7 +262,6 @@
           "count_documents.acceptedNoopOptions": {
             "description": "Mongoeco read.count_documents acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -311,7 +275,6 @@
           "count_documents.acceptsCollation": {
             "description": "Mongoeco read.count_documents acceptsCollation for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -322,7 +285,6 @@
           "count_documents.acceptsComment": {
             "description": "Mongoeco read.count_documents acceptsComment for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -333,7 +295,6 @@
           "count_documents.acceptsFilter": {
             "description": "Mongoeco read.count_documents acceptsFilter for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -344,7 +305,6 @@
           "count_documents.acceptsHint": {
             "description": "Mongoeco read.count_documents acceptsHint for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -355,7 +315,6 @@
           "count_documents.acceptsMaxTimeMs": {
             "description": "Mongoeco read.count_documents acceptsMaxTimeMs for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -366,7 +325,6 @@
           "count_documents.collectionScoped": {
             "description": "Mongoeco read.count_documents collectionScoped for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -377,7 +335,6 @@
           "count_documents.supportedOptions": {
             "description": "Mongoeco read.count_documents supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -391,7 +348,6 @@
           "count_documents.supportsExplain": {
             "description": "Mongoeco read.count_documents supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -402,7 +358,6 @@
           "count_documents.supportsSession": {
             "description": "Mongoeco read.count_documents supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -413,7 +368,6 @@
           "count_documents.unsupportedOptions": {
             "description": "Mongoeco read.count_documents unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -427,7 +381,6 @@
           "distinct.acceptedNoopOptions": {
             "description": "Mongoeco read.distinct acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -441,7 +394,6 @@
           "distinct.acceptsCollation": {
             "description": "Mongoeco read.distinct acceptsCollation for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -452,7 +404,6 @@
           "distinct.acceptsComment": {
             "description": "Mongoeco read.distinct acceptsComment for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -463,7 +414,6 @@
           "distinct.acceptsFieldPath": {
             "description": "Mongoeco read.distinct acceptsFieldPath for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -474,7 +424,6 @@
           "distinct.acceptsFilter": {
             "description": "Mongoeco read.distinct acceptsFilter for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -485,7 +434,6 @@
           "distinct.acceptsHint": {
             "description": "Mongoeco read.distinct acceptsHint for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -496,7 +444,6 @@
           "distinct.acceptsMaxTimeMs": {
             "description": "Mongoeco read.distinct acceptsMaxTimeMs for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -507,7 +454,6 @@
           "distinct.collectionScoped": {
             "description": "Mongoeco read.distinct collectionScoped for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -518,7 +464,6 @@
           "distinct.supportedOptions": {
             "description": "Mongoeco read.distinct supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -532,7 +477,6 @@
           "distinct.supportsExplain": {
             "description": "Mongoeco read.distinct supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -543,7 +487,6 @@
           "distinct.supportsSession": {
             "description": "Mongoeco read.distinct supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -554,7 +497,6 @@
           "distinct.unsupportedOptions": {
             "description": "Mongoeco read.distinct unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -568,7 +510,6 @@
           "estimated_document_count.acceptedNoopOptions": {
             "description": "Mongoeco read.estimated_document_count acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -582,7 +523,6 @@
           "estimated_document_count.acceptsComment": {
             "description": "Mongoeco read.estimated_document_count acceptsComment for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -593,7 +533,6 @@
           "estimated_document_count.acceptsFilter": {
             "description": "Mongoeco read.estimated_document_count acceptsFilter for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -604,7 +543,6 @@
           "estimated_document_count.acceptsMaxTimeMs": {
             "description": "Mongoeco read.estimated_document_count acceptsMaxTimeMs for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -615,7 +553,6 @@
           "estimated_document_count.collectionScoped": {
             "description": "Mongoeco read.estimated_document_count collectionScoped for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -626,7 +563,6 @@
           "estimated_document_count.supportedOptions": {
             "description": "Mongoeco read.estimated_document_count supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -640,7 +576,6 @@
           "estimated_document_count.supportsExplain": {
             "description": "Mongoeco read.estimated_document_count supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -651,7 +586,6 @@
           "estimated_document_count.supportsSession": {
             "description": "Mongoeco read.estimated_document_count supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -662,7 +596,6 @@
           "estimated_document_count.unsupportedOptions": {
             "description": "Mongoeco read.estimated_document_count unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -676,7 +609,6 @@
           "find_one.acceptedNoopOptions": {
             "description": "Mongoeco read.find_one acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -690,7 +622,6 @@
           "find_one.acceptsBatchSize": {
             "description": "Mongoeco read.find_one acceptsBatchSize for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -701,7 +632,6 @@
           "find_one.acceptsCollation": {
             "description": "Mongoeco read.find_one acceptsCollation for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -712,7 +642,6 @@
           "find_one.acceptsComment": {
             "description": "Mongoeco read.find_one acceptsComment for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -723,7 +652,6 @@
           "find_one.acceptsFilter": {
             "description": "Mongoeco read.find_one acceptsFilter for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -734,7 +662,6 @@
           "find_one.acceptsHint": {
             "description": "Mongoeco read.find_one acceptsHint for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -745,7 +672,6 @@
           "find_one.acceptsLet": {
             "description": "Mongoeco read.find_one acceptsLet for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -756,7 +682,6 @@
           "find_one.acceptsLimit": {
             "description": "Mongoeco read.find_one acceptsLimit for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -767,7 +692,6 @@
           "find_one.acceptsMaxTimeMs": {
             "description": "Mongoeco read.find_one acceptsMaxTimeMs for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -778,7 +702,6 @@
           "find_one.acceptsProjection": {
             "description": "Mongoeco read.find_one acceptsProjection for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -789,7 +712,6 @@
           "find_one.acceptsSkip": {
             "description": "Mongoeco read.find_one acceptsSkip for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -800,7 +722,6 @@
           "find_one.acceptsSort": {
             "description": "Mongoeco read.find_one acceptsSort for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -811,7 +732,6 @@
           "find_one.collectionScoped": {
             "description": "Mongoeco read.find_one collectionScoped for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -822,7 +742,6 @@
           "find_one.supportedOptions": {
             "description": "Mongoeco read.find_one supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -836,7 +755,6 @@
           "find_one.supportsExplain": {
             "description": "Mongoeco read.find_one supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -847,7 +765,6 @@
           "find_one.supportsSession": {
             "description": "Mongoeco read.find_one supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -858,7 +775,6 @@
           "find_one.unsupportedOptions": {
             "description": "Mongoeco read.find_one unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -872,7 +788,6 @@
           "async": {
             "description": "Mongoeco read async for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -883,7 +798,6 @@
           "embedded": {
             "description": "Mongoeco read embedded for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -894,7 +808,6 @@
           "queryFieldOperators": {
             "description": "Mongoeco read queryFieldOperators for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -936,7 +849,6 @@
           "queryTopLevelOperators": {
             "description": "Mongoeco read queryTopLevelOperators for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -960,7 +872,6 @@
           "sync": {
             "description": "Mongoeco read sync for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -981,9 +892,6 @@
         "name": "write",
         "operations": [
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "insert_one",
             "result_type": "org.mongoeco:result.insert_result:1",
             "source": {
@@ -994,9 +902,6 @@
             }
           },
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "insert_many",
             "result_type": "org.mongoeco:result.insert_many_result:1",
             "source": {
@@ -1007,9 +912,6 @@
             }
           },
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "update_one",
             "result_type": "org.mongoeco:result.update_result:1",
             "source": {
@@ -1020,9 +922,6 @@
             }
           },
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "update_many",
             "result_type": "org.mongoeco:result.update_result:1",
             "source": {
@@ -1033,9 +932,6 @@
             }
           },
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "replace_one",
             "result_type": "org.mongoeco:result.update_result:1",
             "source": {
@@ -1046,9 +942,6 @@
             }
           },
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "delete_one",
             "result_type": "org.mongoeco:result.delete_result:1",
             "source": {
@@ -1059,9 +952,6 @@
             }
           },
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "delete_many",
             "result_type": "org.mongoeco:result.delete_result:1",
             "source": {
@@ -1072,9 +962,6 @@
             }
           },
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "bulk_write",
             "result_type": "org.mongoeco:result.bulk_write_result:1",
             "source": {
@@ -1089,7 +976,6 @@
           "metadata_keys": {
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/metadata.py",
               "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
@@ -1112,7 +998,6 @@
           "bulk_write.acceptedNoopOptions": {
             "description": "Mongoeco write.bulk_write acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1126,7 +1011,6 @@
           "bulk_write.acceptsComment": {
             "description": "Mongoeco write.bulk_write acceptsComment for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1137,7 +1021,6 @@
           "bulk_write.acceptsLet": {
             "description": "Mongoeco write.bulk_write acceptsLet for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1148,7 +1031,6 @@
           "bulk_write.acceptsOrderedExecution": {
             "description": "Mongoeco write.bulk_write acceptsOrderedExecution for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1159,7 +1041,6 @@
           "bulk_write.acceptsWriteModels": {
             "description": "Mongoeco write.bulk_write acceptsWriteModels for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1170,7 +1051,6 @@
           "bulk_write.collectionScoped": {
             "description": "Mongoeco write.bulk_write collectionScoped for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1181,7 +1061,6 @@
           "bulk_write.supportedOptions": {
             "description": "Mongoeco write.bulk_write supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1195,7 +1074,6 @@
           "bulk_write.supportsExplain": {
             "description": "Mongoeco write.bulk_write supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1206,7 +1084,6 @@
           "bulk_write.supportsOrderedExecution": {
             "description": "Mongoeco write.bulk_write supportsOrderedExecution for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1217,7 +1094,6 @@
           "bulk_write.supportsSession": {
             "description": "Mongoeco write.bulk_write supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1228,7 +1104,6 @@
           "bulk_write.unsupportedOptions": {
             "description": "Mongoeco write.bulk_write unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1242,7 +1117,6 @@
           "delete_many.acceptedNoopOptions": {
             "description": "Mongoeco write.delete_many acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1256,7 +1130,6 @@
           "delete_many.acceptsCollation": {
             "description": "Mongoeco write.delete_many acceptsCollation for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1267,7 +1140,6 @@
           "delete_many.acceptsComment": {
             "description": "Mongoeco write.delete_many acceptsComment for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1278,7 +1150,6 @@
           "delete_many.acceptsFilter": {
             "description": "Mongoeco write.delete_many acceptsFilter for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1289,7 +1160,6 @@
           "delete_many.acceptsHint": {
             "description": "Mongoeco write.delete_many acceptsHint for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1300,7 +1170,6 @@
           "delete_many.acceptsLet": {
             "description": "Mongoeco write.delete_many acceptsLet for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1311,7 +1180,6 @@
           "delete_many.collectionScoped": {
             "description": "Mongoeco write.delete_many collectionScoped for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1322,7 +1190,6 @@
           "delete_many.supportedOptions": {
             "description": "Mongoeco write.delete_many supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1336,7 +1203,6 @@
           "delete_many.supportsExplain": {
             "description": "Mongoeco write.delete_many supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1347,7 +1213,6 @@
           "delete_many.supportsSession": {
             "description": "Mongoeco write.delete_many supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1358,7 +1223,6 @@
           "delete_many.unsupportedOptions": {
             "description": "Mongoeco write.delete_many unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1372,7 +1236,6 @@
           "delete_one.acceptedNoopOptions": {
             "description": "Mongoeco write.delete_one acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1386,7 +1249,6 @@
           "delete_one.acceptsCollation": {
             "description": "Mongoeco write.delete_one acceptsCollation for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1397,7 +1259,6 @@
           "delete_one.acceptsComment": {
             "description": "Mongoeco write.delete_one acceptsComment for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1408,7 +1269,6 @@
           "delete_one.acceptsFilter": {
             "description": "Mongoeco write.delete_one acceptsFilter for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1419,7 +1279,6 @@
           "delete_one.acceptsHint": {
             "description": "Mongoeco write.delete_one acceptsHint for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1430,7 +1289,6 @@
           "delete_one.acceptsLet": {
             "description": "Mongoeco write.delete_one acceptsLet for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1441,7 +1299,6 @@
           "delete_one.collectionScoped": {
             "description": "Mongoeco write.delete_one collectionScoped for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1452,7 +1309,6 @@
           "delete_one.supportedOptions": {
             "description": "Mongoeco write.delete_one supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1466,7 +1322,6 @@
           "delete_one.supportsExplain": {
             "description": "Mongoeco write.delete_one supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1477,7 +1332,6 @@
           "delete_one.supportsSession": {
             "description": "Mongoeco write.delete_one supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1488,7 +1342,6 @@
           "delete_one.unsupportedOptions": {
             "description": "Mongoeco write.delete_one unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1502,7 +1355,6 @@
           "insert_many.acceptedNoopOptions": {
             "description": "Mongoeco write.insert_many acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1516,7 +1368,6 @@
           "insert_many.acceptsComment": {
             "description": "Mongoeco write.insert_many acceptsComment for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1527,7 +1378,6 @@
           "insert_many.acceptsDocuments": {
             "description": "Mongoeco write.insert_many acceptsDocuments for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1538,7 +1388,6 @@
           "insert_many.acceptsOrderedExecution": {
             "description": "Mongoeco write.insert_many acceptsOrderedExecution for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1549,7 +1398,6 @@
           "insert_many.collectionScoped": {
             "description": "Mongoeco write.insert_many collectionScoped for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1560,7 +1408,6 @@
           "insert_many.supportedOptions": {
             "description": "Mongoeco write.insert_many supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1574,7 +1421,6 @@
           "insert_many.supportsExplain": {
             "description": "Mongoeco write.insert_many supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1585,7 +1431,6 @@
           "insert_many.supportsOrderedExecution": {
             "description": "Mongoeco write.insert_many supportsOrderedExecution for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1596,7 +1441,6 @@
           "insert_many.supportsSession": {
             "description": "Mongoeco write.insert_many supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1607,7 +1451,6 @@
           "insert_many.unsupportedOptions": {
             "description": "Mongoeco write.insert_many unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1621,7 +1464,6 @@
           "insert_one.acceptedNoopOptions": {
             "description": "Mongoeco write.insert_one acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1635,7 +1477,6 @@
           "insert_one.acceptsComment": {
             "description": "Mongoeco write.insert_one acceptsComment for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1646,7 +1487,6 @@
           "insert_one.acceptsDocument": {
             "description": "Mongoeco write.insert_one acceptsDocument for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1657,7 +1497,6 @@
           "insert_one.collectionScoped": {
             "description": "Mongoeco write.insert_one collectionScoped for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1668,7 +1507,6 @@
           "insert_one.supportedOptions": {
             "description": "Mongoeco write.insert_one supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1682,7 +1520,6 @@
           "insert_one.supportsExplain": {
             "description": "Mongoeco write.insert_one supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1693,7 +1530,6 @@
           "insert_one.supportsSession": {
             "description": "Mongoeco write.insert_one supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1704,7 +1540,6 @@
           "insert_one.unsupportedOptions": {
             "description": "Mongoeco write.insert_one unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1718,7 +1553,6 @@
           "replace_one.acceptedNoopOptions": {
             "description": "Mongoeco write.replace_one acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1732,7 +1566,6 @@
           "replace_one.acceptsCollation": {
             "description": "Mongoeco write.replace_one acceptsCollation for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1743,7 +1576,6 @@
           "replace_one.acceptsComment": {
             "description": "Mongoeco write.replace_one acceptsComment for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1754,7 +1586,6 @@
           "replace_one.acceptsFilter": {
             "description": "Mongoeco write.replace_one acceptsFilter for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1765,7 +1596,6 @@
           "replace_one.acceptsHint": {
             "description": "Mongoeco write.replace_one acceptsHint for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1776,7 +1606,6 @@
           "replace_one.acceptsLet": {
             "description": "Mongoeco write.replace_one acceptsLet for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1787,7 +1616,6 @@
           "replace_one.acceptsReplacementDocument": {
             "description": "Mongoeco write.replace_one acceptsReplacementDocument for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1798,7 +1626,6 @@
           "replace_one.acceptsSort": {
             "description": "Mongoeco write.replace_one acceptsSort for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1809,7 +1636,6 @@
           "replace_one.collectionScoped": {
             "description": "Mongoeco write.replace_one collectionScoped for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1820,7 +1646,6 @@
           "replace_one.supportedOptions": {
             "description": "Mongoeco write.replace_one supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1834,7 +1659,6 @@
           "replace_one.supportsExplain": {
             "description": "Mongoeco write.replace_one supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1845,7 +1669,6 @@
           "replace_one.supportsReplacementDocument": {
             "description": "Mongoeco write.replace_one supportsReplacementDocument for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1856,7 +1679,6 @@
           "replace_one.supportsSession": {
             "description": "Mongoeco write.replace_one supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1867,7 +1689,6 @@
           "replace_one.supportsUpsert": {
             "description": "Mongoeco write.replace_one supportsUpsert for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1878,7 +1699,6 @@
           "replace_one.unsupportedOptions": {
             "description": "Mongoeco write.replace_one unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1892,7 +1712,6 @@
           "update_many.acceptedNoopOptions": {
             "description": "Mongoeco write.update_many acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1906,7 +1725,6 @@
           "update_many.acceptsArrayFilters": {
             "description": "Mongoeco write.update_many acceptsArrayFilters for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1917,7 +1735,6 @@
           "update_many.acceptsCollation": {
             "description": "Mongoeco write.update_many acceptsCollation for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1928,7 +1745,6 @@
           "update_many.acceptsComment": {
             "description": "Mongoeco write.update_many acceptsComment for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1939,7 +1755,6 @@
           "update_many.acceptsFilter": {
             "description": "Mongoeco write.update_many acceptsFilter for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1950,7 +1765,6 @@
           "update_many.acceptsHint": {
             "description": "Mongoeco write.update_many acceptsHint for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1961,7 +1775,6 @@
           "update_many.acceptsLet": {
             "description": "Mongoeco write.update_many acceptsLet for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1972,7 +1785,6 @@
           "update_many.acceptsSort": {
             "description": "Mongoeco write.update_many acceptsSort for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1983,7 +1795,6 @@
           "update_many.acceptsUpdateDocument": {
             "description": "Mongoeco write.update_many acceptsUpdateDocument for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -1994,7 +1805,6 @@
           "update_many.collectionScoped": {
             "description": "Mongoeco write.update_many collectionScoped for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2005,7 +1815,6 @@
           "update_many.supportedOptions": {
             "description": "Mongoeco write.update_many supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2019,7 +1828,6 @@
           "update_many.supportedUpdateOperators": {
             "description": "Mongoeco write.update_many supportedUpdateOperators for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2033,7 +1841,6 @@
           "update_many.supportsExplain": {
             "description": "Mongoeco write.update_many supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2044,7 +1851,6 @@
           "update_many.supportsPipelineUpdate": {
             "description": "Mongoeco write.update_many supportsPipelineUpdate for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2055,7 +1861,6 @@
           "update_many.supportsSession": {
             "description": "Mongoeco write.update_many supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2066,7 +1871,6 @@
           "update_many.supportsUpsert": {
             "description": "Mongoeco write.update_many supportsUpsert for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2077,7 +1881,6 @@
           "update_many.unsupportedOptions": {
             "description": "Mongoeco write.update_many unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2091,7 +1894,6 @@
           "update_one.acceptedNoopOptions": {
             "description": "Mongoeco write.update_one acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2105,7 +1907,6 @@
           "update_one.acceptsArrayFilters": {
             "description": "Mongoeco write.update_one acceptsArrayFilters for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2116,7 +1917,6 @@
           "update_one.acceptsCollation": {
             "description": "Mongoeco write.update_one acceptsCollation for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2127,7 +1927,6 @@
           "update_one.acceptsComment": {
             "description": "Mongoeco write.update_one acceptsComment for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2138,7 +1937,6 @@
           "update_one.acceptsFilter": {
             "description": "Mongoeco write.update_one acceptsFilter for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2149,7 +1947,6 @@
           "update_one.acceptsHint": {
             "description": "Mongoeco write.update_one acceptsHint for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2160,7 +1957,6 @@
           "update_one.acceptsLet": {
             "description": "Mongoeco write.update_one acceptsLet for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2171,7 +1967,6 @@
           "update_one.acceptsSort": {
             "description": "Mongoeco write.update_one acceptsSort for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2182,7 +1977,6 @@
           "update_one.acceptsUpdateDocument": {
             "description": "Mongoeco write.update_one acceptsUpdateDocument for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2193,7 +1987,6 @@
           "update_one.collectionScoped": {
             "description": "Mongoeco write.update_one collectionScoped for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2204,7 +1997,6 @@
           "update_one.supportedOptions": {
             "description": "Mongoeco write.update_one supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2218,7 +2010,6 @@
           "update_one.supportedUpdateOperators": {
             "description": "Mongoeco write.update_one supportedUpdateOperators for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2232,7 +2023,6 @@
           "update_one.supportsExplain": {
             "description": "Mongoeco write.update_one supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2243,7 +2033,6 @@
           "update_one.supportsPipelineUpdate": {
             "description": "Mongoeco write.update_one supportsPipelineUpdate for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2254,7 +2043,6 @@
           "update_one.supportsSession": {
             "description": "Mongoeco write.update_one supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2265,7 +2053,6 @@
           "update_one.supportsUpsert": {
             "description": "Mongoeco write.update_one supportsUpsert for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2276,7 +2063,6 @@
           "update_one.unsupportedOptions": {
             "description": "Mongoeco write.update_one unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2290,7 +2076,6 @@
           "async": {
             "description": "Mongoeco write async for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2301,7 +2086,6 @@
           "embedded": {
             "description": "Mongoeco write embedded for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2312,7 +2096,6 @@
           "supportsPipelineUpdate": {
             "description": "Mongoeco write supportsPipelineUpdate for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2323,7 +2106,6 @@
           "sync": {
             "description": "Mongoeco write sync for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2334,7 +2116,6 @@
           "updateOperators": {
             "description": "Mongoeco write updateOperators for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2375,9 +2156,6 @@
         "name": "transactions",
         "operations": [
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "start_session",
             "result_type": "org.mongoeco:result.session:1",
             "source": {
@@ -2389,9 +2167,6 @@
             }
           },
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "with_transaction",
             "result_type": "org.mongoeco:result.transaction_result:1",
             "source": {
@@ -2407,7 +2182,6 @@
           "metadata_keys": {
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/metadata.py",
               "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
@@ -2429,7 +2203,6 @@
           "async": {
             "description": "Whether the async client surface is supported.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2440,7 +2213,6 @@
           "distributed": {
             "description": "Whether the behavior spans independent nodes.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2451,7 +2223,6 @@
           "embedded": {
             "description": "Whether the behavior is available in embedded backends.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2462,7 +2233,6 @@
           "mode": {
             "description": "Effective transaction mode declared by this implementation.",
             "kind": "string",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2476,7 +2246,6 @@
           "sync": {
             "description": "Whether the synchronous client surface is supported.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2497,9 +2266,6 @@
         "name": "change_streams",
         "operations": [
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "watch",
             "result_type": "org.mongoeco:result.change_stream:1",
             "source": {
@@ -2515,7 +2281,6 @@
           "metadata_keys": {
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/metadata.py",
               "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
@@ -2540,7 +2305,6 @@
           "boundedHistory": {
             "description": "Whether retained change history is bounded.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2551,7 +2315,6 @@
           "distributed": {
             "description": "Whether the behavior spans independent nodes.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2562,7 +2325,6 @@
           "implementation": {
             "description": "Implementation kind of the change stream.",
             "kind": "string",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2576,7 +2338,6 @@
           "persistent": {
             "description": "Whether change history survives process restart.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2587,7 +2348,6 @@
           "resumable": {
             "description": "Whether a stream can resume within its supported scope.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2598,7 +2358,6 @@
           "resumableAcrossClientRestarts": {
             "description": "Whether a stream resumes after client recreation.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2609,7 +2368,6 @@
           "resumableAcrossNodes": {
             "description": "Whether a stream resumes on another node.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2620,7 +2378,6 @@
           "resumableAcrossProcesses": {
             "description": "Whether a stream resumes after process restart.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2641,9 +2398,6 @@
         "name": "aggregation",
         "operations": [
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "aggregate",
             "result_type": "org.mongoeco:result.cursor:1",
             "source": {
@@ -2658,7 +2412,6 @@
           "metadata_keys": {
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/metadata.py",
               "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
@@ -2684,7 +2437,6 @@
           "async": {
             "description": "Mongoeco aggregation async for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2695,7 +2447,6 @@
           "embedded": {
             "description": "Mongoeco aggregation embedded for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2706,7 +2457,6 @@
           "explainable": {
             "description": "Mongoeco aggregation explainable for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2717,7 +2467,6 @@
           "supportedExpressionOperators": {
             "description": "Mongoeco aggregation supportedExpressionOperators for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2865,7 +2614,6 @@
           "supportedGroupAccumulators": {
             "description": "Mongoeco aggregation supportedGroupAccumulators for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2903,7 +2651,6 @@
           "supportedStages": {
             "description": "Mongoeco aggregation supportedStages for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2952,7 +2699,6 @@
           "supportedWindowAccumulators": {
             "description": "Mongoeco aggregation supportedWindowAccumulators for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -2998,7 +2744,6 @@
           "sync": {
             "description": "Mongoeco aggregation sync for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3009,7 +2754,6 @@
           "aggregate.acceptedNoopOptions": {
             "description": "Mongoeco aggregation.aggregate acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3023,7 +2767,6 @@
           "aggregate.acceptsPipeline": {
             "description": "Mongoeco aggregation.aggregate acceptsPipeline for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3034,7 +2777,6 @@
           "aggregate.supportedExpressionOperators": {
             "description": "Mongoeco aggregation.aggregate supportedExpressionOperators for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3048,7 +2790,6 @@
           "aggregate.supportedGroupAccumulators": {
             "description": "Mongoeco aggregation.aggregate supportedGroupAccumulators for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3062,7 +2803,6 @@
           "aggregate.supportedOptions": {
             "description": "Mongoeco aggregation.aggregate supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3076,7 +2816,6 @@
           "aggregate.supportedStages": {
             "description": "Mongoeco aggregation.aggregate supportedStages for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3090,7 +2829,6 @@
           "aggregate.supportedWindowAccumulators": {
             "description": "Mongoeco aggregation.aggregate supportedWindowAccumulators for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3104,7 +2842,6 @@
           "aggregate.supportsCollectionScope": {
             "description": "Mongoeco aggregation.aggregate supportsCollectionScope for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3115,7 +2852,6 @@
           "aggregate.supportsDatabaseScope": {
             "description": "Mongoeco aggregation.aggregate supportsDatabaseScope for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3126,7 +2862,6 @@
           "aggregate.supportsExplain": {
             "description": "Mongoeco aggregation.aggregate supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3137,7 +2872,6 @@
           "aggregate.supportsLeadingSearchStage": {
             "description": "Mongoeco aggregation.aggregate supportsLeadingSearchStage for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3148,7 +2882,6 @@
           "aggregate.supportsLeadingVectorSearchStage": {
             "description": "Mongoeco aggregation.aggregate supportsLeadingVectorSearchStage for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3159,7 +2892,6 @@
           "aggregate.supportsSession": {
             "description": "Mongoeco aggregation.aggregate supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3170,7 +2902,6 @@
           "aggregate.unsupportedOptions": {
             "description": "Mongoeco aggregation.aggregate unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3184,7 +2915,6 @@
           "aggregate.bucketAutoGranularitySeries": {
             "description": "Series accepted by $bucketAuto for valid numeric inputs; no claim about arbitrary stage inputs.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3223,9 +2953,6 @@
         "name": "search",
         "operations": [
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "aggregate",
             "result_type": "org.mongoeco:result.cursor:1",
             "source": {
@@ -3240,7 +2967,6 @@
           "metadata_keys": {
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/metadata.py",
               "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
@@ -3272,7 +2998,6 @@
           "advancedAtlasLikeGaps": {
             "description": "Mongoeco search advancedAtlasLikeGaps for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3286,7 +3011,6 @@
           "aggregateStage": {
             "description": "Mongoeco search aggregateStage for this configuration.",
             "kind": "string",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3303,7 +3027,6 @@
           "exactFilterFieldMappings": {
             "description": "Mongoeco search exactFilterFieldMappings for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3324,7 +3047,6 @@
           "explainFeatures": {
             "description": "Mongoeco search explainFeatures for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3338,7 +3060,6 @@
           "fieldMappings": {
             "description": "Mongoeco search fieldMappings for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3364,7 +3085,6 @@
           "operators": {
             "description": "Mongoeco search operators for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3391,7 +3111,6 @@
           "sqliteBackends": {
             "description": "Mongoeco search sqliteBackends for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3405,7 +3124,6 @@
           "structuredFieldMappings": {
             "description": "Mongoeco search structuredFieldMappings for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3423,7 +3141,6 @@
           "structuredParentPathOperators": {
             "description": "Mongoeco search structuredParentPathOperators for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3445,7 +3162,6 @@
           "textSearchTier": {
             "description": "Mongoeco search textSearchTier for this configuration.",
             "kind": "string",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3462,7 +3178,6 @@
           "textualFieldMappings": {
             "description": "Mongoeco search textualFieldMappings for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3481,7 +3196,6 @@
           "aggregate.acceptedNoopOptions": {
             "description": "Mongoeco search.aggregate acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3495,7 +3209,6 @@
           "aggregate.acceptsPipeline": {
             "description": "Mongoeco search.aggregate acceptsPipeline for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3506,7 +3219,6 @@
           "aggregate.aggregateStage": {
             "description": "Mongoeco search.aggregate aggregateStage for the declared configuration.",
             "kind": "string",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3523,7 +3235,6 @@
           "aggregate.operators": {
             "description": "Mongoeco search.aggregate operators for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3550,7 +3261,6 @@
           "aggregate.requiresLeadingStage": {
             "description": "Mongoeco search.aggregate requiresLeadingStage for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3561,7 +3271,6 @@
           "aggregate.supportedOptions": {
             "description": "Mongoeco search.aggregate supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3575,7 +3284,6 @@
           "aggregate.supportsCollectionScope": {
             "description": "Mongoeco search.aggregate supportsCollectionScope for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3586,7 +3294,6 @@
           "aggregate.supportsDatabaseScope": {
             "description": "Mongoeco search.aggregate supportsDatabaseScope for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3597,7 +3304,6 @@
           "aggregate.supportsExplain": {
             "description": "Mongoeco search.aggregate supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3608,7 +3314,6 @@
           "aggregate.supportsSession": {
             "description": "Mongoeco search.aggregate supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3619,7 +3324,6 @@
           "aggregate.unsupportedOptions": {
             "description": "Mongoeco search.aggregate unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3643,9 +3347,6 @@
         "name": "vector_search",
         "operations": [
           {
-            "idempotency": {
-              "state": "unknown"
-            },
             "name": "aggregate",
             "result_type": "org.mongoeco:result.cursor:1",
             "source": {
@@ -3660,7 +3361,6 @@
           "metadata_keys": {
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/metadata.py",
               "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
@@ -3687,7 +3387,6 @@
           "aggregate.acceptedNoopOptions": {
             "description": "Mongoeco vector_search.aggregate acceptedNoopOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3701,7 +3400,6 @@
           "aggregate.acceptsPipeline": {
             "description": "Mongoeco vector_search.aggregate acceptsPipeline for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3712,7 +3410,6 @@
           "aggregate.aggregateStage": {
             "description": "Mongoeco vector_search.aggregate aggregateStage for the declared configuration.",
             "kind": "string",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3729,7 +3426,6 @@
           "aggregate.explainFeatures": {
             "description": "Mongoeco vector_search.aggregate explainFeatures for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3743,7 +3439,6 @@
           "aggregate.hybridFilterModes": {
             "description": "Mongoeco vector_search.aggregate hybridFilterModes for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3762,7 +3457,6 @@
           "aggregate.requiresLeadingStage": {
             "description": "Mongoeco vector_search.aggregate requiresLeadingStage for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3773,7 +3467,6 @@
           "aggregate.scoreField": {
             "description": "Mongoeco vector_search.aggregate scoreField for the declared configuration.",
             "kind": "string",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3790,7 +3483,6 @@
           "aggregate.similarities": {
             "description": "Mongoeco vector_search.aggregate similarities for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3809,7 +3501,6 @@
           "aggregate.supportedOptions": {
             "description": "Mongoeco vector_search.aggregate supportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3823,7 +3514,6 @@
           "aggregate.supportsCollectionScope": {
             "description": "Mongoeco vector_search.aggregate supportsCollectionScope for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3834,7 +3524,6 @@
           "aggregate.supportsDatabaseScope": {
             "description": "Mongoeco vector_search.aggregate supportsDatabaseScope for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3845,7 +3534,6 @@
           "aggregate.supportsExplain": {
             "description": "Mongoeco vector_search.aggregate supportsExplain for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3856,7 +3544,6 @@
           "aggregate.supportsSession": {
             "description": "Mongoeco vector_search.aggregate supportsSession for the declared configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3867,7 +3554,6 @@
           "aggregate.unsupportedOptions": {
             "description": "Mongoeco vector_search.aggregate unsupportedOptions for the declared configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3881,7 +3567,6 @@
           "aggregateStage": {
             "description": "Mongoeco vector_search aggregateStage for this configuration.",
             "kind": "string",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3898,7 +3583,6 @@
           "backend": {
             "description": "Mongoeco vector_search backend for this configuration.",
             "kind": "string",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3912,7 +3596,6 @@
           "explainFeatures": {
             "description": "Mongoeco vector_search explainFeatures for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3926,7 +3609,6 @@
           "fallback": {
             "description": "Mongoeco vector_search fallback for this configuration.",
             "kind": "string",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3940,7 +3622,6 @@
           "filterMode": {
             "description": "Mongoeco vector_search filterMode for this configuration.",
             "kind": "string",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3954,7 +3635,6 @@
           "hybridFilterModes": {
             "description": "Mongoeco vector_search hybridFilterModes for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3973,7 +3653,6 @@
           "mode": {
             "description": "Mongoeco vector_search mode for this configuration.",
             "kind": "string",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -3987,7 +3666,6 @@
           "similarities": {
             "description": "Mongoeco vector_search similarities for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4019,7 +3697,6 @@
           "metadata_keys": {
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/metadata.py",
               "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
@@ -4039,7 +3716,6 @@
           "backend.advancedOptionsAvailable": {
             "description": "Mongoeco collation backend.advancedOptionsAvailable for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4050,7 +3726,6 @@
           "backend.availableBackends": {
             "description": "Mongoeco collation backend.availableBackends for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4064,7 +3739,6 @@
           "backend.selectedBackend": {
             "description": "Mongoeco collation backend.selectedBackend for this configuration.",
             "kind": "string",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4078,7 +3752,6 @@
           "backend.unicodeAvailable": {
             "description": "Mongoeco collation backend.unicodeAvailable for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4089,7 +3762,6 @@
           "capabilities.advancedOptionsRequireIcu": {
             "description": "Mongoeco collation capabilities.advancedOptionsRequireIcu for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4103,7 +3775,6 @@
           "capabilities.fallbackBackend": {
             "description": "Mongoeco collation capabilities.fallbackBackend for this configuration.",
             "kind": "string",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4117,7 +3788,6 @@
           "capabilities.optionalIcuBackend": {
             "description": "Mongoeco collation capabilities.optionalIcuBackend for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4128,7 +3798,6 @@
           "capabilities.supportedLocales": {
             "description": "Mongoeco collation capabilities.supportedLocales for this configuration.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4142,7 +3811,6 @@
           "capabilities.supportsCaseLevel": {
             "description": "Mongoeco collation capabilities.supportsCaseLevel for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4153,7 +3821,6 @@
           "capabilities.supportsNumericOrdering": {
             "description": "Mongoeco collation capabilities.supportsNumericOrdering for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4177,7 +3844,6 @@
           "metadata_keys": {
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/metadata.py",
               "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
@@ -4197,7 +3863,6 @@
           "persistent": {
             "description": "Mongoeco persistence persistent for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4221,7 +3886,6 @@
           "metadata_keys": {
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/metadata.py",
               "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
@@ -4242,7 +3906,6 @@
           "sdam.distributedMonitoring": {
             "description": "Mongoeco topology_discovery sdam.distributedMonitoring for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4253,7 +3916,6 @@
           "sdam.electionMetadataAware": {
             "description": "Mongoeco topology_discovery sdam.electionMetadataAware for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4264,7 +3926,6 @@
           "sdam.fullSdam": {
             "description": "Mongoeco topology_discovery sdam.fullSdam for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4275,7 +3936,6 @@
           "sdam.helloMemberDiscovery": {
             "description": "Mongoeco topology_discovery sdam.helloMemberDiscovery for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4286,7 +3946,6 @@
           "sdam.longPollingHello": {
             "description": "Mongoeco topology_discovery sdam.longPollingHello for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4297,7 +3956,6 @@
           "sdam.serverHealthTracking": {
             "description": "Mongoeco topology_discovery sdam.serverHealthTracking for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
@@ -4308,7 +3966,6 @@
           "sdam.topologyVersionAware": {
             "description": "Mongoeco topology_discovery sdam.topologyVersionAware for this configuration.",
             "kind": "boolean",
-            "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
               "revision": "sha256:4677b904145305e0d9345a50cdc772a4ca8020e36676b2b9aab14cf8c1b23afb",
