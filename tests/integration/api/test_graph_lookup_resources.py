@@ -6,7 +6,14 @@ import pytest
 
 from mongoeco import MongoClient
 from mongoeco.core.aggregation.lookup_physical import BoundedLookupHashPlan
+from mongoeco.core.aggregation.runtime_state import apply_pipeline_states
 from mongoeco.core.aggregation.stages import apply_pipeline
+from mongoeco.core.bson_scalars import BsonInt64
+from mongoeco.core.runtime_metadata import (
+    RuntimeDocumentState,
+    RuntimeMetadata,
+    RuntimeMetadataKey,
+)
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import OperationFailure
@@ -162,3 +169,27 @@ def test_graph_lookup_deduplicates_seeds_and_rejects_depth_overwriting_identity(
             )
         expected_code = 2398003
         assert failure.value.code == expected_code
+
+
+def test_graph_lookup_retains_metadata_outside_the_output_path():
+    score = RuntimeMetadataKey.TEXT_SCORE
+    metadata = (
+        RuntimeMetadata()
+        .with_value(score, 1.5)
+        .with_virtual_field("children", "shadowed", source=score)
+        .with_virtual_field("previewScore", 1.5, source=score)
+    )
+    root = RuntimeDocumentState({"_id": 1}, metadata)
+    foreign = {"_id": "child", "parent_id": 1}
+    (output,) = apply_pipeline_states(
+        [root],
+        [{"$graphLookup": GRAPH_SPEC | {"maxDepth": 0}}],
+        collection_resolver=lambda _name: [foreign],
+        lookup_hash_max_associations=10,
+    )
+    joined = {"_id": 1, "children": [foreign | {"depth": BsonInt64(0)}]}
+    assert output.persistence_document() == joined
+    assert output.public_document() == joined | {"previewScore": 1.5}
+    assert output.metadata == metadata.without_virtual_path("children")
+    assert root.persistence_document() == {"_id": 1}
+    assert root.metadata == metadata
