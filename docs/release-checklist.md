@@ -82,16 +82,20 @@ Esta lista prepara una release sin obligar a publicar nada.
 
 ## 3. Validacion funcional
 
-- ejecutar `pytest -q` en Python 3.13, 3.14 y 3.15 contra el wheel candidato;
+- ejecutar `python -m pytest -q` en los Python de la
+  [CI](../.github/workflows/ci.yml) contra el wheel candidato instalado, con
+  `MONGOECO_TEST_INSTALLED_ARTIFACT=1` para exigir que se importe desde
+  `site-packages`;
 - comprobar que las versiones oficiales de Python coinciden con los
   clasificadores, la matriz obligatoria de CI y la
   [política de soporte](python-support.md); Python 3.13 se mantiene hasta
   octubre de 2028, incluido ese mes;
 - ejecutar `python -m unittest discover -s tests -p 'test*.py'`;
-- ejecutar `pytest --cov=mongoeco --cov-report=term -q`;
 - ejecutar el corpus K01–K20 del [kit pytest](pytest.md) contra el wheel,
   con ambos motores, clientes nativos sync/async y workers 2/4; verificar
-  también las celdas pytest 8.4/9 y PyMongo 4.9.2/4.19.0 en los tres Python;
+  también las doce celdas de `pytest-kit` definidas en la
+  [CI](../.github/workflows/ci.yml). Usar los pins y los extremos de SDK de
+  ese job, incluido el mínimo soportado;
 - comprobar el diagnóstico de configuración en el resumen normal, con `-q` y
   una sola vez con xdist; los perfiles inválidos deben conservar los resultados
   originales y la generación del informe no debe abrir recursos;
@@ -107,16 +111,34 @@ Esta lista prepara una release sin obligar a publicar nada.
   incorporan identidades de consumidores;
 - ejecutar los property tests con los perfiles `ci` y `deep`, conservando el
   ejemplo reducido si Hypothesis encuentra una divergencia;
-- confirmar que `[tool.coverage.report]` aplica `precision = 2` y
-  `fail_under = 99.00`, y que la cobertura real sigue en `>=99.00%`.
+- medir la cobertura en Python 3.14 con el wheel instalado y la
+  configuración del backend opcional PCRE2 que usa el job `test` de
+  [CI](../.github/workflows/ci.yml). Conservar el informe JSON:
+
+  ```sh
+  MONGOECO_TEST_INSTALLED_ARTIFACT=1 python -m pytest --cov=mongoeco \
+    --cov-report=term --cov-report=json:coverage.json -q -n 2 -ra
+  ```
+
+  El gate de CI exige `num_statements > 0` y
+  `covered_lines * 100 >= num_statements * 99` con los enteros de
+  `coverage.json`. `precision = 2` y `fail_under = 99.00` en
+  `[tool.coverage.report]` no sustituyen esa comparación exacta;
 - derivar la ultima etiqueta con `git describe --tags --abbrev=0
   --match 'v[0-9]*' HEAD^`, pasarla a `check_lint_ratchet.py` y resolver
   cualquier diagnostico Ruff nuevo en los ficheros modificados;
 - no ampliar `scripts/ruff_ratchet_baseline.json`; reducirla cuando se corrija
   deuda conocida y reiniciar su referencia despues de etiquetar la release;
-- ejecutar `python scripts/run_pymongo_profile_matrix.py --versions 4.9.2
-  4.11.3 4.13.2 4.17.0 4.18.2 4.19.0 --summary-output
-  tests/fixtures/pymongo_profile_matrix.json` y revisar los deltas publicados.
+- ejecutar la [matriz aislada de PyMongo](../scripts/run_pymongo_profile_matrix.py)
+  con sus versiones por defecto, igual que CI. Comparar el resumen con el
+  fixture versionado y revisar los deltas antes de actualizarlo:
+
+  ```sh
+  profile_dir="$(mktemp -d)"
+  python scripts/run_pymongo_profile_matrix.py --root "$profile_dir/envs" \
+    --output "$profile_dir/raw.json" --summary-output "$profile_dir/summary.json" &&
+    diff -u tests/fixtures/pymongo_profile_matrix.json "$profile_dir/summary.json"
+  ```
 - verificar conversiones BSON numéricas equivalentes de `_id` por replacement
   y pipeline, incluidos contadores, no-op posterior, error 66 clásico y parcialidad
   de update_many/bulk; comprobar rollback, snapshots, índices, Search, TTL,

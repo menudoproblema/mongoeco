@@ -7,12 +7,12 @@ Test application queries and writes locally, using a fresh in-memory database
 or SQLite. Start with the direct Python API, or keep real PyMongo clients and
 point them at an isolated local server with the optional pytest kit.
 
-**5.0.0 is being prepared; it has not been published yet.** It aligns BSON,
+**Mongoeco 5.0.0 is available.** This release aligns BSON,
 queries, writes and cursor behavior with the retained MongoDB dialects, adds an
 explicit optional PCRE2 backend and preferred bucket boundaries, and adopts CXP
 catalog 2.0.0. Read the
 [migration guide](https://github.com/menudoproblema/mongoeco/blob/main/docs/migrating-to-5.0.md)
-and [candidate release notes](https://github.com/menudoproblema/mongoeco/blob/main/docs/release-5.0.0.md)
+and [5.0.0 release notes](https://github.com/menudoproblema/mongoeco/releases/tag/v5.0.0)
 before upgrading. The pytest kit remains available since 4.10.0; wire diagnostics
 require 4.11.0 or later.
 

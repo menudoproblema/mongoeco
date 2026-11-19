@@ -67,3 +67,18 @@ under a 60 s process limit.
 Disposition: defer B3. A general eager evaluator adds work on rejections,
 and the probe does not support adding per-document state for a limited
 near benefit. No compound production path changes.
+
+## Acceptance in main
+
+B1 and B2 were accepted on `8033a12ff35406953013837f7e25c1fd66a40dad`,
+with B3 deferred. The [candidate CI](https://github.com/menudoproblema/mongoeco/actions/runs/44466173652)
+passed 19 jobs and covered 48,387 of 48,874 statements (99.00356%).
+All 12 selected native cases passed again on the verified wheel without skips.
+Its SHA-256 was
+`37a3394b2504380d04d2d4b79f295e29d42dee3c27d7481401a5ef69fc71e9a0`.
+
+The [PR #3](https://github.com/menudoproblema/mongoeco/pull/3) was integrated
+into `main` on November 19, 2026, followed by the test-only commit `5c41a410`.
+That commit adds an unlimited eligibility check alongside the limited
+tiebreak case and asserts absent highlights in both. Its ten focused tests
+passed against the accepted wheel.

@@ -19,9 +19,13 @@ usa Semantic Versioning.
 - Match PyMongo 4.20's `TypeError` for rejected `return_document` values.
 - Enforce ObjectId text and BSON length validation with or without PyMongo.
 
-## [5.0.0] - 2026-11-02
+### Performance
 
-Preparación del candidato; todavía no publicada.
+- Reuse the computed distance for matching and ranking in Memory `near` queries.
+  The engine benchmark's high-match workload used 49% less median CPU per query.
+  See the [measurement and controls](docs/index-search-validation.md#b2--reuse-the-distance-in-memory-near-ranking).
+
+## [5.0.0] - 2026-11-03
 
 ### Added
 

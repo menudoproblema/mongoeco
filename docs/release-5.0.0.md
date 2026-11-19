@@ -1,8 +1,13 @@
-# Candidato Mongoeco 5.0.0
+# Mongoeco 5.0.0
 
-Preparación iniciada el 2 de noviembre de 2026. No publicada ni etiquetada;
-la integración y las ejecuciones actuales se registran al final.
-Base publicada: v4.11.0. Guía: [migración](migrating-to-5.0.md).
+La preparación comenzó el 2 de noviembre de 2026 y la
+[versión v5.0.0](https://github.com/menudoproblema/mongoeco/releases/tag/v5.0.0)
+se publicó el 3 de noviembre sobre `429d90648943533b057c7c09cad4cb974295aa9b`.
+La base anterior era v4.11.0. Consulta la [guía de migración](migrating-to-5.0.md)
+y el [changelog](../CHANGELOG.md#unreleased) para cambios posteriores.
+
+El expediente conserva los estados y gates de cada candidato tal como se
+registraron durante la preparación.
 
 Major por el cambio público del default UUID y la retirada de expresiones
 anunciadas previamente. Incluye los cierres BSON, predicados, escrituras, fechas,
@@ -14,14 +19,13 @@ Resto de parte II excluido. No se reabren los candidatos congelados de F11.
 R1 versión, narrativa y migración; R2 dos builds reproducibles y artefacto
 inmutable; R3 tiempos comparativos aislados; R4 globales/cobertura/deep/matriz
 contra wheel instalado; R5 consumidores, smokes, typing/SPI/SQLite/nativo;
-R6 revisión final, evidencia y árbol limpio. Cada gate se registra cuando termina.
-La aprobación para etiquetar o publicar es posterior y no forma parte del encargo.
+R6 revisión final, evidencia y árbol limpio. El encargo de preparación
+dejaba la autorización de etiquetado y publicación para una fase posterior.
 
 ## Preparación histórica anterior a Q00–Q06
 
 Las secciones siguientes, hasta el incremento Q00–Q06, conservan la preparación
-del artefacto anterior. El candidato aceptado actual y el plan de lanzamiento
-figuran al final. No se deben usar sus hashes históricos para publicar.
+del artefacto anterior. Sus hashes documentan candidatos históricos.
 
 ### Protocolo de tiempos, fijado antes de medir
 

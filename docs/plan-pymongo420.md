@@ -371,3 +371,21 @@ PyMongo 4.20 cambia de ValueError a TypeError cuatro rechazos de
 return_document antes de enviar el comando, con estado intacto. El perfil
 4.20 aplica esa categoría en la admisión de la API. El replay conserva los
 goldens de 4.19 y aplica sólo ese delta comprobado, manteniendo fase y efectos.
+
+## Aceptación e integración
+
+P00–P07 quedaron aceptados sobre `69ebd79dd9d5d920e6a37882586577f51b53fe29`
+en el [PR #1](https://github.com/menudoproblema/mongoeco/pull/1).
+La [CI del candidato](https://github.com/menudoproblema/mongoeco/actions/runs/44437994982)
+terminó con 19 jobs verdes, incluidas las suites completas de los tres Python,
+las 12 celdas del kit, las 378 observaciones de perfiles y la cobertura exacta
+de 48.496/48.983 líneas (99,00578 %). El wheel instalado pasó 2.379 casos
+nativos sin skips y 768 replays de replica set. Los servidores fueron
+7.0.43, 8.0.32 y 9.0.2, cada uno con su FCV y PyMongo 4.20.0.
+
+SHA-256 del wheel: `aa1c15fc7de54a44afcf949d09464c8e526a650a6421d4456659fcf5fc08a635`.
+SHA-256 del sdist: `6654bdc9f4fb0cdefb88736980692af766952cf17ae23d0473e14886a04abe93`.
+
+El PR se integró en `main` el 19 de noviembre de 2026, conservando su SHA.
+La evidencia corresponde al candidato de integración. El perfil 4.20 y
+las correcciones figuran en [Unreleased](../CHANGELOG.md#unreleased).

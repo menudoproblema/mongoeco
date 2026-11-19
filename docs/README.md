@@ -1,8 +1,10 @@
 # Mongoeco documentation
 
 Start with application tests, then choose local persistence or search as needed.
-The [5.0.0 candidate](release-5.0.0.md) and [migration guide](migrating-to-5.0.md)
-cover the upcoming major; it is not published yet.
+Mongoeco 5.0.0 was published on November 3, 2026. See the
+[release record](release-5.0.0.md) and [migration guide](migrating-to-5.0.md).
+The [Unreleased changelog](../CHANGELOG.md#unreleased) tracks subsequent
+changes on `main`, including the PyMongo 4.20 profile.
 The [4.11.0 release notes](release-4.11.0.md) describe optional wire diagnostics,
 protocol fixes and engine simplification, with migration and delivery evidence.
 The [4.10.1 release notes](release-4.10.1.md) cover error and BSON fixes; the
@@ -44,8 +46,8 @@ Python/PyMongo versions.
 - [Pytest acceptance](pytest-review.md): installed-wheel matrix, parallel tests
   and anonymous consumer canary.
 - [Python support policy](python-support.md) and [PyMongo profiles](../COMPATIBILITY.md#4-perfiles-pymongo-disponibles).
-- [PyMongo 4.20 integration plan](plan-pymongo420.md): proposed SDK profile,
-  shared BSON corrections and bounded integration/acceptance gates.
+- [PyMongo 4.20 integration and acceptance](plan-pymongo420.md#aceptación-e-integración):
+  SDK profile, BSON corrections and validation in `main`.
 
 ## Store and search locally
 
@@ -57,6 +59,10 @@ Python/PyMongo versions.
 
 ## Advanced tooling and development
 
+- [Replay and aggregation validation](replay-aggregation-validation.md):
+  differential diagnostics, capture reuse and prepared resource loading.
+- [Index and Search validation](index-search-validation.md): shared conflict
+  comparison, Memory `near` optimization and the compound probe.
 - [Pre-release performance plan](performance-5.0.0-plan.md): verified attribution,
   bounded optimizations, semantic guarantees and a finite evaluation budget.
 

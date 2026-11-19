@@ -69,3 +69,14 @@ selected standalone differential cases passed against each of MongoDB
 collection references in groups, aggregation collation, pipeline
 validation, foreign stats, and the followup lookup paths. All 24 used
 PyMongo 4.20.0, and none skipped. Fixtures were removed on exit.
+
+## Acceptance in main
+
+A0–A3 were accepted on `9b7ac8834ad3a89785f2440d343fadfb08c597eb`.
+The [candidate CI](https://github.com/menudoproblema/mongoeco/actions/runs/44457013626)
+passed 19 jobs, including all 12 kit cells and the exact 99% installed-wheel
+coverage gate. All 24 selected native cases passed again on the verified
+wheel without skips. Its SHA-256 was
+`06a1d5eb2ad21b7f788260f7f4ecb8575ab5daefa72a0cec755eb6a6f69e81b1`.
+The [PR #2](https://github.com/menudoproblema/mongoeco/pull/2) was integrated
+into `main` on November 19, 2026.
