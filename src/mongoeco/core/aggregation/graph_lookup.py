@@ -279,7 +279,7 @@ def graph_lookup_results(documents, spec, context: "AggregationStageContext"):
         return
     if context.collection_resolver is None:
         msg = "$graphLookup requires collection resolver support"
-        raise OperationFailure(msg)
+        raise server_error(msg, code=115, reason="capability_unsupported")
     restriction = compile_graph_restriction(
         spec, dialect=context.dialect, variables=context.variables
     )
