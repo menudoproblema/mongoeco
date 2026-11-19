@@ -43,3 +43,27 @@ control was within 5%. The median paired CPU ratios were 0.50994 (broad),
 0.95718 (selective), and 0.86464 (ties). All four broad blocks improved
 and neither control exceeded the regression band. This measures the
 Memory Search entrypoint for these workloads.
+
+## B3 — Keep compound matching and scoring separate
+
+The bounded probe ran with GC enabled on B2 and the Memory Search entrypoint.
+It used 2,048 documents, eight warmed queries per variant, and compared
+ordered BSON result hashes. Its five variants ran 40 observed queries
+under a 60 s process limit.
+[Raw observations](evidence/index-search/b3-probe.json).
+
+- Ranking should clauses during matching increased range checks from 20,480
+  to 135,168 on the minimum-should-match rejection case. The result digest
+  was unchanged. Matching can stop checking array values once one qualifies;
+  ranking counts matching values, including work that would be discarded.
+- A diagnostic reuse of distances within one document saved 840 of 9,032
+  computations in the compound with near. The single instrumented batch
+  recorded about 6% lower CPU. The tie-heavy text case has no near clause
+  and cannot benefit from that reuse.
+- The tie-heavy case confirmed repeated dispatch (16,384 matches and
+  16,384 ranks). The count alone does not establish shared work across
+  short-circuit matching and full scoring.
+
+Disposition: defer B3. A general eager evaluator adds work on rejections,
+and the probe does not support adding per-document state for a limited
+near benefit. No compound production path changes.

@@ -1,0 +1,58 @@
+{
+  "nested_near/base": {
+    "counts": {
+      "distance_calls": 9032,
+      "should_match": 16384,
+      "should_rank": 1680
+    },
+    "cpu_seconds": 0.07817999999999997,
+    "digest": "577bad54b377b14f34fa748a6394151164a9e5227cbf771a3f6783a261c48ac7",
+    "queries": 8,
+    "returned": 32
+  },
+  "nested_near/reuse_near": {
+    "counts": {
+      "distance_calls": 9032,
+      "distance_reuse": 840,
+      "should_match": 16384,
+      "should_rank": 1680
+    },
+    "cpu_seconds": 0.07348700000000002,
+    "digest": "577bad54b377b14f34fa748a6394151164a9e5227cbf771a3f6783a261c48ac7",
+    "queries": 8,
+    "returned": 32
+  },
+  "reject_range/base": {
+    "counts": {
+      "range_value_checks": 20480,
+      "should_match": 32768,
+      "should_rank": 1024
+    },
+    "cpu_seconds": 0.14094399999999996,
+    "digest": "52f88cdaf267fb644a428d5f5e56b959bc843d9664959cc8d56bb7bba72cebba",
+    "queries": 8,
+    "returned": 32
+  },
+  "reject_range/rank_early": {
+    "counts": {
+      "eager_rank": 32768,
+      "range_value_checks": 135168,
+      "should_match": 32768,
+      "should_rank": 1024
+    },
+    "cpu_seconds": 0.18113,
+    "digest": "52f88cdaf267fb644a428d5f5e56b959bc843d9664959cc8d56bb7bba72cebba",
+    "queries": 8,
+    "returned": 32
+  },
+  "tie_text/base": {
+    "counts": {
+      "should_match": 16384,
+      "should_rank": 16384
+    },
+    "cpu_seconds": 0.058307,
+    "digest": "b0ec1fce75998ea52f62612b6f05b9c4eae8c8ea505b02533e335d8a6a0e8251",
+    "queries": 8,
+    "returned": 32
+  }
+}
