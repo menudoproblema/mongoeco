@@ -1081,87 +1081,6 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(await cursor.to_list(), [{"score": 2}])
 
-    async def test_collect_lookup_names_skips_invalid_stages_and_recurses_nested_pipelines(
-        self,
-    ):
-        cursor = AsyncAggregationCursor(
-            _FakeCollection([]),
-            [],
-        )
-
-        names = cursor._collect_lookup_names(
-            [
-                "invalid",
-                {"$lookup": []},
-                {
-                    "$lookup": {
-                        "from": "users",
-                        "pipeline": [
-                            {
-                                "$lookup": {
-                                    "from": "roles",
-                                    "localField": "role_id",
-                                    "foreignField": "_id",
-                                    "as": "roles",
-                                }
-                            }
-                        ],
-                        "as": "users",
-                    }
-                },
-                {"$unionWith": "archive"},
-                {
-                    "$unionWith": {
-                        "coll": "audits",
-                        "pipeline": [
-                            {
-                                "$lookup": {
-                                    "from": "teams",
-                                    "localField": "team_id",
-                                    "foreignField": "_id",
-                                    "as": "teams",
-                                }
-                            }
-                        ],
-                    }
-                },
-                {
-                    "$facet": {
-                        "nested": [
-                            {
-                                "$lookup": {
-                                    "from": "teams",
-                                    "localField": "team_id",
-                                    "foreignField": "_id",
-                                    "as": "teams",
-                                }
-                            }
-                        ]
-                    }
-                },
-            ]
-        )
-
-        self.assertEqual(names, {"users", "roles", "teams", "archive", "audits"})
-
-    async def test_collect_lookup_names_skips_invalid_union_with_payloads(
-        self,
-    ):
-        cursor = AsyncAggregationCursor(
-            _FakeCollection([]),
-            [],
-        )
-
-        names = cursor._collect_lookup_names(
-            [
-                {"$unionWith": []},
-                {"$unionWith": {"pipeline": []}},
-                {"$unionWith": {"coll": "archive"}},
-            ]
-        )
-
-        self.assertEqual(names, {"archive"})
-
     async def test_pipeline_resource_snapshot_is_shared_across_prefix_and_suffix(self):
         cursor = AsyncAggregationCursor(
             _FakeCollection([]),
@@ -1760,7 +1679,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(collection.built_operations), 1)
         self.assertEqual(collection.built_operations[0][0].sort, [("rank", 1)])
 
-    async def test_load_referenced_collections_uses_compiled_find_operations(
+    async def test_load_pipeline_resources_uses_compiled_find_operations(
         self,
     ):
         collection = _FakeCollection([])
@@ -1781,11 +1700,11 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             max_time_ms=15,
         )
 
-        loaded = await cursor._load_referenced_collections()
+        loaded = await cursor._load_pipeline_resources()
 
-        self.assertEqual(loaded["roles"], [{"_id": "r1", "label": "admin"}])
+        self.assertEqual(loaded("roles"), [{"_id": "r1", "label": "admin"}])
         self.assertEqual(
-            loaded[_CURRENT_COLLECTION_RESOLVER_KEY],
+            loaded(_CURRENT_COLLECTION_RESOLVER_KEY),
             [{"_id": "1", "name": "Ada"}],
         )
         self.assertEqual(len(collection._engine.scan_semantics_calls), 2)
@@ -2098,7 +2017,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(await cursor.first())
         self.assertEqual(profiled[-1]["op"], "command")
 
-    async def test_aggregation_cursor_profile_and_collstats_cover_no_scale_and_exception_paths(
+    async def test_aggregation_cursor_profiles_stream_exception(
         self,
     ):
         collection = _FakeCollection([{"_id": "1"}])
@@ -2109,14 +2028,12 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         collection._profile_operation = _profile_operation  # type: ignore[attr-defined]
         cursor = AsyncAggregationCursor(collection, [{"$project": {"_id": 1}}])
-        with patch.object(cursor, "_stream_batches", side_effect=RuntimeError("boom")):
-            with self.assertRaisesRegex(RuntimeError, "boom"):
-                await cursor.to_list()
+        with (
+            patch.object(cursor, "_stream_batches", side_effect=RuntimeError("boom")),
+            self.assertRaisesRegex(RuntimeError, "boom"),
+        ):
+            await cursor.to_list()
         self.assertEqual(profiled[-1]["errmsg"], "boom")
-
-        self.assertEqual(
-            await cursor._load_collstats_snapshots([{"$match": {"x": 1}}]), {}
-        )
 
     async def test_build_pushdown_cursor_uses_collection_find_when_private_builder_is_missing(
         self,
@@ -2204,13 +2121,11 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             ),
         )
 
-        referenced_loader = AsyncMock(return_value={})
         with (
             patch.object(
-                cursor,
-                "_load_referenced_collections",
-                referenced_loader,
-            ),
+                cursor, "_load_collection_documents",
+                wraps=cursor._load_collection_documents,
+            ) as referenced_loader,
             self.assertRaises(OperationFailure),
         ):
             await cursor.to_list()
@@ -2689,45 +2604,10 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                     [{"_id": "new", "value": "corrupt-target"}],
                 )
 
-    async def test_aggregation_cursor_collstats_and_stream_batches_cover_fallback_branches(
-        self,
-    ):
+    async def test_aggregation_cursor_stream_batches_cover_fallback_branches(self):
         collection = _FakeCollection([{"_id": "1"}, {"_id": "2"}])
         cursor = AsyncAggregationCursor(
             collection, [{"$project": {"_id": 1}}], batch_size=2
-        )
-
-        self.assertEqual(
-            cursor._collect_collstats_scales(
-                [{"$collStats": {"storageStats": {"scale": 4}}}]
-            ),
-            {4},
-        )
-        self.assertEqual(
-            cursor._collect_collstats_scales(
-                [{"$collStats": {"count": {}}}, {"$collStats": []}]
-            ),
-            {1},
-        )
-        self.assertTrue(cursor._collect_index_stats_requested([{"$indexStats": {}}]))
-        self.assertFalse(
-            cursor._collect_index_stats_requested([{"$project": {"_id": 1}}])
-        )
-        self.assertTrue(cursor._collect_current_op_requested([{"$currentOp": {}}]))
-        self.assertFalse(
-            cursor._collect_current_op_requested([{"$project": {"_id": 1}}])
-        )
-        self.assertTrue(
-            cursor._collect_plan_cache_stats_requested([{"$planCacheStats": {}}])
-        )
-        self.assertFalse(
-            cursor._collect_plan_cache_stats_requested([{"$project": {"_id": 1}}])
-        )
-        self.assertTrue(
-            cursor._collect_list_sessions_requested([{"$listSessions": {}}])
-        )
-        self.assertFalse(
-            cursor._collect_list_sessions_requested([{"$project": {"_id": 1}}])
         )
 
         search_cursor = AsyncAggregationCursor(
@@ -2807,9 +2687,6 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                 stream_cursor,
                 "_split_streamable_pipeline",
                 return_value=([{"$project": {"_id": 1}}], 1, 1),
-            ),
-            patch.object(
-                stream_cursor, "_load_referenced_collections", return_value={}
             ),
             patch.object(stream_cursor, "_spill_policy", return_value=None),
         ):
@@ -3020,7 +2897,6 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                 "_split_streamable_pipeline",
                 return_value=([{"$project": {"_id": 1}}], 3, None),
             ),
-            patch.object(cursor, "_load_referenced_collections", return_value={}),
             patch.object(cursor, "_spill_policy", return_value=None),
         ):
             batches = [[{"_id": "1"}, {"_id": "2"}], [{"_id": "3"}], []]

@@ -495,9 +495,6 @@ class AsyncAggregationSemanticContextTests(unittest.IsolatedAsyncioTestCase):
                             },
                         ]
                     )
-                    self.assertEqual(await cursor._load_index_stats_snapshot([]), [])
-                    self.assertEqual(cursor._load_plan_cache_stats_snapshot([]), [])
-                    self.assertEqual(cursor._load_list_sessions_snapshot([]), [])
                     with (
                         patch.object(
                             cursor,
@@ -514,7 +511,7 @@ class AsyncAggregationSemanticContextTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(
                         [call.args[0] for call in load.await_args_list], ["foreign"]
                     )
-                    self.assertEqual(indices.await_count, 1)
+                    indices.assert_awaited_once_with("foreign")
                     self.assertEqual(
                         resources.for_collection("foreign")(
                             "__mongoeco_current_collection__"
@@ -536,6 +533,54 @@ class AsyncAggregationSemanticContextTests(unittest.IsolatedAsyncioTestCase):
                         [{"$currentOp": {}}, {"$match": {"active": True}}]
                     ).to_list()
                     self.assertIsInstance(operations, list)
+
+
+    async def test_prepared_stats_load_only_requested_namespaces_and_scales(self):
+        for engine_type in (MemoryEngine, SQLiteEngine):
+            with self.subTest(engine=engine_type.__name__):
+                async with (
+                    AsyncMongoClient(engine_type()) as client,
+                    client.start_session() as session,
+                ):
+                    database = client.probe
+                    await database.root.insert_one({"_id": 1})
+                    await database.foreign.insert_one({"_id": 2})
+                    pipeline = [
+                        {"$lookup": {
+                            "from": "foreign",
+                            "as": f"stats{index}",
+                            "pipeline": [
+                                {"$collStats": {"storageStats": {"scale": scale}}}
+                            ],
+                        }}
+                        for index, scale in enumerate((4, 4, 8))
+                    ]
+                    cursor = database.root.aggregate(pipeline, session=session)
+                    empty = database.root.aggregate([], session=session)
+                    admin_cls = type(database._admin)
+                    with patch.object(
+                        admin_cls, "_collection_stats", autospec=True,
+                        side_effect=admin_cls._collection_stats,
+                    ) as stats:
+                        empty_resources = await empty._load_pipeline_resources()
+                        self.assertEqual(empty_resources.snapshots, {})
+                        stats.assert_not_awaited()
+                        resources = await cursor._load_pipeline_resources()
+                    self.assertEqual(
+                        [
+                            (entry.args[1:], entry.kwargs)
+                            for entry in stats.await_args_list
+                        ],
+                        [
+                            (("foreign",), {"scale": 4, "session": session}),
+                            (("foreign",), {"scale": 8, "session": session}),
+                        ],
+                    )
+                    self.assertEqual(set(resources.snapshots), {
+                        ("foreign", "$collStats", 4), ("foreign", "$collStats", 8),
+                    })
+                    await cursor.close()
+                    await empty.close()
 
 
 class SyncAggregationSemanticContextTests(unittest.TestCase):

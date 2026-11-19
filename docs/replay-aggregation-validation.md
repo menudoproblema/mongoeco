@@ -49,3 +49,23 @@ blocks all improved: median elapsed ratio 0.93195 and 54 to 2 decodes
 per execution. The calibrated control median was 0.98789, with no
 ratio above 1.05. Maximum observed per-worker RSS increase, comparing
 peaks within each block, was 4.24 MiB across both lots. A2 is accepted.
+
+## A3 — Load prepared aggregation dependencies
+
+The cursor binds only the requests in its prepared pipeline. Stats
+loaders take the resolved collection and scale directly. The unused raw
+pipeline traversal and its test-only bypasses are removed.
+
+PyMongo 4.20.0: 118 cursor/context tests and 1,050 subtests passed. The
+64-bit BSON rules, request-bound session, namespace and scale are
+unchanged. The new control observes no stats read for an empty request set
+and two reads for three requests for the same collection at scales 4, 4
+and 8. The existing source and error cleanup checks passed.
+
+The native replay focus passed 96 tests covering four lookup cases in
+three dialects, with both engines and sync, async and wire routes. Eight
+selected standalone differential cases passed against each of MongoDB
+7.0.43, 8.0.32 and 9.0.2: facet shapes, lookup shapes, union shapes,
+collection references in groups, aggregation collation, pipeline
+validation, foreign stats, and the followup lookup paths. All 24 used
+PyMongo 4.20.0, and none skipped. Fixtures were removed on exit.

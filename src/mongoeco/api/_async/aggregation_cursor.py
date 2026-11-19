@@ -27,7 +27,6 @@ from mongoeco.api.operations import (
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core._search_contract import TEXT_SEARCH_OPERATOR_NAMES
 from mongoeco.core.aggregation import (
-    _CURRENT_COLLECTION_RESOLVER_KEY,
     AggregationCostPolicy,
     AggregationSpillPolicy,
     Pipeline,
@@ -1089,79 +1088,6 @@ class AsyncAggregationCursor:
                 return None
         return None
 
-    def _collect_collection_names(self, pipeline: Pipeline) -> set[str]:
-        names: set[str] = set()
-        for stage in pipeline:
-            if not isinstance(stage, dict) or len(stage) != 1:
-                continue
-            if "$facet" in stage:
-                spec = stage["$facet"]
-                if isinstance(spec, dict):
-                    for subpipeline in spec.values():
-                        if isinstance(subpipeline, list):
-                            names.update(
-                                self._collect_collection_names(subpipeline),
-                            )
-                continue
-            if "$lookup" in stage:
-                spec = stage["$lookup"]
-                if not isinstance(spec, dict):
-                    continue
-                from_collection = spec.get("from")
-                if isinstance(from_collection, str):
-                    names.add(from_collection)
-                pipeline_spec = spec.get("pipeline")
-                if isinstance(pipeline_spec, list):
-                    names.update(self._collect_collection_names(pipeline_spec))
-                continue
-            if "$unionWith" in stage:
-                spec = stage["$unionWith"]
-                if isinstance(spec, str):
-                    if spec:
-                        names.add(spec)
-                    continue
-                if not isinstance(spec, dict):
-                    continue
-                coll = spec.get("coll")
-                if isinstance(coll, str):
-                    names.add(coll)
-                elif "pipeline" in spec:
-                    names.add(_CURRENT_COLLECTION_RESOLVER_KEY)
-                pipeline_spec = spec.get("pipeline")
-                if isinstance(pipeline_spec, list):
-                    names.update(self._collect_collection_names(pipeline_spec))
-        return names
-
-    def _collect_lookup_names(self, pipeline: Pipeline) -> set[str]:
-        # Compatibilidad interna con tests y callers existentes; ahora recoge
-        # también colecciones referenciadas por $unionWith.
-        return {
-            name
-            for name in self._collect_collection_names(pipeline)
-            if name != _CURRENT_COLLECTION_RESOLVER_KEY
-        }
-
-    async def _load_referenced_collections(self) -> dict[str, list[Document]]:
-        names = self._collect_collection_names(self._effective_pipeline())
-        loaded: dict[str, list[Document]] = {}
-        if _CURRENT_COLLECTION_RESOLVER_KEY in names:
-            collection_name = getattr(
-                self._collection,
-                "_collection_name",
-                None,
-            )
-            if isinstance(collection_name, str):
-                loaded[
-                    _CURRENT_COLLECTION_RESOLVER_KEY
-                ] = await self._load_collection_documents(
-                    collection_name,
-                )
-        for name in names:
-            if name == _CURRENT_COLLECTION_RESOLVER_KEY:
-                continue
-            loaded[name] = await self._load_collection_documents(name)
-        return loaded
-
     async def _load_pipeline_resources(self) -> AggregationResources:
         """Bind the prepared dependency graph, retaining namespace ownership."""
         if self._pipeline_resources is not None:
@@ -1181,23 +1107,20 @@ class AsyncAggregationCursor:
             key = (request.collection, request.operator, request.scale)
             if key in snapshots:
                 continue
-            pipeline = [{request.operator: {}}]
             if request.operator == "$collStats":
-                pipeline = [{"$collStats": {"storageStats": {"scale": request.scale}}}]
-                stats = await self._load_collstats_snapshots(
-                    pipeline, request.collection
+                snapshots[key] = await self._load_collstats_snapshot(
+                    request.collection, scale=request.scale
                 )
-                snapshots[key] = stats[request.scale]
             elif request.operator == "$indexStats":
                 snapshots[key] = await self._load_index_stats_snapshot(
-                    pipeline, request.collection
+                    request.collection
                 )
             elif request.operator == "$planCacheStats":
                 snapshots[key] = self._load_plan_cache_stats_snapshot(
-                    pipeline, request.collection
+                    request.collection
                 )
             elif request.operator == "$listSessions":
-                snapshots[key] = self._load_list_sessions_snapshot(pipeline)
+                snapshots[key] = self._load_list_sessions_snapshot()
             elif request.operator == "$currentOp":
                 snapshot = getattr(
                     self._collection._engine, "_snapshot_active_operations", None
@@ -1206,77 +1129,19 @@ class AsyncAggregationCursor:
         self._pipeline_resources = AggregationResources(loaded, root, snapshots)
         return self._pipeline_resources
 
-    def _collect_collstats_scales(self, pipeline: Pipeline) -> set[int]:
-        scales: set[int] = set()
-        for stage in pipeline:
-            if (
-                not isinstance(stage, dict)
-                or len(stage) != 1
-                or "$collStats" not in stage
-            ):
-                continue
-            spec = stage["$collStats"]
-            if not isinstance(spec, dict):
-                continue
-            storage_spec = spec.get("storageStats")
-            if isinstance(storage_spec, dict):
-                scale = storage_spec.get("scale", 1)
-                if isinstance(scale, int) and not isinstance(scale, bool) and scale > 0:
-                    scales.add(scale)
-            else:
-                scales.add(1)
-        return scales
-
-    def _collect_current_op_requested(self, pipeline: Pipeline) -> bool:
-        return any(
-            isinstance(stage, dict) and len(stage) == 1 and "$currentOp" in stage
-            for stage in pipeline
+    async def _load_collstats_snapshot(
+        self, collection_name: str | None, *, scale: int
+    ) -> Document:
+        snapshot = await self._collection.database._admin._collection_stats(
+            collection_name or self._collection._collection_name,
+            scale=scale,
+            session=self._session,
         )
-
-    def _collect_plan_cache_stats_requested(self, pipeline: Pipeline) -> bool:
-        return any(
-            isinstance(stage, dict) and len(stage) == 1 and "$planCacheStats" in stage
-            for stage in pipeline
-        )
-
-    def _collect_list_sessions_requested(self, pipeline: Pipeline) -> bool:
-        return any(
-            isinstance(stage, dict) and len(stage) == 1 and "$listSessions" in stage
-            for stage in pipeline
-        )
-
-    async def _load_collstats_snapshots(
-        self,
-        pipeline: Pipeline,
-        collection_name: str | None = None,
-    ) -> dict[int, Document]:
-        snapshots: dict[int, Document] = {}
-        scales = self._collect_collstats_scales(pipeline)
-        if not scales:
-            return snapshots
-        database = self._collection.database
-        for scale in sorted(scales):
-            snapshot = await database._admin._collection_stats(
-                collection_name or self._collection._collection_name,
-                scale=scale,
-                session=self._session,
-            )
-            snapshots[scale] = snapshot.to_document()
-        return snapshots
-
-    def _collect_index_stats_requested(self, pipeline: Pipeline) -> bool:
-        return any(
-            isinstance(stage, dict) and len(stage) == 1 and "$indexStats" in stage
-            for stage in pipeline
-        )
+        return snapshot.to_document()
 
     async def _load_index_stats_snapshot(
-        self,
-        pipeline: Pipeline,
-        collection_name: str | None = None,
+        self, collection_name: str | None
     ) -> list[Document]:
-        if not self._collect_index_stats_requested(pipeline):
-            return []
         target = (
             self._collection
             if collection_name is None
@@ -1303,12 +1168,8 @@ class AsyncAggregationCursor:
         return snapshot
 
     def _load_plan_cache_stats_snapshot(
-        self,
-        pipeline: Pipeline,
-        collection_name: str | None = None,
+        self, collection_name: str | None
     ) -> list[Document]:
-        if not self._collect_plan_cache_stats_requested(pipeline):
-            return []
         runtime_diagnostics = getattr(
             self._collection._engine,
             "_runtime_diagnostics_info",
@@ -1333,12 +1194,7 @@ class AsyncAggregationCursor:
             },
         ]
 
-    def _load_list_sessions_snapshot(
-        self,
-        pipeline: Pipeline,
-    ) -> list[Document]:
-        if not self._collect_list_sessions_requested(pipeline):
-            return []
+    def _load_list_sessions_snapshot(self) -> list[Document]:
         captured_at = datetime.datetime.now(datetime.UTC)
         snapshot_by_id: dict[str, Document] = {}
         if self._session is not None:
