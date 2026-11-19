@@ -23,6 +23,24 @@ class ObjectIdLike(Protocol):
 _OBJECT_ID_BYTE_LENGTH = 12
 
 
+def _validate_object_id_input(oid: Any) -> None:
+    """Enforce the same physical size before either implementation accepts input."""
+    if isinstance(oid, str):
+        if len(oid) != _OBJECT_ID_BYTE_LENGTH * 2:
+            message = f"string de ObjectId debe ser de 24 hex, no {len(oid)}"
+            raise ValueError(message)
+        try:
+            binascii.unhexlify(oid)
+        except (binascii.Error, ValueError) as exc:
+            message = f"'{oid}' no es un hexadecimal valido"
+            raise ValueError(message) from exc
+    elif isinstance(oid, (bytes, ObjectIdLike)):
+        binary = oid if isinstance(oid, bytes) else bytes(oid.binary)
+        if len(binary) != _OBJECT_ID_BYTE_LENGTH:
+            message = f"bytes de ObjectId deben ser de 12, no {len(binary)}"
+            raise ValueError(message)
+
+
 if _PyMongoObjectId is not None:
 
     class ObjectId(_PyMongoObjectId):
@@ -41,6 +59,7 @@ if _PyMongoObjectId is not None:
                     oid = bytes(oid.binary)
                 else:
                     raise TypeError(f"ID invalido tipo {type(oid)}: {oid}")
+            _validate_object_id_input(oid)
             try:
                 super().__init__(oid)
             except TypeError as exc:
@@ -59,6 +78,10 @@ if _PyMongoObjectId is not None:
 
         @classmethod
         def is_valid(cls, oid: Any) -> bool:
+            try:
+                _validate_object_id_input(oid)
+            except (TypeError, ValueError):
+                return False
             if isinstance(oid, bytes):
                 return len(oid) == 12
             return bool(_PyMongoObjectId.is_valid(oid))
@@ -88,6 +111,7 @@ else:
             self,
             oid: str | bytes | Self | ObjectIdLike | None = None,
         ):
+            _validate_object_id_input(oid)
             if oid is None:
                 self._oid = self._generate()
             elif isinstance(oid, ObjectId):
@@ -129,6 +153,10 @@ else:
 
         @classmethod
         def is_valid(cls, oid: Any) -> bool:
+            try:
+                _validate_object_id_input(oid)
+            except (TypeError, ValueError):
+                return False
             if isinstance(oid, ObjectId):
                 return True
             if isinstance(oid, bytes):
