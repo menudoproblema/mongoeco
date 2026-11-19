@@ -11,6 +11,74 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class OptionalBsonImportTests(unittest.TestCase):
+    def test_uuid_and_objectid_validation_without_the_optional_sdk(self):
+        script = textwrap.dedent(
+            '''
+            import asyncio
+            import importlib.abc
+            import sys
+
+            class BlockSDK(importlib.abc.MetaPathFinder):
+                def find_spec(self, fullname, path=None, target=None):
+                    if fullname.split(".")[0] in {"bson", "pymongo"}:
+                        raise ModuleNotFoundError("SDK deliberately unavailable")
+                    return None
+
+            sys.meta_path.insert(0, BlockSDK())
+            from mongoeco import MongoClient, AsyncMongoClient
+            from mongoeco.engines import MemoryEngine, SQLiteEngine
+            from mongoeco.types import Binary, CodecOptions, ObjectId
+            from mongoeco.core._public_materialization import _InvalidBSON
+
+            for whitespace in ["  ", "\\t\\t", "\\n\\n"]:
+                text = "00" * 11 + whitespace
+                assert not ObjectId.is_valid(text)
+                try:
+                    ObjectId(text)
+                except ValueError:
+                    pass
+                else:
+                    raise AssertionError("invalid ObjectId accepted")
+            assert len(ObjectId("A0" * 12).binary) == 12
+
+            async def check():
+                for engine in [MemoryEngine, SQLiteEngine]:
+                    async with AsyncMongoClient(
+                        engine(), pymongo_profile="4.20",
+                        codec_options=CodecOptions(uuid_representation="standard"),
+                    ) as client:
+                        collection = client.test.items
+                        await collection.insert_one({"_id": "x", "v": Binary(b"ab", 4)})
+                        try:
+                            await collection.find_one()
+                        except _InvalidBSON:
+                            pass
+                        else:
+                            raise AssertionError("invalid requested UUID accepted")
+                        raw = collection.with_options(codec_options=CodecOptions())
+                        assert bytes((await raw.find_one())["v"]) == b"ab"
+                    with MongoClient(
+                        engine(),
+                        codec_options=CodecOptions(uuid_representation="pythonLegacy"),
+                    ) as client:
+                        collection = client.test.items
+                        collection.insert_one({"_id": "x", "v": [Binary(b"ab", 3)]})
+                        try:
+                            collection.find_one()
+                        except _InvalidBSON:
+                            pass
+                        else:
+                            raise AssertionError("invalid legacy UUID accepted")
+            asyncio.run(check())
+            '''
+        )
+        process = subprocess.run(  # noqa: S603 - fixed interpreter and test program
+            [sys.executable, "-c", script], cwd=ROOT,
+            env=_clean_import_environment(), capture_output=True, text=True,
+            check=False,
+        )
+        self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
+
     def test_core_api_imports_without_bson_installed(self) -> None:
         script = textwrap.dedent(
             """

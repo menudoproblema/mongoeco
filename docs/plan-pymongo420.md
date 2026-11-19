@@ -323,3 +323,23 @@ P04 implementado en 7fa4168e y comprobado focalmente: 69 tests verdes,
 resolución exacta 4.20.x y fallback futuro 4.21, catálogo/profiles anteriores
 y documentos/hash CXP preservados. Su aceptación integrada queda para P07.
 P01–P03 conservan pendiente el foco ampliado de factories/decoders y sin SDK.
+
+### Pausa solicitada — 19 de noviembre de 2026
+
+Se conserva el candidato productivo y se detiene la implementación antes de P07.
+El foco ampliado UUID y sin SDK pasó: 123 tests en 4,40 s con SDK 4.20
+(registro p02-extra-frontiers.log). Cubre factories, registro de tipos,
+Code/DBRef, error de lectura tras escritura find-and-modify y ejecución sin SDK.
+Después sólo se reorganizó la selección de la operación fuera de pytest.raises;
+esa modificación de estilo queda pendiente de comprobar al reanudar.
+No se declara aceptación integrada de P01–P04.
+
+P05 queda como trabajo sin commitear: pin de CI, eje del kit, runner y fixture
+de perfiles, y smoke de metadata/pool. El proceso existente de perfiles terminó
+con código 0; sus resultados crudos están en
+/tmp/mongoeco-pymongo420-review/p05-profile-raw.json y todavía no se han
+revisado para aceptar el bloque. El smoke wire nuevo no se ha ejecutado.
+Siguiente paso: revisar ese resultado y comprobar focalmente los cambios de
+P05 y el ratchet de lint antes de su commit. P06/P07 siguen pendientes.
+No hay campañas de coste ni suites globales iniciadas por esta pausa.
+El archivo ajeno benchmarks/execution.json se conserva fuera del incremento.

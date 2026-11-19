@@ -9,6 +9,9 @@ from uuid import UUID
 import pytest
 
 from bson import BSON, Binary
+from bson.code import Code
+from bson.dbref import DBRef
+from bson.errors import InvalidBSON
 from bson.binary import UuidRepresentation as DriverRepresentation
 from bson.codec_options import CodecOptions as DriverOptions
 from pymongo import InsertOne
@@ -20,6 +23,55 @@ from mongoeco.types import CodecOptions, UuidRepresentation
 
 
 VALUE = UUID("00112233-4455-6677-8899-aabbccddeeff")
+
+
+class UUIDDocument(dict):
+    """Exercise the SDK materialization route independently of plain dict."""
+
+
+@pytest.mark.parametrize("engine", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("document_class", [dict, UUIDDocument])
+@pytest.mark.parametrize("decode_uuid", [False, True])
+@pytest.mark.parametrize("route", ["find", "aggregate", "find-modify"])
+@pytest.mark.parametrize("wrapper", [
+    lambda value: value,
+    lambda value: [value],
+    lambda value: Code("x", {"u": value}),
+    lambda value: DBRef("items", value),
+], ids=["root", "array", "code-scope", "dbref-id"])
+def test_invalid_requested_uuid_is_not_hidden_by_response_shape(
+    engine, document_class, decode_uuid, route, wrapper
+):
+    decoded = []
+
+    def decode(value):
+        decoded.append(value)
+        return str(value)
+
+    with MongoClient(engine()) as client:
+        collection = client.test.items
+        collection.insert_one({"_id": "x", "v": wrapper(Binary(b"ab", 4))})
+        selected = collection.with_options(codec_options=CodecOptions(
+            uuid_representation=UuidRepresentation.STANDARD,
+            document_class=document_class,
+            type_registry={UUID: decode} if decode_uuid else None,
+        ))
+        if route == "find":
+            operation = selected.find_one
+        elif route == "aggregate":
+            operation = lambda: list(selected.aggregate([]))
+        else:
+            operation = lambda: selected.find_one_and_update(
+                {"_id": "x"}, {"$set": {"updated": True}},
+                return_document=True,
+            )
+        with pytest.raises(InvalidBSON):
+            operation()
+        assert decoded == []
+        physical = collection.find_one()
+        assert physical["_id"] == "x"
+        assert physical.get("updated", False) is (route == "find-modify")
+
 WRITERS = (
     UuidRepresentation.STANDARD,
     UuidRepresentation.PYTHON_LEGACY,
