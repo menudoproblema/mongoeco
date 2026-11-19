@@ -3,6 +3,7 @@
 import asyncio
 
 from dataclasses import fields
+from functools import partial
 from pathlib import Path
 from uuid import UUID
 
@@ -11,9 +12,9 @@ import pytest
 from bson import BSON, Binary
 from bson.code import Code
 from bson.dbref import DBRef
-from bson.errors import InvalidBSON
 from bson.binary import UuidRepresentation as DriverRepresentation
 from bson.codec_options import CodecOptions as DriverOptions
+from bson.errors import InvalidBSON
 from pymongo import InsertOne
 
 from mongoeco import AsyncMongoClient, MongoClient
@@ -56,12 +57,16 @@ def test_invalid_requested_uuid_is_not_hidden_by_response_shape(
             document_class=document_class,
             type_registry={UUID: decode} if decode_uuid else None,
         ))
+        def aggregate():
+            return list(selected.aggregate([]))
+
         if route == "find":
             operation = selected.find_one
         elif route == "aggregate":
-            operation = lambda: list(selected.aggregate([]))
+            operation = aggregate
         else:
-            operation = lambda: selected.find_one_and_update(
+            operation = partial(
+                selected.find_one_and_update,
                 {"_id": "x"}, {"$set": {"updated": True}},
                 return_document=True,
             )
@@ -71,6 +76,7 @@ def test_invalid_requested_uuid_is_not_hidden_by_response_shape(
         physical = collection.find_one()
         assert physical["_id"] == "x"
         assert physical.get("updated", False) is (route == "find-modify")
+
 
 WRITERS = (
     UuidRepresentation.STANDARD,
