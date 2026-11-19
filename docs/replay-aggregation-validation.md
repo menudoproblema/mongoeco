@@ -33,3 +33,19 @@ and the affected observations; the original capture and its source hash
 remain unchanged. The negative focus and all 24 mutation precedence replay
 nodes passed with each of PyMongo 4.19.0 and 4.20.0. The capture identity
 focus also passed.
+
+## A2 — Reuse of replay captures
+
+The isolation test passed. All 40 subprocesses in the one measurement
+campaign passed the same fixed selections, with 20 paired slots and two
+lots per slot. Timed subprocesses totalled 122.05 s within the 240 s limit.
+[Raw samples](evidence/replay-aggregation/a2-samples.jsonl) include all
+wall, CPU, decode and per-worker RSS observations.
+
+For each lot, use the A0/A1 elapsed ratio for calibration and
+sqrt(B1 * B2 / (A1 * A2)) for each paired elapsed ratio. One block
+for each lot was outside the 5% A/A band. The three calibrated target
+blocks all improved: median elapsed ratio 0.93195 and 54 to 2 decodes
+per execution. The calibrated control median was 0.98789, with no
+ratio above 1.05. Maximum observed per-worker RSS increase, comparing
+peaks within each block, was 4.24 MiB across both lots. A2 is accepted.

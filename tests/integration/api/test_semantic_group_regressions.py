@@ -10,6 +10,7 @@ import sqlite3
 
 from copy import deepcopy
 from decimal import ROUND_DOWN, ROUND_UP, FloatOperation, Inexact, localcontext
+from functools import lru_cache
 from pathlib import Path
 from unittest.mock import patch
 
@@ -69,9 +70,23 @@ DIALECTS = ("7.0", "8.0", "9.0")
 CORPORA = {name: corpus.cases for name, corpus in SEMANTIC_CORPORA.items()}
 
 
+@lru_cache(maxsize=4)
 def _capture(dialect, corpus="group_parity"):
+    """Load an immutable reference for readers in this worker."""
     return _decode_capture(
         (FIXTURES / f"semantic_{corpus}_{dialect.replace('.', '_')}.json").read_text()
+    )
+
+
+def test_sdk_override_preserves_cached_capture():
+    name = "semantic_mutation_precedence"
+    original = _capture("8.0", "bson_mutation")["cases"][name]
+    adjusted = mutation_precedence_for_pymongo420(original)
+    reloaded = _capture("8.0", "bson_mutation")["cases"][name]
+    assert all(
+        adjusted[f"return/{kind}"]["exception"] == "TypeError"
+        and reloaded[f"return/{kind}"]["exception"] == "ValueError"
+        for kind in ("int", "str", "dict", "list")
     )
 
 
