@@ -43,7 +43,7 @@ Python/PyMongo versions.
   [BSON ID conversion](id-bson-conversion.md): bounded regression evidence.
 - [Pytest acceptance](pytest-review.md): installed-wheel matrix, parallel tests
   and anonymous consumer canary.
-- [Python support policy](python-support.md) and [PyMongo 4.19](pymongo419.md).
+- [Python support policy](python-support.md) and [PyMongo profiles](../COMPATIBILITY.md#4-perfiles-pymongo-disponibles).
 - [PyMongo 4.20 integration plan](plan-pymongo420.md): proposed SDK profile,
   shared BSON corrections and bounded integration/acceptance gates.
 

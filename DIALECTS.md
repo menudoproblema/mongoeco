@@ -276,6 +276,8 @@ El catálogo oficial hardcoded del repo modela hoy:
 * `4.13` como perfil posterior compatible, hoy sin un segundo delta activo adicional
 * `4.17` como perfil posterior compatible
 * `4.18` con validación temprana de argumentos reservados de agregación
+* `4.19` con política de resolución de hosts SRV
+* `4.20` con las capacidades de `4.19`
 
 La autodetección `pymongo_profile="auto-installed"` mapea:
 
@@ -284,6 +286,8 @@ La autodetección `pymongo_profile="auto-installed"` mapea:
 * `4.13` a `4.16` -> `PyMongoProfile413`
 * `4.17` -> `PyMongoProfile417`
 * `4.18` -> `PyMongoProfile418`
+* `4.19` -> `PyMongoProfile419`
+* `4.20` -> `PyMongoProfile420`
 * minor posteriores dentro de `4.x` -> último perfil conocido, con metadata
   explícita de fallback; el modo estricto exige una minor registrada
 
@@ -460,7 +464,7 @@ completa. Deben modelar:
 * **CI diferencial**: matriz compartida contra MongoDB 7.0, 8.0 y 9.0,
   con imágenes fijadas por digest y FCV comprobada. Es obligatoria al entregar
   una release y se ejecuta también semanalmente o por etiqueta de PR.
-* **Perfiles PyMongo**: cinco versiones oficiales en entornos independientes.
+* **Perfiles PyMongo**: siete versiones oficiales en entornos independientes.
 
 Esto evita convertir cada PR en una batería pesada de integración externa.
 

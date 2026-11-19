@@ -358,3 +358,8 @@ con metadata de agente, ping y escritura/lectura con pool sin límite en sync
 y async. El pin 4.19.0 del canario de escritura conserva el entorno histórico
 documentado en write-parity-validation.md. La matriz completa del kit y la
 aceptación del artefacto se comprueban en P07.
+
+P06 documenta la selección del perfil en COMPATIBILITY y los contratos BSON
+en la referencia de runtime. Se conservan las notas históricas de 4.19.
+La aceptación toma como candidato el commit de cierre de P06 y su árbol.
+Los gates ya comprobados focalmente se conservan como evidencia de diagnóstico.

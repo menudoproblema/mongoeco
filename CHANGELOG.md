@@ -8,6 +8,16 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Add the explicit PyMongo 4.20 profile and exact detection of installed 4.20.x.
+
+### Fixed
+
+- Reject malformed UUID payloads when response decoding requests conversion.
+  Preserve Binary values when the selected representation leaves them unconverted.
+- Enforce ObjectId text and BSON length validation with or without PyMongo.
+
 ## [5.0.0] - 2026-11-02
 
 Preparación del candidato; todavía no publicada.

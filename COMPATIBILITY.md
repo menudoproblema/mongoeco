@@ -614,6 +614,7 @@ Hoy el catálogo oficial incluye:
 * `4.17`
 * `4.18`
 * `4.19` (desde 4.10.0; no incluido en 4.9.1)
+* `4.20`
 
 Regla práctica:
 
@@ -628,6 +629,10 @@ Regla práctica:
 * `4.19` hereda 4.18 y añade `srv_host_validator` con resolución pública,
   sufijos privados y rechazo de percent-encoding en hostnames. La
   [guía 4.19](docs/pymongo419.md) documenta validación y límites.
+* `4.20` conserva las capacidades y opciones de `4.19`. Se puede seleccionar
+  con `pymongo_profile="4.20"` o importar `PyMongoProfile420` y
+  `PYMONGO_PROFILE_420` de `mongoeco.compat`. La selección del dialecto de
+  MongoDB es independiente. El cifrado del driver queda fuera del soporte.
 * no existe catálogo oficial para perfiles anteriores a `4.9`
 
 ## 5. Autodetección de PyMongo instalada
@@ -656,6 +661,8 @@ Ejemplos actuales:
 * `4.10.x` -> `4.9`
 * `4.12.x` -> `4.11`
 * `4.14.x` -> `4.13`
+* `4.20.x` -> `4.20` en ambos modos de autodetección
+* `4.21.x` -> `4.20` en modo flexible y rechazo en modo estricto
 * `5.x` -> error explícito
 
 ### Modo estricto
@@ -1158,7 +1165,7 @@ python3 scripts/run_pymongo_profile_matrix.py
 ```
 
 El script crea entornos aislados para `PyMongo 4.9.2`, `4.11.3`, `4.13.2`,
-`4.17.0`, `4.18.2` y `4.19.0`, ejecuta
+`4.17.0`, `4.18.2`, `4.19.0` y `4.20.0`, ejecuta
 una sonda de aceptación de parámetros reales y devuelve un JSON con los
 resultados.
 

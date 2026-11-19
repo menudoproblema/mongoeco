@@ -86,6 +86,16 @@ scraping documentation.
 The catalog lifecycle is documented in
 [docs/deprecations.md](deprecations.md).
 
+ObjectId construction accepts 24 hexadecimal characters without whitespace
+or a 12-byte binary payload. Invalid input of either form raises `ValueError`
+with or without the optional SDK.
+
+Response codecs preserve UUID Binary values with `UNSPECIFIED` or when the
+subtype does not match the selected representation. When the representation
+requests conversion, the payload must contain 16 bytes. A malformed payload
+raises `InvalidBSON` during decoding. A write already applied by a
+find-and-modify operation remains applied if decoding its response fails.
+
 Import guidance by layer:
 
 * use `mongoeco` for clients, sessions, BSON-facing types and URI/config helpers

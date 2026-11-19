@@ -37,7 +37,7 @@ El [kit pytest](../pytest.md) ofrece clientes PyMongo nativos sobre el proxy
 wire, con motor y servidor de función y cierre de recursos propios. Sus
 pruebas ejecutan sesiones consumidoras en procesos separados y agregan su
 cobertura cuando está activa. La matriz del kit cubre pytest 8.4/9 y los
-extremos SDK 4.9.2/4.19.0; se conserva además el canario consumidor anónimo
+extremos SDK 4.9.2/4.20.0; se conserva además el canario consumidor anónimo
 contra el wheel instalado. El helper de `conformance.pytest` conserva su
 contrato independiente para motores externos.
 
